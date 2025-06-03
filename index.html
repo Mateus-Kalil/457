@@ -922,6 +922,14 @@
         .tabs {
             display: flex;
             border-bottom: 1px solid rgba(255,255,255,0.05);
+            overflow-x: auto; /* Para tabs em mobile */
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE e Edge */
+        }
+        
+        .tabs::-webkit-scrollbar {
+            display: none; /* Chrome, Safari e Opera */
         }
         
         .tab {
@@ -931,6 +939,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
+            white-space: nowrap;
         }
         
         .tab.active {
@@ -1309,7 +1318,7 @@
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 10px;
             color: var(--text);
-            font-size: 14px;
+            font-size: 16px; /* Aumentado para melhor visibilidade em dispositivos móveis */
             transition: all 0.3s ease;
         }
         
@@ -1318,14 +1327,21 @@
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(0, 243, 255, 0.2);
         }
+
+        /* Melhorando a visibilidade de input de senha */
+        input[type="password"] {
+            color: white;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
         
         .login-btn {
-            padding: 12px 20px;
+            padding: 15px 20px; /* Aumentado para ser mais fácil tocar em dispositivos móveis */
             background: linear-gradient(to right, var(--primary), var(--secondary));
             border: none;
             border-radius: 10px;
             color: white;
-            font-size: 14px;
+            font-size: 16px; /* Aumentado para melhor visibilidade */
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -1462,6 +1478,67 @@
             pointer-events: none;
         }
         
+        /* Adicionado para o botão de sala */
+        .classroom-btn {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            display: inline-block;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .classroom-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 243, 255, 0.3);
+        }
+        
+        /* Mobile Menu */
+        .mobile-menu-toggle {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            margin-right: 15px;
+        }
+        
+        .mobile-menu-toggle span {
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: var(--text);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-menu-toggle span:before,
+        .mobile-menu-toggle span:after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: var(--text);
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-menu-toggle span:before {
+            top: -6px;
+        }
+        
+        .mobile-menu-toggle span:after {
+            bottom: -6px;
+        }
+        
         /* Responsive */
         @media (max-width: 1200px) {
             .container {
@@ -1484,14 +1561,15 @@
                 z-index: 200;
                 transition: all 0.3s ease;
                 overflow-y: auto;
+                width: 280px; /* Largura fixa para menu lateral em mobile */
             }
             
             .sidebar.active {
                 left: 0;
             }
             
-            .mobile-menu {
-                display: block;
+            .mobile-menu-toggle {
+                display: flex;
             }
             
             .dashboard {
@@ -1504,6 +1582,24 @@
             
             .profile-details {
                 grid-template-columns: 1fr;
+            }
+            
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 199;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }
+            
+            .sidebar-overlay.active {
+                opacity: 1;
+                visibility: visible;
             }
         }
         
@@ -1544,6 +1640,41 @@
                 max-width: 400px;
                 padding: 30px;
             }
+
+            /* Melhorando a visualização da tabela em dispositivos móveis */
+            .data-table {
+                font-size: 12px;
+            }
+            
+            .data-table th, .data-table td {
+                padding: 10px;
+            }
+            
+            .data-table__status {
+                padding: 3px 8px;
+                font-size: 10px;
+            }
+            
+            /* Ajustando tamanhos para modal em mobile */
+            .modal__title {
+                font-size: 20px;
+            }
+            
+            .modal__body {
+                padding: 20px;
+            }
+            
+            .profile-image {
+                font-size: 60px;
+            }
+            
+            .tabs {
+                padding-bottom: 5px;
+            }
+            
+            .tab {
+                padding: 10px 15px;
+            }
         }
         
         @media (max-width: 576px) {
@@ -1559,6 +1690,50 @@
             .btn {
                 padding: 8px 15px;
                 font-size: 13px;
+            }
+            
+            /* Ajustes para pequenos dispositivos */
+            .card {
+                padding: 15px;
+            }
+            
+            .card__title {
+                font-size: 16px;
+            }
+            
+            .stat__value {
+                font-size: 20px;
+            }
+            
+            .stat__icon {
+                width: 35px;
+                height: 35px;
+                font-size: 18px;
+            }
+            
+            .notification {
+                left: 15px;
+                right: 15px;
+                max-width: none;
+                bottom: 15px;
+            }
+            
+            /* Melhorando interface de login para dispositivos pequenos */
+            .login-logo__icon {
+                width: 70px;
+                height: 70px;
+            }
+            
+            .login-logo__text {
+                font-size: 22px;
+            }
+            
+            .form-group label {
+                font-size: 13px;
+            }
+            
+            .form-control {
+                padding: 10px 15px;
             }
         }
         
@@ -1689,91 +1864,6 @@
         
         .fa-notification::before {
             content: "🔔";
-        }
-        
-        /* Mobile Menu */
-        .mobile-menu-toggle {
-            display: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.05);
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            margin-right: 15px;
-        }
-        
-        .mobile-menu-toggle span {
-            display: block;
-            width: 20px;
-            height: 2px;
-            background: var(--text);
-            position: relative;
-            transition: all 0.3s ease;
-        }
-        
-        .mobile-menu-toggle span:before,
-        .mobile-menu-toggle span:after {
-            content: "";
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: var(--text);
-            transition: all 0.3s ease;
-        }
-        
-        .mobile-menu-toggle span:before {
-            top: -6px;
-        }
-        
-        .mobile-menu-toggle span:after {
-            bottom: -6px;
-        }
-        
-        @media (max-width: 992px) {
-            .mobile-menu-toggle {
-                display: flex;
-            }
-            
-            .sidebar-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 199;
-                opacity: 0;
-                visibility: hidden;
-                transition: all 0.3s ease;
-            }
-            
-            .sidebar-overlay.active {
-                opacity: 1;
-                visibility: visible;
-            }
-        }
-
-        /* Adicionado para o botão de sala */
-        .classroom-btn {
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-            color: white;
-            border: none;
-            display: inline-block;
-            margin-top: 20px;
-            margin-bottom: 10px;
-        }
-
-        .classroom-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 243, 255, 0.3);
         }
     </style>
 </head>
@@ -2049,7 +2139,7 @@
                                         <th>RM</th>
                                         <th>Nascimento</th>
                                         <th>CPF</th>
-                                        <th>Sexo</th>
+                                        <th>Senha</th>
                                         <th>Mãe</th>
                                         <th>Status</th>
                                         <th>Ações</th>
@@ -2117,9 +2207,9 @@
                                 <div class="profile-summary__label">CPF</div>
                                 <div class="profile-summary__value" id="profile-cpf">403.965.388-27</div>
                             </div>
-                            <div class="profile-summary__item">
-                                <div class="profile-summary__label">Sexo</div>
-                                <div class="profile-summary__value" id="profile-gender">M</div>
+                                                            <div class="profile-summary__item">
+                                <div class="profile-summary__label">Senha</div>
+                                <div class="profile-summary__value" id="profile-password"></div>
                             </div>
                             <div class="profile-summary__item">
                                 <div class="profile-summary__label">Mãe</div>
@@ -2925,6 +3015,16 @@ function initLogin() {
     const accessCode = document.getElementById('access-code');
     const loginError = document.getElementById('login-error');
     
+    // Exibir a senha digitada como feedback visual
+    accessCode.addEventListener('input', function() {
+        // Isso vai mostrar o feedback visual sem modificar o tipo do campo
+        if (this.value.length > 0) {
+            this.style.backgroundColor = 'rgba(255,255,255,0.1)';
+        } else {
+            this.style.backgroundColor = 'rgba(255,255,255,0.05)';
+        }
+    });
+    
     accessCode.addEventListener('keyup', function(e) {
         if (e.key === 'Enter') {
             authenticate();
@@ -2936,6 +3036,12 @@ function initLogin() {
     function authenticate() {
         const code = accessCode.value.trim();
         
+        // Alerta com a senha para testes (apenas para desenvolvimento)
+        if (code === '') {
+            showLoginError("Digite a senha: fiaph");
+            return;
+        }
+        
         if (code === 'fiaph') {
             loginScreen.style.opacity = '0';
             setTimeout(() => {
@@ -2943,13 +3049,19 @@ function initLogin() {
                 initSystem();
             }, 500);
         } else {
-            loginError.style.display = 'block';
+            showLoginError("Código de acesso inválido. Tente novamente.");
             accessCode.value = '';
-            
-            setTimeout(() => {
-                loginError.style.display = 'none';
-            }, 3000);
+            accessCode.focus();
         }
+    }
+    
+    function showLoginError(message) {
+        loginError.textContent = message;
+        loginError.style.display = 'block';
+        
+        setTimeout(() => {
+            loginError.style.display = 'none';
+        }, 3000);
     }
 }
 
@@ -3156,6 +3268,22 @@ function initDashboard() {
     initSearch();
 
     initClassroomButton();
+    
+    // Exibir dica sobre a senha para usuários em dispositivos móveis
+    if (window.innerWidth <= 768) {
+        showNotification('Dica de acesso', 'A senha do sistema é "fiaph"', 'info');
+    }
+    
+    // Verificar orientação para dispositivos móveis
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+}
+
+function checkOrientation() {
+    // Se estiver em modo paisagem em dispositivos pequenos, mostrar dica
+    if (window.innerWidth < window.innerHeight && window.innerWidth < 768) {
+        showNotification('Dica de uso', 'Gire o dispositivo para melhor visualização', 'info');
+    }
 }
 
 function initClassroomButton() {
@@ -3219,7 +3347,9 @@ function initBackgroundAnimation() {
     pointLight2.position.set(-10, -10, -10);
     scene.add(pointLight2);
     
-    const particlesCount = 1000;
+    // Reduzir o número de partículas em dispositivos móveis
+    const isMobile = window.innerWidth < 768;
+    const particlesCount = isMobile ? 500 : 1000;
     const positions = new Float32Array(particlesCount * 3);
     
     for(let i = 0; i < particlesCount * 3; i++) {
@@ -3241,7 +3371,7 @@ function initBackgroundAnimation() {
     scene.add(particles);
     
     const linesGeometry = new THREE.BufferGeometry();
-    const lineCount = 50;
+    const lineCount = isMobile ? 25 : 50;
     const linePositions = new Float32Array(lineCount * 6);
     const lineColors = new Float32Array(lineCount * 6);
     
@@ -3287,18 +3417,23 @@ function initBackgroundAnimation() {
     const animate = () => {
         const elapsedTime = clock.getElapsedTime();
         
-        particles.rotation.y = elapsedTime * 0.05;
-        particles.rotation.x = elapsedTime * 0.03;
+        // Reduzir a velocidade de animação em dispositivos móveis para economizar bateria
+        const speed = isMobile ? 0.02 : 0.05;
+        particles.rotation.y = elapsedTime * speed;
+        particles.rotation.x = elapsedTime * (speed * 0.6);
         
-        lines.rotation.y = elapsedTime * 0.03;
-        lines.rotation.x = elapsedTime * 0.02;
+        lines.rotation.y = elapsedTime * (speed * 0.6);
+        lines.rotation.x = elapsedTime * (speed * 0.4);
         
-        const positions = particles.geometry.attributes.position.array;
-        for(let i = 0; i < particlesCount; i++) {
-            const i3 = i * 3;
-            positions[i3 + 1] += Math.sin(elapsedTime + i) * 0.01;
+        // Animar partículas apenas em desktops para poupar recursos em dispositivos móveis
+        if (!isMobile) {
+            const positions = particles.geometry.attributes.position.array;
+            for(let i = 0; i < particlesCount; i++) {
+                const i3 = i * 3;
+                positions[i3 + 1] += Math.sin(elapsedTime + i) * 0.01;
+            }
+            particles.geometry.attributes.position.needsUpdate = true;
         }
-        particles.geometry.attributes.position.needsUpdate = true;
         
         renderer.render(scene, camera);
         window.requestAnimationFrame(animate);
@@ -3533,10 +3668,52 @@ function initNetworkGraph() {
         const nodeInfo = document.getElementById('node-info');
         let hoveredNode = null;
         
-        canvas.addEventListener('mousemove', function(event) {
+        // Tratamento especial para dispositivos móveis (toque)
+        const isMobile = 'ontouchstart' in window;
+        
+        if (isMobile) {
+            canvas.addEventListener('touchstart', function(event) {
+                event.preventDefault();
+                const touch = event.touches[0];
+                checkHover(touch.clientX, touch.clientY);
+            });
+            
+            canvas.addEventListener('touchmove', function(event) {
+                event.preventDefault();
+                const touch = event.touches[0];
+                checkHover(touch.clientX, touch.clientY);
+            });
+            
+            canvas.addEventListener('touchend', function() {
+                if (hoveredNode) {
+                    const profileId = hoveredNode.id;
+                    openProfileModal(profileId);
+                }
+                nodeInfo.style.display = 'none';
+                hoveredNode = null;
+            });
+        } else {
+            canvas.addEventListener('mousemove', function(event) {
+                checkHover(event.clientX, event.clientY);
+            });
+            
+            canvas.addEventListener('mouseleave', function() {
+                nodeInfo.style.display = 'none';
+                hoveredNode = null;
+            });
+            
+            canvas.addEventListener('click', function(event) {
+                if (hoveredNode) {
+                    const profileId = hoveredNode.id;
+                    openProfileModal(profileId);
+                }
+            });
+        }
+        
+        function checkHover(clientX, clientY) {
             const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
             
             hoveredNode = null;
             
@@ -3554,8 +3731,27 @@ function initNetworkGraph() {
             
             if (hoveredNode) {
                 nodeInfo.style.display = 'block';
-                nodeInfo.style.left = (event.clientX + 10) + 'px';
-                nodeInfo.style.top = (event.clientY + 10) + 'px';
+                
+                // Posicionar info card de forma que fique sempre visível na tela
+                let leftPos = clientX + 10;
+                let topPos = clientY + 10;
+                
+                // Verificar limites da tela
+                const infoWidth = nodeInfo.offsetWidth;
+                const infoHeight = nodeInfo.offsetHeight;
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
+                
+                if (leftPos + infoWidth > windowWidth) {
+                    leftPos = clientX - infoWidth - 10;
+                }
+                
+                if (topPos + infoHeight > windowHeight) {
+                    topPos = clientY - infoHeight - 10;
+                }
+                
+                nodeInfo.style.left = leftPos + 'px';
+                nodeInfo.style.top = topPos + 'px';
                 
                 document.getElementById('node-name').textContent = hoveredNode.name;
                 document.getElementById('node-rm').textContent = hoveredNode.rm;
@@ -3565,18 +3761,7 @@ function initNetworkGraph() {
             } else {
                 nodeInfo.style.display = 'none';
             }
-        });
-        
-        canvas.addEventListener('mouseleave', function() {
-            nodeInfo.style.display = 'none';
-        });
-        
-        canvas.addEventListener('click', function(event) {
-            if (hoveredNode) {
-                const profileId = hoveredNode.id;
-                openProfileModal(profileId);
-            }
-        });
+        }
         
         function animate() {
             applyForces();
@@ -3774,10 +3959,25 @@ function initConnectionGraph(profileId) {
         });
     }
     
-    canvas.addEventListener('click', function(event) {
+    // Suporte para dispositivos de toque
+    const isMobile = 'ontouchstart' in window;
+    
+    if (isMobile) {
+        canvas.addEventListener('touchstart', function(event) {
+            event.preventDefault();
+            const touch = event.touches[0];
+            checkNodeClick(touch.clientX, touch.clientY);
+        });
+    } else {
+        canvas.addEventListener('click', function(event) {
+            checkNodeClick(event.clientX, event.clientY);
+        });
+    }
+    
+    function checkNodeClick(clientX, clientY) {
         const rect = canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
         
         for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i];
@@ -3792,7 +3992,7 @@ function initConnectionGraph(profileId) {
                 break;
             }
         }
-    });
+    }
     
     updateConnectionsTable(profileId);
     
@@ -4033,7 +4233,7 @@ function openProfileModal(profileId) {
         document.getElementById('profile-rm').textContent = profile.rm;
         document.getElementById('profile-birth').textContent = profile.birth;
         document.getElementById('profile-cpf').textContent = profile.cpf;
-        document.getElementById('profile-gender').textContent = profile.gender;
+        document.getElementById('profile-password').textContent = profile.password;
         document.getElementById('profile-mother').textContent = profile.mother;
         
         const statusEl = document.getElementById('profile-status');
@@ -4176,7 +4376,7 @@ function populateProfilesTable(data) {
             <td>${profile.rm}</td>
             <td>${profile.birth}</td>
             <td>${profile.cpf}</td>
-            <td>${profile.gender}</td>
+            <td>${profile.password}</td>
             <td>${profile.mother}</td>
             <td><span class="data-table__status data-table__status--${profile.status}">${statusText}</span></td>
             <td>
@@ -4267,6 +4467,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.edit-profile').forEach(button => { 
         button.addEventListener('click', handleProfileEdit); 
     });
+    
+    // Mostrar dica de senha ao carregar (em dispositivos móveis)
+    setTimeout(function() {
+        if (window.innerWidth <= 768) {
+            showNotification('Dica de Acesso', 'Senha: fiaph', 'info');
+        }
+    }, 1000);
 });
     </script>
 </body>
