@@ -2724,7 +2724,7 @@
     </div>
     
     <script>
-        
+        // Dados do sistema com RMs adicionados
         const profiles = [
     {
         id: 1,
@@ -2972,14 +2972,14 @@
     {
         id: 21,
         name: "MK procurado pelo FBI",
-        rm: "*******",
+        rm: "******",
         birth: "**/**/****",
         cpf: "***.***.***-**",
         gender: "M",
-        mother: "******* ********* *****",
+        mother: "Não informado",
         status: "inactive",
         classroom: "1TDCPH",
-        password: "********"
+        password: "******"
     },
     {
         id: 22,
@@ -3089,6 +3089,8 @@ const relationships = [
 ];
 
 let showClassroom = false;
+// Variável para controlar o nível de acesso (normal ou admin)
+let isAdmin = false;
 
 function calculateAge(birthDateStr) {
     if (!birthDateStr || birthDateStr === "Não informado") return null;
@@ -3154,15 +3156,24 @@ function initLogin() {
         
         // Alerta com a senha para testes (apenas para desenvolvimento)
         if (code === '') {
-            showLoginError("Digite a senha: fiaph");
+            showLoginError("Digite a senha: fiaph ou MK741");
             return;
         }
         
         if (code === 'fiaph') {
+            isAdmin = false;
             loginScreen.style.opacity = '0';
             setTimeout(() => {
                 loginScreen.style.display = 'none';
                 initSystem();
+            }, 500);
+        } else if (code === 'MK741') {
+            isAdmin = true;
+            loginScreen.style.opacity = '0';
+            setTimeout(() => {
+                loginScreen.style.display = 'none';
+                initSystem();
+                showNotification('Acesso Administrativo', 'Você está logado com acesso de administrador', 'info');
             }, 500);
         } else {
             showLoginError("Código de acesso inválido. Tente novamente.");
@@ -3391,7 +3402,7 @@ function initDashboard() {
     
     // Exibir dica sobre a senha para usuários em dispositivos móveis
     if (window.innerWidth <= 768) {
-        showNotification('Dica de acesso', 'A senha do sistema é "fiaph"', 'info');
+        showNotification('Dica de acesso', 'Use a senha fiaph para acesso normal, MK741 para acesso administrativo', 'info');
     }
     
     // Verificar orientação para dispositivos móveis
@@ -4370,12 +4381,22 @@ function openProfileModal(profileId) {
     const profile = profiles.find(p => p.id == profileId);
     
     if (profile) {
+        // Lista de perfis restritos
+        const restrictedProfiles = [
+            "Leandro de Souza da Silva",
+            "Aquiles Fonseca de Almeida",
+            "Gabriel Pereira Catini"
+        ];
+        
+        // Verificar se o perfil está na lista restrita e se não estamos no modo admin
+        const isRestricted = !isAdmin && restrictedProfiles.includes(profile.name);
+        
         document.getElementById('profile-name').textContent = profile.name;
-        document.getElementById('profile-rm').textContent = profile.rm;
-        document.getElementById('profile-birth').textContent = profile.birth;
-        document.getElementById('profile-cpf').textContent = profile.cpf;
-        document.getElementById('profile-password').textContent = profile.password;
-        document.getElementById('profile-mother').textContent = profile.mother;
+        document.getElementById('profile-rm').textContent = isRestricted ? '****' : profile.rm;
+        document.getElementById('profile-birth').textContent = isRestricted ? '****' : profile.birth;
+        document.getElementById('profile-cpf').textContent = isRestricted ? '****' : profile.cpf;
+        document.getElementById('profile-password').textContent = isRestricted ? '****' : profile.password;
+        document.getElementById('profile-mother').textContent = isRestricted ? '****' : profile.mother;
         
         const statusEl = document.getElementById('profile-status');
         statusEl.innerHTML = '';
@@ -4494,10 +4515,20 @@ function populateProfilesTable(data) {
         return;
     }
     
+    // Lista de perfis restritos
+    const restrictedProfiles = [
+        "Leandro de Souza da Silva",
+        "Aquiles Fonseca de Almeida",
+        "Gabriel Pereira Catini"
+    ];
+    
     data.forEach(profile => {
         const row = document.createElement('tr');
         row.classList.add('profile-row');
         row.setAttribute('data-id', profile.id);
+        
+        // Verificar se o perfil está na lista restrita e se não estamos no modo admin
+        const isRestricted = !isAdmin && restrictedProfiles.includes(profile.name);
         
         let statusText = '';
         switch(profile.status) {
@@ -4514,11 +4545,11 @@ function populateProfilesTable(data) {
         
         row.innerHTML = `
             <td>${profile.name}</td>
-            <td>${profile.rm}</td>
-            <td>${profile.birth}</td>
-            <td>${profile.cpf}</td>
-            <td>${profile.password}</td>
-            <td>${profile.mother}</td>
+            <td>${isRestricted ? '****' : profile.rm}</td>
+            <td>${isRestricted ? '****' : profile.birth}</td>
+            <td>${isRestricted ? '****' : profile.cpf}</td>
+            <td>${isRestricted ? '****' : profile.password}</td>
+            <td>${isRestricted ? '****' : profile.mother}</td>
             <td><span class="data-table__status data-table__status--${profile.status}">${statusText}</span></td>
             <td>
                 <div class="data-table__actions">
@@ -4612,7 +4643,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mostrar dica de senha ao carregar (em dispositivos móveis)
     setTimeout(function() {
         if (window.innerWidth <= 768) {
-            showNotification('Dica de Acesso', 'Senha: fiaph', 'info');
+            showNotification('Dica de Acesso', 'Senhas: fiaph (normal) ou MK741 (admin)', 'info');
         }
     }, 1000);
 });
