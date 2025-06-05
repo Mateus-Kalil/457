@@ -1679,6 +1679,52 @@
             visibility: visible;
         }
         
+        /* Estilos para busca em arquivo */
+        .search-result-item {
+            margin-bottom: 15px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            transition: all 0.3s ease;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .search-result-item:hover {
+            background: rgba(255,255,255,0.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .search-result-header {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--primary);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 8px;
+        }
+        
+        .btn-add-profile {
+            margin-top: 10px;
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+        
+        /* Melhorias no seletor de tipo de busca */
+        #file-search-type {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            font-weight: 500;
+            padding: 10px 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+            width: 100%;
+        }
+        
+        #file-search-type option {
+            background-color: var(--panel);
+            color: white;
+            padding: 10px;
+        }
+        
         /* Responsive styles - these were overhauled */
         @media (min-width: 576px) {
             header {
@@ -2110,6 +2156,10 @@
                 </div>
                 
                 <div class="action-buttons">
+                    <button class="btn btn--outline" id="file-search-btn">
+                        <i class="fa fa-search btn__icon"></i>
+                        Busca em Arquivo
+                    </button>
                     <button class="btn btn--outline" id="filter-btn">
                         <i class="fa fa-filter btn__icon"></i>
                         Filtrar
@@ -2685,6 +2735,51 @@
         </div>
     </div>
     
+    <!-- File Search Modal -->
+    <div class="modal" id="file-search-modal">
+        <div class="modal__content">
+            <div class="modal__close" id="file-search-modal-close">
+                <i class="fa fa-close"></i>
+            </div>
+            <div class="modal__header">
+                <h2 class="modal__title">Busca em Arquivo</h2>
+                <div class="modal__subtitle">Resultados do arquivo 1.txt</div>
+            </div>
+            <div class="modal__body">
+                <div class="settings-section">
+                    <h3 class="settings-section__title">Consulta</h3>
+                    <div class="settings-group">
+                        <div class="form-group">
+                            <label for="file-search-query">Termo de Busca</label>
+                            <input type="text" id="file-search-query" class="form-control" placeholder="Nome, CPF, Telefone ou Placa">
+                        </div>
+                        <div class="form-group">
+                            <label for="file-search-type">Tipo de Busca</label>
+                            <select id="file-search-type" class="form-control">
+                                <option value="all">Todos os Campos</option>
+                                <option value="nome">Nome</option>
+                                <option value="cpf">CPF/CNPJ</option>
+                                <option value="telefone">Telefone</option>
+                                <option value="placa">Placa</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section" id="file-search-results-container" style="display: none;">
+                    <h3 class="settings-section__title">Resultados da Busca</h3>
+                    <div class="settings-group">
+                        <div id="file-search-results" style="max-height: 400px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal__footer">
+                <button class="btn btn--outline" id="clear-file-search">Limpar</button>
+                <button class="btn btn--primary" id="run-file-search">Buscar</button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Notification Popup -->
     <div class="notification" id="notification">
         <div class="notification__icon" style="background:rgba(0, 243, 255, 0.1); color:var(--primary)">
@@ -3055,18 +3150,6 @@
     },
     {
         id: 28,
-        name: "Yasmin Barbosa Vasconcelos",
-        rm: "561803",
-        birth: "05/07/2006",
-        cpf: "490.661.038-25",
-        gender: "F",
-        mother: "Sem informação",
-        status: "active",
-        classroom: "1TDCPH",
-        password: "050706"
-    },
-    {
-        id: 29,
         name: "Vitor Yuji Suenaga Yoshida",
         rm: "563005",
         birth: "03/07/2006",
@@ -3103,6 +3186,8 @@ const relationships = [
 let showClassroom = false;
 // Variável para controlar o nível de acesso (normal ou admin)
 let isAdmin = false;
+// Armazenar os dados do arquivo para busca
+let fileDataCache = null;
 
 function calculateAge(birthDateStr) {
     if (!birthDateStr || birthDateStr === "Não informado") return null;
@@ -3137,7 +3222,211 @@ let connectionGraph = null;
 document.addEventListener('DOMContentLoaded', function() {
     initLogin();
     initGlobalEvents();
+    
+    // Carregar o arquivo 1.txt quando a página carregar
+    loadDataFile();
 });
+
+// Função para carregar o arquivo 1.txt
+function loadDataFile() {
+    fetch('1.txt')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Arquivo 1.txt não encontrado');
+            }
+            return response.text();
+        })
+        .then(data => {
+            fileDataCache = data;
+            console.log('Arquivo 1.txt carregado com sucesso');
+        })
+        .catch(error => {
+            console.error('Erro ao carregar arquivo:', error);
+            showNotification('Arquivo', 'Não foi possível carregar o arquivo 1.txt', 'warning');
+        });
+}
+
+// Função para normalizar textos (remover pontuação e acentos)
+function normalizeText(text) {
+    if (!text) return '';
+    
+    // Remover pontuação e converter para minúsculas
+    const normalized = text.toLowerCase()
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '')
+        .replace(/\s+/g, ' ');
+    
+    // Remover acentos
+    return normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+// Função para buscar no arquivo 1.txt
+function searchInFile(query) {
+    if (!query || !fileDataCache) {
+        return [];
+    }
+    
+    // Normalizar a consulta para facilitar a busca
+    const normalizedQuery = normalizeText(query);
+    
+    // Dividir o conteúdo em registros (assumindo que cada registro é separado por linhas em branco)
+    const records = fileDataCache.split(/\n\s*\n/).filter(r => r.trim());
+    
+    // Filtrar registros com base no termo de busca
+    const matchedRecords = records.filter(record => {
+        const normalizedRecord = normalizeText(record);
+        return normalizedRecord.includes(normalizedQuery);
+    });
+    
+    // Extrair informações relevantes e remover duplicatas (baseado no CPF)
+    const uniqueResults = [];
+    const uniqueCPFs = new Set();
+    
+    matchedRecords.forEach(record => {
+        const nameMatch = record.match(/NOME\s*:\s*([^\n]+)/i);
+        const cpfMatch = record.match(/CPF\/CNPJ\s*:\s*([^\n]+)/i);
+        const birthMatch = record.match(/NASCIMENTO\s*:\s*([^\n]+)/i);
+        const genderMatch = record.match(/SEXO\s*:\s*([^\n]+)/i);
+        const motherMatch = record.match(/MÃE\s*:\s*([^\n]+)/i);
+        const phoneMatch = record.match(/TELEFONE\s*:\s*([^\n]+)/i);
+        const plateMatch = record.match(/PLACA\s*:\s*([^\n]+)/i);
+        
+        if (nameMatch) {
+            const cpf = cpfMatch ? cpfMatch[1].trim() : "Não informado";
+            
+            // Verificar se já existe um resultado com este CPF
+            if (!uniqueCPFs.has(cpf) || cpf === "Não informado") {
+                uniqueCPFs.add(cpf);
+                
+                uniqueResults.push({
+                    name: nameMatch[1].trim(),
+                    cpf: cpf,
+                    birth: birthMatch ? birthMatch[1].trim() : "Não informado",
+                    gender: genderMatch ? genderMatch[1].trim() : "Não informado",
+                    mother: motherMatch ? motherMatch[1].trim() : "Não informado",
+                    phone: phoneMatch ? phoneMatch[1].trim() : "Não informado",
+                    plate: plateMatch ? plateMatch[1].trim() : "Não informado",
+                    fullRecord: record
+                });
+            }
+        }
+    });
+    
+    return uniqueResults;
+}
+
+// Função para formatar e exibir resultados da busca
+function displaySearchResults(results, container) {
+    if (results.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 15px; color: var(--danger);">Nenhum resultado encontrado para a busca.</div>';
+        return;
+    }
+    
+    let html = '';
+    
+    results.forEach(result => {
+        // Destaca campos importantes
+        html += `
+        <div class="search-result-item">
+            <div class="search-result-header">${result.name}</div>
+            <div style="margin: 5px 0;"><span style="font-weight: bold; color: var(--primary);">CPF/CNPJ:</span> <span>${result.cpf}</span></div>
+            <div style="margin: 5px 0;"><span style="font-weight: bold;">Nascimento:</span> <span>${result.birth}</span></div>
+            <div style="margin: 5px 0;"><span style="font-weight: bold;">Sexo:</span> <span>${result.gender}</span></div>
+            <div style="margin: 5px 0;"><span style="font-weight: bold;">Mãe:</span> <span>${result.mother}</span></div>
+            ${result.phone !== "Não informado" ? `<div style="margin: 5px 0;"><span style="font-weight: bold; color: var(--primary);">Telefone:</span> <span>${result.phone}</span></div>` : ''}
+            ${result.plate !== "Não informado" ? `<div style="margin: 5px 0;"><span style="font-weight: bold; color: var(--primary);">Placa:</span> <span>${result.plate}</span></div>` : ''}
+            <div style="margin-top: 10px;">
+                <button class="btn btn--outline btn-add-profile" data-record="${encodeURIComponent(result.fullRecord)}">Adicionar ao Sistema</button>
+            </div>
+        </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    
+    // Adicionar event listeners para os botões "Adicionar ao Sistema"
+    document.querySelectorAll('.btn-add-profile').forEach(button => {
+        button.addEventListener('click', function() {
+            const recordData = decodeURIComponent(this.getAttribute('data-record'));
+            addProfileFromRecord(recordData);
+        });
+    });
+}
+
+// Função para adicionar um perfil ao sistema a partir do registro
+function addProfileFromRecord(record) {
+    const nameMatch = record.match(/NOME\s*:\s*([^\n]+)/i);
+    const cpfMatch = record.match(/CPF\/CNPJ\s*:\s*([^\n]+)/i);
+    const birthMatch = record.match(/NASCIMENTO\s*:\s*([^\n]+)/i);
+    const genderMatch = record.match(/SEXO\s*:\s*([^\n]+)/i);
+    const motherMatch = record.match(/MÃE\s*:\s*([^\n]+)/i);
+    
+    if (nameMatch) {
+        const name = nameMatch[1].trim();
+        const cpf = cpfMatch ? cpfMatch[1].trim() : "Não informado";
+        
+        // Verificar se o perfil já existe
+        const existingProfile = profiles.find(p => 
+            (p.cpf === cpf && cpf !== "Não informado") || 
+            (p.name.toLowerCase() === name.toLowerCase() && p.cpf === cpf)
+        );
+        
+        if (existingProfile) {
+            showNotification('Perfil Existente', `${name} já existe no sistema`, 'warning');
+            return;
+        }
+        
+        const newId = profiles.length + 1;
+        const newProfile = {
+            id: newId,
+            name: name,
+            rm: `FILE${newId}`,
+            birth: birthMatch ? birthMatch[1].trim() : "Não informado",
+            cpf: cpf,
+            gender: genderMatch ? genderMatch[1].trim().charAt(0) : "M",
+            mother: motherMatch ? motherMatch[1].trim() : "Não informado",
+            status: "active",
+            classroom: "ARQUIVO",
+            password: "*****"
+        };
+        
+        profiles.push(newProfile);
+        
+        // Adicionar conexões aleatórias para o novo perfil
+        const randomConnections = Math.floor(Math.random() * 3) + 1;
+        for (let i = 0; i < randomConnections; i++) {
+            const targetId = Math.floor(Math.random() * 15) + 1;
+            const types = ['school', 'friend', 'family'];
+            const randomType = types[Math.floor(Math.random() * types.length)];
+            
+            relationships.push({
+                source: newId,
+                target: targetId,
+                type: randomType
+            });
+        }
+        
+        showNotification('Perfil Adicionado', `${name} foi adicionado ao sistema`, 'success');
+        
+        if (showClassroom) {
+            applyFilters();
+        }
+        
+        initNetworkGraph();
+    }
+}
+
+// Função para abrir o modal de busca em arquivo com resultados
+function openFileSearchModal(query, results) {
+    const fileSearchModal = document.getElementById('file-search-modal');
+    const fileSearchQuery = document.getElementById('file-search-query');
+    const fileSearchResults = document.getElementById('file-search-results');
+    const fileSearchResultsContainer = document.getElementById('file-search-results-container');
+    
+    fileSearchQuery.value = query;
+    displaySearchResults(results, fileSearchResults);
+    fileSearchResultsContainer.style.display = 'block';
+    fileSearchModal.classList.add('active');
+}
 
 function initLogin() {
     const loginScreen = document.getElementById('login-screen');
@@ -3370,6 +3659,94 @@ function initGlobalEvents() {
     });
 }
 
+// Função para inicializar o modal de busca em arquivo
+function initFileSearchModal() {
+    const fileSearchBtn = document.getElementById('file-search-btn');
+    const fileSearchModal = document.getElementById('file-search-modal');
+    const fileSearchModalClose = document.getElementById('file-search-modal-close');
+    const clearFileSearchBtn = document.getElementById('clear-file-search');
+    const runFileSearchBtn = document.getElementById('run-file-search');
+    const fileSearchQuery = document.getElementById('file-search-query');
+    const fileSearchResults = document.getElementById('file-search-results');
+    const fileSearchResultsContainer = document.getElementById('file-search-results-container');
+    
+    fileSearchBtn.addEventListener('click', function() {
+        fileSearchModal.classList.add('active');
+    });
+    
+    fileSearchModalClose.addEventListener('click', function() {
+        fileSearchModal.classList.remove('active');
+    });
+    
+    clearFileSearchBtn.addEventListener('click', function() {
+        fileSearchQuery.value = '';
+        fileSearchResults.innerHTML = '';
+        fileSearchResultsContainer.style.display = 'none';
+        document.getElementById('file-search-type').value = 'all';
+    });
+    
+    runFileSearchBtn.addEventListener('click', function() {
+        const query = fileSearchQuery.value.trim();
+        
+        if (!query) {
+            showNotification('Erro', 'Digite um termo para busca', 'warning');
+            return;
+        }
+        
+        if (!fileDataCache) {
+            showNotification('Erro', 'Arquivo 1.txt não carregado', 'error');
+            return;
+        }
+        
+        const results = searchInFile(query);
+        displaySearchResults(results, fileSearchResults);
+        fileSearchResultsContainer.style.display = 'block';
+        
+        if (results.length > 0) {
+            showNotification('Busca Concluída', `${results.length} resultado(s) encontrado(s)`, 'success');
+        } else {
+            showNotification('Busca Concluída', 'Nenhum resultado encontrado', 'warning');
+        }
+    });
+    
+    // Permitir pesquisar pressionando Enter
+    fileSearchQuery.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            runFileSearchBtn.click();
+        }
+    });
+}
+
+// Modifica a função initSearch para incluir busca no arquivo
+function initSearch() {
+    const searchInput = document.getElementById('search-input');
+    
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        activeFilters.search = query;
+        
+        if (query) {
+            // Buscar no sistema
+            showClassroom = true;
+            document.getElementById('classroom-btn').textContent = 'Ocultar Perfis 1TDCPH';
+            
+            // Buscar também no arquivo
+            const fileResults = searchInFile(query);
+            if (fileResults.length > 0) {
+                showNotification('Resultados Encontrados', `${fileResults.length} resultado(s) encontrado(s) no arquivo`, 'success');
+                // Abrir o modal de busca em arquivo com os resultados
+                openFileSearchModal(query, fileResults);
+            }
+        }
+        
+        applyFilters();
+        
+        if (query && document.querySelector('#profiles-table tbody').children.length === 0 && !fileResults?.length) {
+            showNotification('Busca no Sistema', 'Nenhum perfil encontrado no sistema', 'info');
+        }
+    });
+}
+
 function initSystem() {
     const preloader = document.querySelector('.preloader');
     const preloaderBar = document.getElementById('preloader-bar');
@@ -3387,100 +3764,13 @@ function initSystem() {
                     preloader.style.display = 'none';
                     initBackgroundAnimation();
                     initDashboard();
+                    initFileSearchModal();
                 }, 500);
             }, 500);
         }
         
         preloaderBar.style.width = `${progress}%`;
     }, 200);
-}
-
-function initDashboard() {
-    populateProfilesTable([]); 
-    
-    initCharts();
-    
-    initNetworkGraph();
-    
-    initFilters();
-    
-    initProfileModal();
-    
-    initAnalysisModal();
-    
-    initSearch();
-
-    initClassroomButton();
-    
-    // Exibir dica sobre a senha para usuários em dispositivos móveis
-    if (window.innerWidth <= 768) {
-        showNotification('Dica de acesso', 'Use a senha para acesso normal', 'info');
-    }
-    
-    // Verificar orientação para dispositivos móveis
-    checkOrientation();
-    window.addEventListener('resize', checkOrientation);
-    
-    // Ajustar elementos quando a janela é redimensionada
-    window.addEventListener('resize', function() {
-        if (ageChart) {
-            ageChart.resize();
-        }
-        
-        const networkCanvas = document.getElementById('network-canvas');
-        if (networkCanvas) {
-            const container = networkCanvas.parentElement;
-            networkCanvas.width = container.offsetWidth;
-            networkCanvas.height = container.offsetHeight;
-        }
-        
-        const connectionCanvas = document.getElementById('connection-canvas');
-        if (connectionCanvas) {
-            const container = connectionCanvas.parentElement;
-            connectionCanvas.width = container.offsetWidth;
-            connectionCanvas.height = container.offsetHeight;
-        }
-    });
-}
-
-function checkOrientation() {
-    // Se estiver em modo paisagem em dispositivos pequenos, mostrar dica
-    if (window.innerWidth < window.innerHeight && window.innerWidth < 768) {
-        showNotification('Dica de uso', 'Gire o dispositivo para melhor visualização', 'info');
-    }
-}
-
-function initClassroomButton() {
-    const classroomBtn = document.getElementById('classroom-btn');
-    
-    classroomBtn.addEventListener('click', function() {
-        showClassroom = !showClassroom;
-        
-        if (showClassroom) {
-            const classroomProfiles = profiles.filter(p => p.classroom === '1TDCPH');
-            populateProfilesTable(classroomProfiles);
-            classroomBtn.textContent = 'Ocultar Perfis 1TDCPH';
-            showNotification('Sala 1TDCPH', 'Exibindo perfis da sala 1TDCPH', 'info');
-            
-            document.getElementById('total-profiles').innerHTML = `
-                <div class="stat__icon stat__icon--blue">
-                    <i class="fa fa-users"></i>
-                </div>
-                ${classroomProfiles.length}
-            `;
-        } else {
-            populateProfilesTable([]);
-            classroomBtn.textContent = 'Mostrar Perfis 1TDCPH';
-            showNotification('Sala 1TDCPH', 'Perfis ocultados', 'info');
-            
-            document.getElementById('total-profiles').innerHTML = `
-                <div class="stat__icon stat__icon--blue">
-                    <i class="fa fa-users"></i>
-                </div>
-                0
-            `;
-        }
-    });
 }
 
 function initBackgroundAnimation() {
@@ -3609,6 +3899,94 @@ function initBackgroundAnimation() {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+}
+
+function initDashboard() {
+    populateProfilesTable([]); 
+    
+    initCharts();
+    
+    initNetworkGraph();
+    
+    initFilters();
+    
+    initProfileModal();
+    
+    initAnalysisModal();
+    
+    initSearch();
+
+    initClassroomButton();
+    
+    // Exibir dica sobre a senha para usuários em dispositivos móveis
+    if (window.innerWidth <= 768) {
+        showNotification('Dica de acesso', 'Use a senha para acesso normal', 'info');
+    }
+    
+    // Verificar orientação para dispositivos móveis
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    
+    // Ajustar elementos quando a janela é redimensionada
+    window.addEventListener('resize', function() {
+        if (ageChart) {
+            ageChart.resize();
+        }
+        
+        const networkCanvas = document.getElementById('network-canvas');
+        if (networkCanvas) {
+            const container = networkCanvas.parentElement;
+            networkCanvas.width = container.offsetWidth;
+            networkCanvas.height = container.offsetHeight;
+        }
+        
+        const connectionCanvas = document.getElementById('connection-canvas');
+        if (connectionCanvas) {
+            const container = connectionCanvas.parentElement;
+            connectionCanvas.width = container.offsetWidth;
+            connectionCanvas.height = container.offsetHeight;
+        }
+    });
+}
+
+function checkOrientation() {
+    // Se estiver em modo paisagem em dispositivos pequenos, mostrar dica
+    if (window.innerWidth < window.innerHeight && window.innerWidth < 768) {
+        showNotification('Dica de uso', 'Gire o dispositivo para melhor visualização', 'info');
+    }
+}
+
+function initClassroomButton() {
+    const classroomBtn = document.getElementById('classroom-btn');
+    
+    classroomBtn.addEventListener('click', function() {
+        showClassroom = !showClassroom;
+        
+        if (showClassroom) {
+            const classroomProfiles = profiles.filter(p => p.classroom === '1TDCPH');
+            populateProfilesTable(classroomProfiles);
+            classroomBtn.textContent = 'Ocultar Perfis 1TDCPH';
+            showNotification('Sala 1TDCPH', 'Exibindo perfis da sala 1TDCPH', 'info');
+            
+            document.getElementById('total-profiles').innerHTML = `
+                <div class="stat__icon stat__icon--blue">
+                    <i class="fa fa-users"></i>
+                </div>
+                ${classroomProfiles.length}
+            `;
+        } else {
+            populateProfilesTable([]);
+            classroomBtn.textContent = 'Mostrar Perfis 1TDCPH';
+            showNotification('Sala 1TDCPH', 'Perfis ocultados', 'info');
+            
+            document.getElementById('total-profiles').innerHTML = `
+                <div class="stat__icon stat__icon--blue">
+                    <i class="fa fa-users"></i>
+                </div>
+                0
+            `;
+        }
     });
 }
 
@@ -4170,7 +4548,7 @@ function initConnectionGraph(profileId) {
     
     window.addEventListener('resize', function() {
         canvas.width = canvasContainer.offsetWidth;
-        canvas.height = canvasContainer.offsetHeight;
+        canvas.height = container.offsetHeight;
     });
 }
 
@@ -4346,25 +4724,6 @@ function applyFilters() {
     `;
 }
 
-function initSearch() {
-    const searchInput = document.getElementById('search-input');
-    
-    searchInput.addEventListener('input', function() {
-        activeFilters.search = this.value.trim();
-        
-        if (activeFilters.search) {
-            showClassroom = true;
-            document.getElementById('classroom-btn').textContent = 'Ocultar Perfis 1TDCPH';
-        }
-        
-        applyFilters();
-        
-        if (activeFilters.search && document.querySelector('#profiles-table tbody').children.length === 0) {
-            showNotification('Busca', 'Nenhum perfil encontrado com os critérios de busca', 'warning');
-        }
-    });
-}
-
 function initProfileModal() {
     const profileModal = document.getElementById('profile-modal');
     const profileModalClose = document.getElementById('profile-modal-close');
@@ -4455,8 +4814,8 @@ function initAnalysisModal() {
         const name = document.getElementById('analysis-name').value;
         const doc = document.getElementById('analysis-doc').value;
         
-        if (!name || !doc) {
-            showNotification('Campos obrigatórios', 'Preencha nome e documento para iniciar a análise', 'warning');
+        if (!name && !doc) {
+            showNotification('Campos obrigatórios', 'Preencha nome ou documento para iniciar a análise', 'warning');
             return;
         }
         
@@ -4466,16 +4825,37 @@ function initAnalysisModal() {
         
         showNotification('Análise iniciada', 'Coletando informações de fontes abertas...', 'info');
         
+        // Buscar primeiro no arquivo, se houver dados carregados
+        if (fileDataCache) {
+            const searchTerm = name || doc;
+            const results = searchInFile(searchTerm);
+            
+            if (results.length > 0) {
+                setTimeout(() => {
+                    document.getElementById('network-loading').classList.remove('active');
+                    showNotification('Dados Encontrados', `Encontrados dados para ${results[0].name} no arquivo`, 'success');
+                    
+                    // Adicionar o primeiro resultado ao sistema
+                    addProfileFromRecord(results[0].fullRecord);
+                    
+                    document.getElementById('analysis-name').value = '';
+                    document.getElementById('analysis-doc').value = '';
+                }, 1500);
+                return;
+            }
+        }
+        
+        // Se não encontrou no arquivo, cria um perfil genérico
         setTimeout(() => {
             document.getElementById('network-loading').classList.remove('active');
             
             const newId = profiles.length + 1;
             const newProfile = {
                 id: newId,
-                name: name,
+                name: name || "Usuário " + newId,
                 rm: "999999",
                 birth: "01/01/2000",
-                cpf: doc,
+                cpf: doc || "000.000.000-00",
                 gender: "M",
                 mother: "Sem informação",
                 status: "pending",
