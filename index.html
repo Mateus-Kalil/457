@@ -3167,7 +3167,7 @@ function initLogin() {
                 loginScreen.style.display = 'none';
                 initSystem();
             }, 500);
-        } else if (code === 'MK741') {
+        } else if (code === 'MK5041') {
             isAdmin = true;
             loginScreen.style.opacity = '0';
             setTimeout(() => {
@@ -3402,7 +3402,7 @@ function initDashboard() {
     
     // Exibir dica sobre a senha para usuários em dispositivos móveis
     if (window.innerWidth <= 768) {
-        showNotification('Dica de acesso', 'Use a senha fiaph para acesso normal, MK741 para acesso administrativo', 'info');
+        showNotification('Dica de acesso', 'Use a senha para acesso normal', 'info');
     }
     
     // Verificar orientação para dispositivos móveis
