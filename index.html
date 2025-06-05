@@ -3271,8 +3271,8 @@ function normalizeText(text) {
     return normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
-// Função para buscar no arquivo 1.txt
-function searchInFile(query) {
+// Função melhorada para buscar no arquivo 1.txt
+function searchInFile(query, searchType = 'all') {
     if (!query || !fileDataCache) {
         return [];
     }
@@ -3283,24 +3283,40 @@ function searchInFile(query) {
     // Dividir o conteúdo em registros (assumindo que cada registro é separado por linhas em branco)
     const records = fileDataCache.split(/\n\s*\n/).filter(r => r.trim());
     
-    // Filtrar registros com base no termo de busca
+    // Filtrar registros com base no termo de busca e tipo de busca
     const matchedRecords = records.filter(record => {
         const normalizedRecord = normalizeText(record);
+        
+        // Busca específica por tipo
+        if (searchType !== 'all') {
+            switch(searchType) {
+                case 'nome':
+                    const nameMatch = record.match(/NOME\s*:\s*([^\n]+)/i);
+                    return nameMatch && normalizeText(nameMatch[1]).includes(normalizedQuery);
+                case 'cpf':
+                    const cpfMatch = record.match(/CPF[\/CNPJ]*\s*:\s*([^\n]+)/i);
+                    return cpfMatch && normalizeText(cpfMatch[1]).includes(normalizedQuery);
+                case 'telefone':
+                    return record.match(/TELEFONE/i) && normalizedRecord.includes(normalizedQuery);
+                case 'placa':
+                    return record.match(/PLACA/i) && normalizedRecord.includes(normalizedQuery);
+                default:
+                    return normalizedRecord.includes(normalizedQuery);
+            }
+        }
+        
+        // Busca em todos os campos
         return normalizedRecord.includes(normalizedQuery);
     });
     
-    // Extrair informações relevantes e remover duplicatas (baseado no CPF)
+    // Extrair informações detalhadas e remover duplicatas (baseado no CPF)
     const uniqueResults = [];
     const uniqueCPFs = new Set();
     
     matchedRecords.forEach(record => {
+        // Extrair informações básicas
         const nameMatch = record.match(/NOME\s*:\s*([^\n]+)/i);
-        const cpfMatch = record.match(/CPF\/CNPJ\s*:\s*([^\n]+)/i);
-        const birthMatch = record.match(/NASCIMENTO\s*:\s*([^\n]+)/i);
-        const genderMatch = record.match(/SEXO\s*:\s*([^\n]+)/i);
-        const motherMatch = record.match(/MÃE\s*:\s*([^\n]+)/i);
-        const phoneMatch = record.match(/TELEFONE\s*:\s*([^\n]+)/i);
-        const plateMatch = record.match(/PLACA\s*:\s*([^\n]+)/i);
+        const cpfMatch = record.match(/CPF[\/CNPJ]*\s*:\s*([^\n]+)/i);
         
         if (nameMatch) {
             const cpf = cpfMatch ? cpfMatch[1].trim() : "Não informado";
@@ -3309,14 +3325,133 @@ function searchInFile(query) {
             if (!uniqueCPFs.has(cpf) || cpf === "Não informado") {
                 uniqueCPFs.add(cpf);
                 
+                // Extrair todos os campos possíveis
+                const fields = {};
+                
+                // Função auxiliar para extrair campos
+                const extractField = (pattern, fieldName) => {
+                    const match = record.match(pattern);
+                    if (match) {
+                        fields[fieldName] = match[1].trim();
+                    } else {
+                        fields[fieldName] = "Não informado";
+                    }
+                };
+                
+                // Função para extrair listas (como endereços, telefones, emails)
+                const extractList = (startPattern, endPattern = /\*/i) => {
+                    const startMatch = record.match(startPattern);
+                    if (!startMatch) return [];
+                    
+                    const startIndex = startMatch.index + startMatch[0].length;
+                    const remainingText = record.substring(startIndex);
+                    
+                    // Encontrar o próximo marcador ou fim do registro
+                    const endMatch = remainingText.match(endPattern);
+                    const endIndex = endMatch ? endMatch.index : remainingText.length;
+                    
+                    // Extrair texto entre o início e o fim
+                    const sectionText = remainingText.substring(0, endIndex).trim();
+                    
+                    // Dividir em linhas e filtrar linhas vazias
+                    return sectionText.split('\n')
+                        .map(line => line.trim())
+                        .filter(line => line && !line.match(/^\*/) && !line.match(/^SEM INFORMAÇÃO$/i));
+                };
+                
+                // Extrair todos os campos básicos
+                extractField(/NOME\s*:\s*([^\n]+)/i, "nome");
+                extractField(/CPF[\/CNPJ]*\s*:\s*([^\n]+)/i, "cpf");
+                extractField(/SITUAÇÃO\s*:\s*([^\n]+)/i, "situacao");
+                extractField(/RG\s*:\s*([^\n]+)/i, "rg");
+                extractField(/CNS\s*:\s*([^\n]+)/i, "cns");
+                extractField(/SEXO\s*:\s*([^\n]+)/i, "sexo");
+                extractField(/NASCIMENTO\s*:\s*([^\n]+)/i, "nascimento");
+                extractField(/RAÇA[\/COR]*\s*:\s*([^\n]+)/i, "raca");
+                extractField(/OBITO\s*:\s*([^\n]+)/i, "obito");
+                extractField(/DATA DE OBITO\s*:\s*([^\n]+)/i, "dataObito");
+                extractField(/ESTADO CIVIL\s*:\s*([^\n]+)/i, "estadoCivil");
+                extractField(/NACIONALIDADE\s*:\s*([^\n]+)/i, "nacionalidade");
+                extractField(/MÃE\s*:\s*([^\n]+)/i, "mae");
+                extractField(/PAI\s*:\s*([^\n]+)/i, "pai");
+                extractField(/SCORE\s*CSB8\s*:\s*([^\n]+)/i, "scoreCSB8");
+                extractField(/SCORE\s*CSB8\s*FAIXA\s*:\s*([^\n]+)/i, "scoreCSB8Faixa");
+                extractField(/SCORE\s*CSBA\s*:\s*([^\n]+)/i, "scoreCSBA");
+                extractField(/PODER\s*AQUISITIVO\s*:\s*([^\n]+)/i, "poderAquisitivo");
+                extractField(/RENDA\s*PODER\s*AQUISITIVO\s*:\s*([^\n]+)/i, "rendaPoderAquisitivo");
+                extractField(/FAIXA\s*PODER\s*AQUISITIVO\s*:\s*([^\n]+)/i, "faixaPoderAquisitivo");
+                extractField(/RENDA\s*:\s*([^\n]+)/i, "renda");
+                extractField(/PROFISSAO\s*:\s*([^\n]+)/i, "profissao");
+                extractField(/ESCOLARIDADE\s*:\s*([^\n]+)/i, "escolaridade");
+                
+                // Extrair listas de dados
+                const emails = extractList(/EMAILS\s*:\s*/i);
+                const telefones = extractList(/TELEFONES\s*:\s*/i);
+                const enderecos = extractList(/ENDEREÇOS\s*:\s*/i);
+                
+                // Extrair parentes
+                const parentes = [];
+                const parentesMatch = record.match(/POSSÍVEIS PARENTES\s*:\s*/i);
+                if (parentesMatch) {
+                    const parentesStart = parentesMatch.index + parentesMatch[0].length;
+                    const parentesText = record.substring(parentesStart);
+                    const parentesEnd = parentesText.match(/\*\s*(EMPRESAS|EMPREGOS|COMPRAS)/i);
+                    const parentesSection = parentesEnd 
+                        ? parentesText.substring(0, parentesEnd.index).trim() 
+                        : parentesText.trim();
+                    
+                    // Extrair informações de cada parente
+                    const parenteRegex = /NOME\s*:\s*([^\n]+)(?:\s*\n\s*CPF\s*:\s*([^\n]+))?(?:\s*\n\s*PARENTESCO\s*:\s*([^\n]+))?/gi;
+                    let parenteMatch;
+                    while ((parenteMatch = parenteRegex.exec(parentesSection)) !== null) {
+                        parentes.push({
+                            nome: parenteMatch[1] ? parenteMatch[1].trim() : "Não informado",
+                            cpf: parenteMatch[2] ? parenteMatch[2].trim() : "Não informado",
+                            parentesco: parenteMatch[3] ? parenteMatch[3].trim() : "Não informado"
+                        });
+                    }
+                }
+                
+                // Extrair empresas
+                const empresas = extractList(/EMPRESAS\s*:\s*/i);
+                
+                // Extrair empregos
+                const empregos = extractList(/EMPREGOS\s*:\s*/i);
+                
+                // Extrair compras
+                const compras = extractList(/COMPRAS\s*:\s*/i);
+                
+                // Verificar se existe um padrão de endereço alternativo (para o segundo exemplo)
+                if (record.match(/TIPO\s*:/i) && record.match(/LOGRADOURO\s*:/i)) {
+                    const enderecoAlt = {};
+                    extractField(/TIPO\s*:\s*([^\n]+)/i, "tipo");
+                    extractField(/LOGRADOURO\s*:\s*([^\n]+)/i, "logradouro");
+                    extractField(/NÚMERO\s*:\s*([^\n]+)/i, "numero");
+                    extractField(/COMPLEMENTO\s*:\s*([^\n]+)/i, "complemento");
+                    extractField(/BAIRRO\s*:\s*([^\n]+)/i, "bairro");
+                    extractField(/CIDADE\s*:\s*([^\n]+)/i, "cidade");
+                    extractField(/CEP\s*:\s*([^\n]+)/i, "cep");
+                    
+                    if (enderecoAlt.tipo !== "SEM INFORMAÇÃO" || 
+                        enderecoAlt.logradouro !== "SEM INFORMAÇÃO") {
+                        // Criar um endereço formatado a partir dos campos
+                        const endereco = `${enderecoAlt.logradouro}, ${enderecoAlt.numero}, ${enderecoAlt.bairro}, ${enderecoAlt.cidade} - ${enderecoAlt.cep}`.replace(/, SEM INFORMAÇÃO/g, '');
+                        if (!enderecos.includes(endereco)) {
+                            enderecos.push(endereco);
+                        }
+                    }
+                }
+                
+                // Adicionar o resultado aos resultados únicos
                 uniqueResults.push({
-                    name: nameMatch[1].trim(),
-                    cpf: cpf,
-                    birth: birthMatch ? birthMatch[1].trim() : "Não informado",
-                    gender: genderMatch ? genderMatch[1].trim() : "Não informado",
-                    mother: motherMatch ? motherMatch[1].trim() : "Não informado",
-                    phone: phoneMatch ? phoneMatch[1].trim() : "Não informado",
-                    plate: plateMatch ? plateMatch[1].trim() : "Não informado",
+                    ...fields,
+                    emails,
+                    telefones,
+                    enderecos,
+                    parentes,
+                    empresas,
+                    empregos,
+                    compras,
                     fullRecord: record
                 });
             }
@@ -3326,7 +3461,7 @@ function searchInFile(query) {
     return uniqueResults;
 }
 
-// Função para formatar e exibir resultados da busca
+// Função melhorada para exibir resultados da busca
 function displaySearchResults(results, container) {
     if (results.length === 0) {
         container.innerHTML = '<div style="text-align: center; padding: 15px; color: var(--danger);">Nenhum resultado encontrado para a busca.</div>';
@@ -3336,17 +3471,231 @@ function displaySearchResults(results, container) {
     let html = '';
     
     results.forEach(result => {
-        // Destaca campos importantes
+        // Criar seção principal com informações pessoais
         html += `
         <div class="search-result-item">
-            <div class="search-result-header">${result.name}</div>
-            <div style="margin: 5px 0;"><span style="font-weight: bold; color: var(--primary);">CPF/CNPJ:</span> <span>${result.cpf}</span></div>
-            <div style="margin: 5px 0;"><span style="font-weight: bold;">Nascimento:</span> <span>${result.birth}</span></div>
-            <div style="margin: 5px 0;"><span style="font-weight: bold;">Sexo:</span> <span>${result.gender}</span></div>
-            <div style="margin: 5px 0;"><span style="font-weight: bold;">Mãe:</span> <span>${result.mother}</span></div>
-            ${result.phone !== "Não informado" ? `<div style="margin: 5px 0;"><span style="font-weight: bold; color: var(--primary);">Telefone:</span> <span>${result.phone}</span></div>` : ''}
-            ${result.plate !== "Não informado" ? `<div style="margin: 5px 0;"><span style="font-weight: bold; color: var(--primary);">Placa:</span> <span>${result.plate}</span></div>` : ''}
-            <div style="margin-top: 10px;">
+            <div class="search-result-header">${result.nome}</div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <div style="margin: 5px 0;"><span style="font-weight: bold; color: var(--primary);">CPF/CNPJ:</span> <span>${result.cpf}</span></div>
+                <div style="margin: 5px 0;"><span style="font-weight: bold;">Nascimento:</span> <span>${result.nascimento}</span></div>
+                <div style="margin: 5px 0;"><span style="font-weight: bold;">Sexo:</span> <span>${result.sexo}</span></div>
+                <div style="margin: 5px 0;"><span style="font-weight: bold;">Mãe:</span> <span>${result.mae}</span></div>
+        `;
+        
+        // Adicionar campos adicionais se não forem "Não informado"
+        if (result.pai !== "Não informado") {
+            html += `<div style="margin: 5px 0;"><span style="font-weight: bold;">Pai:</span> <span>${result.pai}</span></div>`;
+        }
+        
+        if (result.rg !== "Não informado") {
+            html += `<div style="margin: 5px 0;"><span style="font-weight: bold;">RG:</span> <span>${result.rg}</span></div>`;
+        }
+        
+        if (result.cns !== "Não informado") {
+            html += `<div style="margin: 5px 0;"><span style="font-weight: bold;">CNS:</span> <span>${result.cns}</span></div>`;
+        }
+        
+        if (result.estadoCivil !== "Não informado") {
+            html += `<div style="margin: 5px 0;"><span style="font-weight: bold;">Estado Civil:</span> <span>${result.estadoCivil}</span></div>`;
+        }
+        
+        if (result.nacionalidade !== "Não informado") {
+            html += `<div style="margin: 5px 0;"><span style="font-weight: bold;">Nacionalidade:</span> <span>${result.nacionalidade}</span></div>`;
+        }
+        
+        if (result.profissao !== "Não informado") {
+            html += `<div style="margin: 5px 0;"><span style="font-weight: bold;">Profissão:</span> <span>${result.profissao}</span></div>`;
+        }
+        
+        if (result.escolaridade !== "Não informado") {
+            html += `<div style="margin: 5px 0;"><span style="font-weight: bold;">Escolaridade:</span> <span>${result.escolaridade}</span></div>`;
+        }
+        
+        html += `</div>`;
+        
+        // Exibir telefones
+        if (result.telefones && result.telefones.length > 0) {
+            html += `
+            <div style="margin: 10px 0;">
+                <div style="font-weight: bold; color: var(--primary); margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Telefones:</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            `;
+            
+            result.telefones.forEach(telefone => {
+                html += `<div class="badge badge--blue">${telefone}</div>`;
+            });
+            
+            html += `
+                </div>
+            </div>
+            `;
+        }
+        
+        // Exibir emails
+        if (result.emails && result.emails.length > 0) {
+            html += `
+            <div style="margin: 10px 0;">
+                <div style="font-weight: bold; color: var(--primary); margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Emails:</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            `;
+            
+            result.emails.forEach(email => {
+                html += `<div class="badge badge--purple">${email}</div>`;
+            });
+            
+            html += `
+                </div>
+            </div>
+            `;
+        }
+        
+        // Exibir endereços
+        if (result.enderecos && result.enderecos.length > 0) {
+            html += `
+            <div style="margin: 10px 0;">
+                <div style="font-weight: bold; color: var(--primary); margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Endereços:</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+            `;
+            
+            result.enderecos.forEach(endereco => {
+                html += `<div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px;">${endereco}</div>`;
+            });
+            
+            html += `
+                </div>
+            </div>
+            `;
+        }
+        
+        // Exibir parentes
+        if (result.parentes && result.parentes.length > 0) {
+            html += `
+            <div style="margin: 10px 0;">
+                <div style="font-weight: bold; color: var(--primary); margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Possíveis Parentes:</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+            `;
+            
+            result.parentes.forEach(parente => {
+                html += `
+                <div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px;">
+                    <div><span style="font-weight: bold;">Nome:</span> ${parente.nome}</div>
+                    ${parente.cpf !== "Não informado" ? `<div><span style="font-weight: bold;">CPF:</span> ${parente.cpf}</div>` : ''}
+                    ${parente.parentesco !== "Não informado" ? `<div><span style="font-weight: bold;">Parentesco:</span> ${parente.parentesco}</div>` : ''}
+                </div>
+                `;
+            });
+            
+            html += `
+                </div>
+            </div>
+            `;
+        }
+        
+        // Exibir informações econômicas
+        if (result.renda !== "Não informado" || 
+            result.poderAquisitivo !== "Não informado" || 
+            result.rendaPoderAquisitivo !== "Não informado" ||
+            result.scoreCSB8 !== "Não informado" ||
+            result.scoreCSBA !== "Não informado") {
+            
+            html += `
+            <div style="margin: 10px 0;">
+                <div style="font-weight: bold; color: var(--primary); margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Informações Econômicas:</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            `;
+            
+            if (result.renda !== "Não informado") {
+                html += `<div><span style="font-weight: bold;">Renda:</span> R$ ${result.renda}</div>`;
+            }
+            
+            if (result.poderAquisitivo !== "Não informado") {
+                html += `<div><span style="font-weight: bold;">Poder Aquisitivo:</span> ${result.poderAquisitivo}</div>`;
+            }
+            
+            if (result.rendaPoderAquisitivo !== "Não informado") {
+                html += `<div><span style="font-weight: bold;">Categoria:</span> ${result.rendaPoderAquisitivo}</div>`;
+            }
+            
+            if (result.faixaPoderAquisitivo !== "Não informado") {
+                html += `<div><span style="font-weight: bold;">Faixa:</span> ${result.faixaPoderAquisitivo}</div>`;
+            }
+            
+            if (result.scoreCSB8 !== "Não informado") {
+                html += `<div><span style="font-weight: bold;">Score CSB8:</span> ${result.scoreCSB8}</div>`;
+            }
+            
+            if (result.scoreCSB8Faixa !== "Não informado") {
+                html += `<div><span style="font-weight: bold;">Faixa CSB8:</span> ${result.scoreCSB8Faixa}</div>`;
+            }
+            
+            if (result.scoreCSBA !== "Não informado") {
+                html += `<div><span style="font-weight: bold;">Score CSBA:</span> ${result.scoreCSBA}</div>`;
+            }
+            
+            html += `
+                </div>
+            </div>
+            `;
+        }
+        
+        // Exibir empresas
+        if (result.empresas && result.empresas.length > 0) {
+            html += `
+            <div style="margin: 10px 0;">
+                <div style="font-weight: bold; color: var(--primary); margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Empresas:</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+            `;
+            
+            result.empresas.forEach(empresa => {
+                html += `<div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px;">${empresa}</div>`;
+            });
+            
+            html += `
+                </div>
+            </div>
+            `;
+        }
+        
+        // Exibir empregos
+        if (result.empregos && result.empregos.length > 0) {
+            html += `
+            <div style="margin: 10px 0;">
+                <div style="font-weight: bold; color: var(--primary); margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Empregos:</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+            `;
+            
+            result.empregos.forEach(emprego => {
+                html += `<div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px;">${emprego}</div>`;
+            });
+            
+            html += `
+                </div>
+            </div>
+            `;
+        }
+        
+        // Exibir compras
+        if (result.compras && result.compras.length > 0) {
+            html += `
+            <div style="margin: 10px 0;">
+                <div style="font-weight: bold; color: var(--primary); margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Compras:</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+            `;
+            
+            result.compras.forEach(compra => {
+                html += `<div style="background: rgba(255,255,255,0.03); padding: 8px; border-radius: 8px;">${compra}</div>`;
+            });
+            
+            html += `
+                </div>
+            </div>
+            `;
+        }
+        
+        // Botão para adicionar ao sistema
+        html += `
+            <div style="margin-top: 15px; text-align: right;">
                 <button class="btn btn--outline btn-add-profile" data-record="${encodeURIComponent(result.fullRecord)}">Adicionar ao Sistema</button>
             </div>
         </div>
@@ -3424,6 +3773,32 @@ function addProfileFromRecord(record) {
         }
         
         initNetworkGraph();
+    }
+}
+
+// Função para executar busca com o tipo selecionado
+function runFileSearch() {
+    const query = document.getElementById('file-search-query').value.trim();
+    const searchType = document.getElementById('file-search-type').value;
+    
+    if (!query) {
+        showNotification('Erro', 'Digite um termo para busca', 'warning');
+        return;
+    }
+    
+    if (!fileDataCache) {
+        showNotification('Erro', 'Arquivo 1.txt não carregado', 'error');
+        return;
+    }
+    
+    const results = searchInFile(query, searchType);
+    displaySearchResults(results, document.getElementById('file-search-results'));
+    document.getElementById('file-search-results-container').style.display = 'block';
+    
+    if (results.length > 0) {
+        showNotification('Busca Concluída', `${results.length} resultado(s) encontrado(s)`, 'success');
+    } else {
+        showNotification('Busca Concluída', 'Nenhum resultado encontrado', 'warning');
     }
 }
 
@@ -3697,29 +4072,7 @@ function initFileSearchModal() {
         document.getElementById('file-search-type').value = 'all';
     });
     
-    runFileSearchBtn.addEventListener('click', function() {
-        const query = fileSearchQuery.value.trim();
-        
-        if (!query) {
-            showNotification('Erro', 'Digite um termo para busca', 'warning');
-            return;
-        }
-        
-        if (!fileDataCache) {
-            showNotification('Erro', 'Arquivo 1.txt não carregado', 'error');
-            return;
-        }
-        
-        const results = searchInFile(query);
-        displaySearchResults(results, fileSearchResults);
-        fileSearchResultsContainer.style.display = 'block';
-        
-        if (results.length > 0) {
-            showNotification('Busca Concluída', `${results.length} resultado(s) encontrado(s)`, 'success');
-        } else {
-            showNotification('Busca Concluída', 'Nenhum resultado encontrado', 'warning');
-        }
-    });
+    runFileSearchBtn.addEventListener('click', runFileSearch);
     
     // Permitir pesquisar pressionando Enter
     fileSearchQuery.addEventListener('keyup', function(e) {
@@ -4845,7 +5198,7 @@ function initAnalysisModal() {
             if (results.length > 0) {
                 setTimeout(() => {
                     document.getElementById('network-loading').classList.remove('active');
-                    showNotification('Dados Encontrados', `Encontrados dados para ${results[0].name} no arquivo`, 'success');
+                    showNotification('Dados Encontrados', `Encontrados dados para ${results[0].nome} no arquivo`, 'success');
                     
                     // Adicionar o primeiro resultado ao sistema
                     addProfileFromRecord(results[0].fullRecord);
