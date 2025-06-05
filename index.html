@@ -1725,6 +1725,89 @@
             padding: 10px;
         }
         
+        /* Estilos para o banco de dados */
+        .database-content {
+            max-height: 60vh;
+            overflow-y: auto;
+            background: rgba(10, 14, 23, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            margin-top: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .database-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .database-content::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+        
+        .database-content::-webkit-scrollbar-thumb {
+            background: rgba(0, 243, 255, 0.3);
+            border-radius: 10px;
+        }
+        
+        .database-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 243, 255, 0.5);
+        }
+        
+        .database-search-container {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--panel);
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+        
+        .database-search-input {
+            width: 100%;
+            padding: 10px 15px;
+            padding-left: 40px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .database-search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 243, 255, 0.2);
+        }
+        
+        .database-search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary);
+        }
+        
+        .database-search-results {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: rgba(0, 243, 255, 0.1);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .highlight {
+            background-color: rgba(255, 204, 0, 0.3);
+            color: white;
+            padding: 0 2px;
+            border-radius: 3px;
+        }
+        
         /* Responsive styles - these were overhauled */
         @media (min-width: 576px) {
             header {
@@ -2164,9 +2247,9 @@
                         <i class="fa fa-filter btn__icon"></i>
                         Filtrar
                     </button>
-                    <button class="btn btn--primary" id="scan-btn">
-                        <i class="fa fa-scan btn__icon"></i>
-                        Nova Análise
+                    <button class="btn btn--primary" id="database-btn">
+                        <i class="fa fa-database btn__icon"></i>
+                        Banco de Dados
                     </button>
                 </div>
             </div>
@@ -2489,7 +2572,7 @@
                         </div>
                         <div class="settings-item">
                             <div>
-                                <div class="settings-item__label">Notificações</div>
+                            <div class="settings-item__label">Notificações</div>
                                 <div class="settings-item__description">Receber alertas de sistema</div>
                             </div>
                             <label class="toggle">
@@ -2670,67 +2753,29 @@
         </div>
     </div>
     
-    <!-- New Analysis Modal -->
-    <div class="modal" id="analysis-modal">
+    <!-- Database Modal -->
+    <div class="modal" id="database-modal">
         <div class="modal__content">
-            <div class="modal__close" id="analysis-modal-close">
+            <div class="modal__close" id="database-modal-close">
                 <i class="fa fa-close"></i>
             </div>
             <div class="modal__header">
-                <h2 class="modal__title">Nova Análise OSINT</h2>
-                <div class="modal__subtitle">Colete informações de fontes abertas</div>
+                <h2 class="modal__title">Banco de Dados</h2>
+                <div class="modal__subtitle">Visualização do arquivo 1.txt</div>
             </div>
             <div class="modal__body">
-                <div class="settings-section">
-                    <h3 class="settings-section__title">Informações de Entrada</h3>
-                    <div class="settings-group">
-                        <div class="form-group">
-                            <label for="analysis-name">Nome Completo</label>
-                            <input type="text" id="analysis-name" class="form-control" placeholder="Ex: João Silva">
-                        </div>
-                        <div class="form-group">
-                            <label for="analysis-doc">CPF/Documento</label>
-                            <input type="text" id="analysis-doc" class="form-control" placeholder="Ex: 123.456.789-00">
-                        </div>
-                        <div class="form-group">
-                            <label for="analysis-options">Opções de Busca</label>
-                            <div class="settings-group" style="padding: 10px;">
-                                <div class="settings-item">
-                                    <div class="settings-item__label">Redes Sociais</div>
-                                    <label class="toggle">
-                                        <input type="checkbox" id="social-toggle" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="settings-item">
-                                    <div class="settings-item__label">Registros Públicos</div>
-                                    <label class="toggle">
-                                        <input type="checkbox" id="public-toggle" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="settings-item">
-                                    <div class="settings-item__label">Geolocalização</div>
-                                    <label class="toggle">
-                                        <input type="checkbox" id="geo-toggle" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="settings-item">
-                                    <div class="settings-item__label">Conexões</div>
-                                    <label class="toggle">
-                                        <input type="checkbox" id="connections-toggle" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
+                <div class="database-search-container">
+                    <i class="fa fa-search database-search-icon"></i>
+                    <input type="text" id="database-search-input" class="database-search-input" placeholder="Pesquisar no banco de dados..." autofocus>
+                    <div id="database-search-results" class="database-search-results" style="display: none;">
+                        Encontrado(s) <span id="database-search-count">0</span> resultado(s)
                     </div>
                 </div>
+                <pre id="database-content" class="database-content">Carregando conteúdo do banco de dados...</pre>
             </div>
             <div class="modal__footer">
-                <button class="btn btn--outline" id="cancel-analysis">Cancelar</button>
-                <button class="btn btn--primary" id="start-analysis">Iniciar Análise</button>
+                <button class="btn btn--outline" id="clear-database-search">Limpar Busca</button>
+                <button class="btn btn--primary" id="close-database">Fechar</button>
             </div>
         </div>
     </div>
@@ -3440,6 +3485,70 @@ function openFileSearchModal(query, results) {
     fileSearchModal.classList.add('active');
 }
 
+// Função para mostrar o conteúdo do banco de dados (arquivo 1.txt)
+function showDatabaseContent() {
+    const databaseModal = document.getElementById('database-modal');
+    const databaseContent = document.getElementById('database-content');
+    
+    databaseModal.classList.add('active');
+    
+    if (!fileDataCache) {
+        databaseContent.textContent = "Erro ao carregar o arquivo 1.txt. Por favor, tente novamente.";
+        return;
+    }
+    
+    databaseContent.textContent = fileDataCache;
+    
+    // Focar automaticamente no campo de busca
+    setTimeout(() => {
+        document.getElementById('database-search-input').focus();
+    }, 300);
+}
+
+// Função para buscar no conteúdo do banco de dados exibido
+function searchInDatabase(query) {
+    const databaseContent = document.getElementById('database-content');
+    const searchResults = document.getElementById('database-search-results');
+    const searchCount = document.getElementById('database-search-count');
+    
+    if (!query || !fileDataCache) {
+        databaseContent.textContent = fileDataCache;
+        searchResults.style.display = 'none';
+        return 0;
+    }
+    
+    // Normalizar a consulta para facilitar a busca
+    const normalizedQuery = query.toLowerCase();
+    
+    // Criar versão do conteúdo com destaques
+    let highlightedContent = fileDataCache;
+    let count = 0;
+    
+    // Destacar todas as ocorrências da consulta
+    const regex = new RegExp(normalizedQuery, 'gi');
+    highlightedContent = fileDataCache.replace(regex, match => {
+        count++;
+        return `<span class="highlight">${match}</span>`;
+    });
+    
+    // Exibir o conteúdo com destaques
+    databaseContent.innerHTML = highlightedContent;
+    
+    // Atualizar contador de resultados
+    searchCount.textContent = count;
+    searchResults.style.display = count > 0 ? 'block' : 'none';
+    
+    // Rolar para o primeiro resultado se houver
+    if (count > 0) {
+        const firstHighlight = databaseContent.querySelector('.highlight');
+        if (firstHighlight) {
+            firstHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+    
+    return count;
+}
+
 function initLogin() {
     const loginScreen = document.getElementById('login-screen');
     const loginBtn = document.getElementById('login-btn');
@@ -3729,6 +3838,55 @@ function initFileSearchModal() {
     });
 }
 
+// Função para inicializar o modal de banco de dados
+function initDatabaseModal() {
+    const databaseBtn = document.getElementById('database-btn');
+    const databaseModal = document.getElementById('database-modal');
+    const databaseModalClose = document.getElementById('database-modal-close');
+    const databaseSearchInput = document.getElementById('database-search-input');
+    const clearDatabaseSearchBtn = document.getElementById('clear-database-search');
+    const closeDatabaseBtn = document.getElementById('close-database');
+    
+    databaseBtn.addEventListener('click', function() {
+        showDatabaseContent();
+    });
+    
+    databaseModalClose.addEventListener('click', function() {
+        databaseModal.classList.remove('active');
+    });
+    
+    closeDatabaseBtn.addEventListener('click', function() {
+        databaseModal.classList.remove('active');
+    });
+    
+    clearDatabaseSearchBtn.addEventListener('click', function() {
+        databaseSearchInput.value = '';
+        document.getElementById('database-content').textContent = fileDataCache;
+        document.getElementById('database-search-results').style.display = 'none';
+        databaseSearchInput.focus();
+    });
+    
+    // Pesquisar enquanto digita com um pequeno atraso para melhor desempenho
+    let searchTimeout;
+    databaseSearchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        searchTimeout = setTimeout(() => {
+            searchInDatabase(query);
+        }, 300);
+    });
+    
+    // Pesquisar ao pressionar Enter
+    databaseSearchInput.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            const query = this.value.trim();
+            clearTimeout(searchTimeout);
+            searchInDatabase(query);
+        }
+    });
+}
+
 // Modifica a função initSearch para incluir busca no arquivo
 function initSearch() {
     const searchInput = document.getElementById('search-input');
@@ -3777,6 +3935,7 @@ function initSystem() {
                     initBackgroundAnimation();
                     initDashboard();
                     initFileSearchModal();
+                    initDatabaseModal();
                 }, 500);
             }, 500);
         }
@@ -3924,8 +4083,6 @@ function initDashboard() {
     initFilters();
     
     initProfileModal();
-    
-    initAnalysisModal();
     
     initSearch();
 
@@ -4801,107 +4958,6 @@ function openProfileModal(profileId) {
         
         document.getElementById('profile-modal').classList.add('active');
     }
-}
-
-function initAnalysisModal() {
-    const scanBtn = document.getElementById('scan-btn');
-    const analysisModal = document.getElementById('analysis-modal');
-    const analysisModalClose = document.getElementById('analysis-modal-close');
-    const cancelAnalysisBtn = document.getElementById('cancel-analysis');
-    const startAnalysisBtn = document.getElementById('start-analysis');
-    
-    scanBtn.addEventListener('click', function() {
-        analysisModal.classList.add('active');
-    });
-    
-    analysisModalClose.addEventListener('click', function() {
-        analysisModal.classList.remove('active');
-    });
-    
-    cancelAnalysisBtn.addEventListener('click', function() {
-        analysisModal.classList.remove('active');
-    });
-    
-    startAnalysisBtn.addEventListener('click', function() {
-        const name = document.getElementById('analysis-name').value;
-        const doc = document.getElementById('analysis-doc').value;
-        
-        if (!name && !doc) {
-            showNotification('Campos obrigatórios', 'Preencha nome ou documento para iniciar a análise', 'warning');
-            return;
-        }
-        
-        analysisModal.classList.remove('active');
-        
-        document.getElementById('network-loading').classList.add('active');
-        
-        showNotification('Análise iniciada', 'Coletando informações de fontes abertas...', 'info');
-        
-        // Buscar primeiro no arquivo, se houver dados carregados
-        if (fileDataCache) {
-            const searchTerm = name || doc;
-            const results = searchInFile(searchTerm);
-            
-            if (results.length > 0) {
-                setTimeout(() => {
-                    document.getElementById('network-loading').classList.remove('active');
-                    showNotification('Dados Encontrados', `Encontrados dados para ${results[0].name} no arquivo`, 'success');
-                    
-                    // Adicionar o primeiro resultado ao sistema
-                    addProfileFromRecord(results[0].fullRecord);
-                    
-                    document.getElementById('analysis-name').value = '';
-                    document.getElementById('analysis-doc').value = '';
-                }, 1500);
-                return;
-            }
-        }
-        
-        // Se não encontrou no arquivo, cria um perfil genérico
-        setTimeout(() => {
-            document.getElementById('network-loading').classList.remove('active');
-            
-            const newId = profiles.length + 1;
-            const newProfile = {
-                id: newId,
-                name: name || "Usuário " + newId,
-                rm: "999999",
-                birth: "01/01/2000",
-                cpf: doc || "000.000.000-00",
-                gender: "M",
-                mother: "Sem informação",
-                status: "pending",
-                classroom: "1TDCPH",
-                password: "010100"
-            };
-            
-            profiles.push(newProfile);
-            
-            const randomConnections = Math.floor(Math.random() * 3) + 1;
-            for (let i = 0; i < randomConnections; i++) {
-                const targetId = Math.floor(Math.random() * 15) + 1;
-                const types = ['school', 'friend', 'family'];
-                const randomType = types[Math.floor(Math.random() * types.length)];
-                
-                relationships.push({
-                    source: newId,
-                    target: targetId,
-                    type: randomType
-                });
-            }
-            
-            if (showClassroom) {
-                applyFilters();
-            }
-            
-            initNetworkGraph();
-            
-            showNotification('Análise concluída', `${randomConnections} novas conexões encontradas`, 'success');
-            
-            document.getElementById('analysis-name').value = '';
-            document.getElementById('analysis-doc').value = '';
-        }, 3000);
-    });
 }
 
 function populateProfilesTable(data) {
