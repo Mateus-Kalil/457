@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-<!-- Cabeçalho e CSS mantidos idênticos ao original -->
+<!-- Cabeçalho e CSS mantidos idênticos ao original com adições -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -313,6 +313,7 @@
             width: 100%;
             padding: 10px 15px;
             padding-left: 40px;
+            padding-right: 45px; /* Espaço para o botão de busca */
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 10px;
@@ -336,10 +337,29 @@
             font-size: 16px;
         }
         
+        /* Novo botão de busca adicionado */
+        .search__button {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 243, 255, 0.1);
+            border: none;
+            color: var(--primary);
+            border-radius: 8px;
+            padding: 6px 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .search__button:hover {
+            background: rgba(0, 243, 255, 0.2);
+        }
+        
         /* Adicionando um indicador de carregamento para a busca */
         .search__spinner {
             position: absolute;
-            right: 15px;
+            right: 50px; /* Ajustado para dar espaço ao botão */
             top: 50%;
             transform: translateY(-50%);
             width: 16px;
@@ -2208,7 +2228,7 @@
     </style>
 </head>
 <body>
-    <!-- Conteúdo HTML mantido idêntico ao original -->
+    <!-- Conteúdo HTML mantido idêntico ao original com adições -->
     <canvas id="background-canvas"></canvas>
     
     <!-- Preloader -->
@@ -2279,6 +2299,10 @@
             <div class="search">
                 <i class="fa fa-search search__icon"></i>
                 <input type="text" class="search__input" id="search-input" placeholder="Buscar...">
+                <!-- Adicionado botão de busca -->
+                <button id="search-button" class="search__button">
+                    <i class="fa fa-search"></i>
+                </button>
                 <!-- Adicionado indicador de carregamento -->
                 <div class="search__spinner" id="search-spinner"></div>
             </div>
@@ -2301,6 +2325,10 @@
                     <a href="#" class="menu__item" data-section="connections">
                         <i class="fa fa-network menu__icon"></i>
                         Conexões
+                    </a>
+                    <a href="#" class="menu__item" data-section="geolocation">
+                        <i class="fa fa-map menu__icon"></i>
+                        Geolocalização
                     </a>
                     <a href="#" class="menu__item" data-section="geolocation">
                         <i class="fa fa-map menu__icon"></i>
@@ -2928,6 +2956,11 @@
                                 <option value="placa">Placa</option>
                             </select>
                         </div>
+                        <!-- Botão de busca adicionado -->
+                        <button class="btn btn--primary" id="run-file-search-inner" style="margin-top: 15px; width: 100%;">
+                            <i class="fa fa-search btn__icon"></i>
+                            Buscar
+                        </button>
                     </div>
                 </div>
                 
@@ -4033,6 +4066,7 @@ function initFileSearchModal() {
     const fileSearchModalClose = document.getElementById('file-search-modal-close');
     const clearFileSearchBtn = document.getElementById('clear-file-search');
     const runFileSearchBtn = document.getElementById('run-file-search');
+    const runFileSearchInnerBtn = document.getElementById('run-file-search-inner');
     const fileSearchQuery = document.getElementById('file-search-query');
     const fileSearchResults = document.getElementById('file-search-results');
     const fileSearchResultsContainer = document.getElementById('file-search-results-container');
@@ -4056,6 +4090,10 @@ function initFileSearchModal() {
     });
     
     runFileSearchBtn.addEventListener('click', function() {
+        executeFileSearch();
+    });
+    
+    runFileSearchInnerBtn.addEventListener('click', function() {
         executeFileSearch();
     });
     
@@ -4155,83 +4193,75 @@ function initDatabaseModal() {
         }
     });
     
-    // Pesquisar com um pequeno atraso para melhor desempenho
-    let searchTimeout;
-    databaseSearchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        const query = this.value.trim();
-        
-        searchTimeout = setTimeout(() => {
-            searchInDatabase(query);
-        }, 300);
-    });
-    
-    // Pesquisar ao pressionar Enter
+    // Pesquisar com Enter ou botão de pesquisa (não automático ao digitar)
     databaseSearchInput.addEventListener('keyup', function(e) {
         if (e.key === 'Enter') {
             const query = this.value.trim();
-            clearTimeout(searchTimeout);
             searchInDatabase(query);
         }
     });
 }
 
-// Modifica a função initSearch para incluir busca no arquivo - versão otimizada
+// Modifica a função initSearch para incluir busca no arquivo APENAS quando o botão é clicado ou Enter é pressionado
 function initSearch() {
     const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
     const searchSpinner = document.getElementById('search-spinner');
-    let searchTimeout; // Para debounce da pesquisa
     
-    searchInput.addEventListener('input', function() {
-        const query = this.value.trim();
+    // Função para executar a busca
+    function executeSearch() {
+        const query = searchInput.value.trim();
         
-        // Limpar timeout anterior para implementar debounce
-        clearTimeout(searchTimeout);
-        
-        // Mostrar spinner apenas para buscas não vazias
-        if (query.length > 0) {
-            searchSpinner.classList.add('active');
-        } else {
-            searchSpinner.classList.remove('active');
+        if (query.length === 0) {
             activeFilters.search = '';
             applyFilters();
             return;
         }
         
-        // Definir timeout para não bloquear a interface e permitir digitação contínua
-        searchTimeout = setTimeout(() => {
-            // Definir o filtro de busca
-            activeFilters.search = query;
-            
-            // Sempre mostrar a sala quando uma busca é feita
-            showClassroom = true;
-            document.getElementById('classroom-btn').textContent = 'Ocultar Perfis 1TDCPH';
-            
-            // Aplicar filtros nos perfis do sistema
-            applyFilters();
-            
-            // Buscar também no arquivo de forma assíncrona para não travar a interface
-            if (query.length >= 3) { // Só realizar busca em arquivo para consultas com pelo menos 3 caracteres
-                searchInFile(query).then(results => {
-                    lastSearchResults = results;
-                    searchSpinner.classList.remove('active');
-                    
-                    if (results.length > 0) {
-                        showNotification('Resultados Encontrados', `${results.length} resultado(s) encontrado(s) no arquivo`, 'success');
-                        
-                        // Verificar se o modal de busca já está aberto antes de abri-lo novamente
-                        const fileSearchModal = document.getElementById('file-search-modal');
-                        if (!fileSearchModal.classList.contains('active')) {
-                            openFileSearchModal(query, results);
-                        }
-                    } else if (document.querySelector('#profiles-table tbody').children.length === 0) {
-                        showNotification('Busca no Sistema', 'Nenhum perfil encontrado', 'info');
-                    }
-                });
-            } else {
+        // Mostrar spinner durante a busca
+        searchSpinner.classList.add('active');
+        
+        // Definir o filtro de busca
+        activeFilters.search = query;
+        
+        // Sempre mostrar a sala quando uma busca é feita
+        showClassroom = true;
+        document.getElementById('classroom-btn').textContent = 'Ocultar Perfis 1TDCPH';
+        
+        // Aplicar filtros nos perfis do sistema
+        applyFilters();
+        
+        // Buscar também no arquivo de forma assíncrona para não travar a interface
+        if (query.length >= 3) { // Só realizar busca em arquivo para consultas com pelo menos 3 caracteres
+            searchInFile(query).then(results => {
+                lastSearchResults = results;
                 searchSpinner.classList.remove('active');
-            }
-        }, 500); // Aguardar 500ms para reduzir a frequência de buscas durante digitação
+                
+                if (results.length > 0) {
+                    showNotification('Resultados Encontrados', `${results.length} resultado(s) encontrado(s) no arquivo`, 'success');
+                    
+                    // Verificar se o modal de busca já está aberto antes de abri-lo novamente
+                    const fileSearchModal = document.getElementById('file-search-modal');
+                    if (!fileSearchModal.classList.contains('active')) {
+                        openFileSearchModal(query, results);
+                    }
+                } else if (document.querySelector('#profiles-table tbody').children.length === 0) {
+                    showNotification('Busca no Sistema', 'Nenhum perfil encontrado', 'info');
+                }
+            });
+        } else {
+            searchSpinner.classList.remove('active');
+        }
+    }
+    
+    // Evento de clique no botão de busca
+    searchButton.addEventListener('click', executeSearch);
+    
+    // Evento de pressionar Enter no campo de busca
+    searchInput.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            executeSearch();
+        }
     });
 }
 
@@ -5035,7 +5065,7 @@ function initConnectionGraph(profileId) {
     
     window.addEventListener('resize', function() {
         canvas.width = canvasContainer.offsetWidth;
-        canvas.height = container.offsetHeight;
+        canvas.height = canvasContainer.offsetHeight;
     });
 }
 
