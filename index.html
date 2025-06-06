@@ -1915,6 +1915,32 @@
             margin-right: 10px;
         }
         
+        /* Estilo para blocos de resultados de busca */
+        .search-result-record {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(10, 14, 23, 0.7);
+            border-left: 3px solid var(--primary);
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            line-height: 1.5;
+        }
+        
+        /* Estilo para visualização de registro completo */
+        .full-record-container {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
         /* Responsive styles - these were overhauled */
         @media (min-width: 576px) {
             header {
@@ -3474,8 +3500,13 @@ function loadDataFile() {
 
 // Função para preparar os dados para paginação
 function prepareDataForPagination(data) {
-    // Dividir o conteúdo em registros (assumindo que cada registro é separado por linhas em branco)
-    const records = data.split(/\n\s*\n/).filter(r => r.trim());
+    // Tenta identificar blocos de consulta que começam com marcadores como "CONSULTA DE CPF" ou "CONSULTA DE CNPJ"
+    const blockPattern = /(?:=+\s*CONSULTA|\🔍\s*CONSULTA|👤\s*DADOS PESSOAIS)/i;
+    
+    // Dividir o conteúdo em registros completos
+    const records = data.split(blockPattern)
+        .filter(block => block && block.trim())
+        .map(block => blockPattern.source.charAt(0) + block); // Recolocar o primeiro caractere do padrão
     
     // Calcular o número total de páginas
     totalPages = Math.ceil(records.length / pageSize);
@@ -3509,28 +3540,56 @@ function displayCurrentPage() {
             // Exibir resultados da busca paginados
             const startIdx = (currentPage - 1) * pageSize;
             const endIdx = Math.min(startIdx + pageSize, searchResults.length);
-            const pageContent = searchResults.slice(startIdx, endIdx).join('\n\n');
+            const pageRecords = searchResults.slice(startIdx, endIdx);
             
-            // Verificar se estamos buscando uma pessoa ou organização
-            const isPerson = searchResults.some(record => 
-                /NOME\s*:|CPF\/CNPJ\s*:|NASCIMENTO\s*:|PESSOA\s*:/i.test(record)
-            );
-            
-            // Se for uma pessoa e tivermos uma consulta atual, destacar os resultados
-            if (isPerson && document.getElementById('database-search-input').value) {
+            // Formatar os resultados com estilo melhorado, preservando a formatação original
+            const formattedRecords = pageRecords.map(record => {
+                // Verificar se há um termo de busca atual para destacar
                 const query = document.getElementById('database-search-input').value;
-                databaseContent.innerHTML = pageContent.replace(new RegExp(query, 'gi'), match => 
-                    `<span class="highlight">${match}</span>`
-                );
-            } else {
-                databaseContent.textContent = pageContent;
+                
+                if (query) {
+                    const highlightedRecord = record.replace(new RegExp(query, 'gi'), match => 
+                        `<span class="highlight">${match}</span>`
+                    );
+                    return `<div class="search-result-record">${highlightedRecord}</div>`;
+                } else {
+                    return `<div class="search-result-record">${record}</div>`;
+                }
+            });
+            
+            databaseContent.innerHTML = formattedRecords.join('');
+            
+            // Adicionar estilos se não existirem
+            if (!document.getElementById('search-result-style')) {
+                const style = document.createElement('style');
+                style.id = 'search-result-style';
+                style.textContent = `
+                    .search-result-record {
+                        margin-bottom: 20px;
+                        padding: 15px;
+                        background: rgba(10, 14, 23, 0.7);
+                        border-left: 3px solid var(--primary);
+                        border-radius: 8px;
+                        white-space: pre-wrap;
+                        font-family: monospace;
+                        line-height: 1.5;
+                    }
+                    .highlight {
+                        background-color: rgba(255, 204, 0, 0.3);
+                        color: white;
+                        padding: 0 2px;
+                        border-radius: 3px;
+                        font-weight: bold;
+                    }
+                `;
+                document.head.appendChild(style);
             }
             
             // Atualizar informações de paginação
             document.getElementById('current-page').textContent = currentPage;
             document.getElementById('total-pages').textContent = Math.ceil(searchResults.length / pageSize);
             document.getElementById('total-records').textContent = searchResults.length;
-        } else if (databasePages[currentPage - 1]) {
+        } else if (databasePages && databasePages[currentPage - 1]) {
             // Exibir página normal
             databaseContent.textContent = databasePages[currentPage - 1];
             
@@ -3567,6 +3626,11 @@ function normalizeText(text) {
     return normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
+// Função para escapar caracteres especiais em expressões regulares
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // Função para buscar no arquivo 1.txt - versão melhorada
 function searchInFile(query, searchType = 'all') {
     // Mostrar notificação de busca em andamento para buscas potencialmente lentas
@@ -3584,13 +3648,43 @@ function searchInFile(query, searchType = 'all') {
             // Normalizar a consulta para facilitar a busca
             const normalizedQuery = normalizeText(query);
             
-            // Dividir o conteúdo em registros (blocos separados por linhas em branco)
-            const records = fileDataCache.split(/\n\s*\n/).filter(r => r.trim());
+            // Usar um padrão para identificar blocos de informação pessoal completos
+            const blockPattern = /(?:=+\s*CONSULTA|\🔍\s*CONSULTA|👤\s*DADOS PESSOAIS|NOME\s*:|CPF\s*:|PESSOA\s*:)/i;
+            
+            // Dividir o conteúdo em blocos completos
+            const blocks = fileDataCache.split(blockPattern)
+                .filter(block => block && block.trim());
+            
+            // Recriar os registros completos
+            const records = [];
+            for (let i = 0; i < blocks.length; i++) {
+                // Tentar encontrar o início do bloco (que foi removido pelo split)
+                let fullBlock = blocks[i];
+                const matches = fileDataCache.match(new RegExp(`(${blockPattern.source})${escapeRegExp(blocks[i].substring(0, 50))}`, 'i'));
+                
+                if (matches && matches[1]) {
+                    fullBlock = matches[1] + fullBlock;
+                } else {
+                    // Se não conseguir encontrar, use um marcador genérico
+                    fullBlock = "CONSULTA " + fullBlock;
+                }
+                
+                // Verificar onde termina este bloco (no próximo marcador ou várias linhas em branco)
+                const endMatch = fullBlock.match(/\n\s*\n\s*\n/);
+                if (endMatch) {
+                    fullBlock = fullBlock.substring(0, endMatch.index + endMatch[0].length);
+                }
+                
+                records.push(fullBlock);
+            }
             
             // Filtrar registros com base no tipo de busca e termo
             const matchedRecords = records.filter(record => {
+                // Normalizar o registro para busca
+                const normalizedRecord = normalizeText(record);
+                
                 // Verificar se o registro parece ser de pessoa (tem campos como NOME ou CPF)
-                const isPerson = /NOME\s*:|CPF\/CNPJ\s*:|NASCIMENTO\s*:|PESSOA\s*:/i.test(record);
+                const isPerson = /nome|cpf|nascimento|dados pessoais/i.test(normalizedRecord);
                 
                 // Se a busca for apenas por pessoas, filtrar não-pessoas
                 if (searchType === 'pessoa' && !isPerson) {
@@ -3601,7 +3695,7 @@ function searchInFile(query, searchType = 'all') {
                 if (searchType === 'nome' && !record.match(/NOME\s*:/i)) {
                     return false;
                 }
-                if (searchType === 'cpf' && !record.match(/CPF\/CNPJ\s*:/i)) {
+                if (searchType === 'cpf' && !record.match(/CPF\s*:|CPF\/CNPJ\s*:/i)) {
                     return false;
                 }
                 if (searchType === 'telefone' && !record.match(/TELEFONE\s*:/i)) {
@@ -3612,41 +3706,41 @@ function searchInFile(query, searchType = 'all') {
                 }
                 
                 // Verificar se o termo de busca está no registro
-                const normalizedRecord = normalizeText(record);
                 return normalizedRecord.includes(normalizedQuery);
             });
             
-            // Extrair informações relevantes e remover duplicatas (baseado no CPF)
-            const uniqueResults = [];
-            const uniqueCPFs = new Set();
-            
-            matchedRecords.forEach(record => {
+            // Extrair informações relevantes dos registros
+            const processedResults = matchedRecords.map(record => {
                 const nameMatch = record.match(/NOME\s*:\s*([^\n]+)/i);
-                const cpfMatch = record.match(/CPF\/CNPJ\s*:\s*([^\n]+)/i);
+                const cpfMatch = record.match(/CPF\s*:|CPF\/CNPJ\s*:\s*([^\n]+)/i);
                 const birthMatch = record.match(/NASCIMENTO\s*:\s*([^\n]+)/i);
                 const genderMatch = record.match(/SEXO\s*:\s*([^\n]+)/i);
                 const motherMatch = record.match(/MÃE\s*:\s*([^\n]+)/i);
                 const phoneMatch = record.match(/TELEFONE\s*:\s*([^\n]+)/i);
                 const plateMatch = record.match(/PLACA\s*:\s*([^\n]+)/i);
                 
-                if (nameMatch) {
-                    const cpf = cpfMatch ? cpfMatch[1].trim() : "Não informado";
-                    
-                    // Verificar se já existe um resultado com este CPF
-                    if (!uniqueCPFs.has(cpf) || cpf === "Não informado") {
-                        uniqueCPFs.add(cpf);
-                        
-                        uniqueResults.push({
-                            name: nameMatch[1].trim(),
-                            cpf: cpf,
-                            birth: birthMatch ? birthMatch[1].trim() : "Não informado",
-                            gender: genderMatch ? genderMatch[1].trim() : "Não informado",
-                            mother: motherMatch ? motherMatch[1].trim() : "Não informado",
-                            phone: phoneMatch ? phoneMatch[1].trim() : "Não informado",
-                            plate: plateMatch ? plateMatch[1].trim() : "Não informado",
-                            fullRecord: record
-                        });
+                return {
+                    name: nameMatch ? nameMatch[1].trim() : "Não informado",
+                    cpf: cpfMatch ? cpfMatch[1].trim() : "Não informado",
+                    birth: birthMatch ? birthMatch[1].trim() : "Não informado",
+                    gender: genderMatch ? genderMatch[1].trim() : "Não informado",
+                    mother: motherMatch ? motherMatch[1].trim() : "Não informado",
+                    phone: phoneMatch ? phoneMatch[1].trim() : "Não informado",
+                    plate: plateMatch ? plateMatch[1].trim() : "Não informado",
+                    fullRecord: record
+                };
+            });
+            
+            // Remover duplicatas baseadas no CPF
+            const uniqueResults = [];
+            const uniqueCPFs = new Set();
+            
+            processedResults.forEach(result => {
+                if (result.cpf === "Não informado" || !uniqueCPFs.has(result.cpf)) {
+                    if (result.cpf !== "Não informado") {
+                        uniqueCPFs.add(result.cpf);
                     }
+                    uniqueResults.push(result);
                 }
             });
             
@@ -3673,17 +3767,20 @@ function searchInDatabase(query) {
     // Normalizar a consulta para facilitar a busca
     const normalizedQuery = query.toLowerCase();
     
-    // Dividir o conteúdo em registros
-    const records = fileDataCache.split(/\n\s*\n/).filter(r => r.trim());
+    // Identificar registros de pessoas vs outros tipos de dados
+    // Uma entrada de pessoa geralmente contém campos como NOME, CPF, NASCIMENTO, etc.
+    const personPattern = /(NOME|CPF|NASCIMENTO|DADOS PESSOAIS)/i;
+    const companyPattern = /(RAZÃO SOCIAL|CNPJ|CAPITAL SOCIAL)/i;
     
-    // Separar registros de pessoas e organizações
-    const personRecords = records.filter(record => 
-        /NOME\s*:|CPF\/CNPJ\s*:|NASCIMENTO\s*:|PESSOA\s*:/i.test(record) &&
-        record.toLowerCase().includes(normalizedQuery)
-    );
+    // Dividir o conteúdo em registros completos - usando blocos maiores de texto
+    // Tentamos identificar blocos de consulta que começam com marcadores como "CONSULTA DE CPF" ou "CONSULTA DE CNPJ"
+    const blockPattern = /(?:=+\s*CONSULTA|\🔍\s*CONSULTA|👤\s*DADOS PESSOAIS)/i;
+    const records = fileDataCache.split(blockPattern)
+        .filter(block => block && block.trim())
+        .map(block => blockPattern.source.charAt(0) + block); // Recolocar o primeiro caractere do padrão no início
     
-    // Usar os registros de pessoas como resultados prioritários
-    let matchedRecords = personRecords.length > 0 ? personRecords : records.filter(record => 
+    // Encontrar registros que contêm o termo de busca
+    const matchedRecords = records.filter(record => 
         record.toLowerCase().includes(normalizedQuery)
     );
     
@@ -3703,14 +3800,50 @@ function searchInDatabase(query) {
         const endIdx = Math.min(pageSize, matchedRecords.length);
         const pageRecords = matchedRecords.slice(startIdx, endIdx);
         
-        // Destacar o termo de busca em cada registro
+        // Destacar o termo de busca em cada registro completo
         const highlightedRecords = pageRecords.map(record => {
-            return record.replace(new RegExp(query, 'gi'), match => 
+            // Destacar os termos de busca mas preservar toda a formatação original
+            const highlightedRecord = record.replace(new RegExp(query, 'gi'), match => 
                 `<span class="highlight">${match}</span>`
             );
+            
+            // Adicionar cada registro em um container com estilo
+            return `<div class="search-result-record">${highlightedRecord}</div>`;
         });
         
-        databaseContent.innerHTML = highlightedRecords.join('\n\n');
+        // Adicionar os registros ao conteúdo
+        databaseContent.innerHTML = highlightedRecords.join('');
+        
+        // Adicionar estilos diretamente para garantir a formatação correta
+        const style = document.createElement('style');
+        style.textContent = `
+            .search-result-record {
+                margin-bottom: 20px;
+                padding: 15px;
+                background: rgba(10, 14, 23, 0.7);
+                border-left: 3px solid var(--primary);
+                border-radius: 8px;
+                white-space: pre-wrap;
+                font-family: monospace;
+                line-height: 1.5;
+            }
+            .highlight {
+                background-color: rgba(255, 204, 0, 0.3);
+                color: white;
+                padding: 0 2px;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+        `;
+        
+        // Remover estilo anterior se existir
+        const existingStyle = document.getElementById('search-result-style');
+        if (existingStyle) {
+            existingStyle.remove();
+        }
+        
+        style.id = 'search-result-style';
+        document.head.appendChild(style);
         
         // Atualizar informações de paginação
         document.getElementById('current-page').textContent = currentPage;
@@ -3727,13 +3860,27 @@ function searchInDatabase(query) {
         }
     } else {
         // Nenhum resultado encontrado
-        databaseContent.textContent = 'Nenhum resultado encontrado para: ' + query;
+        databaseContent.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">Nenhum resultado encontrado para: ' + query + '</div>';
     }
     
     return matchedRecords.length;
 }
 
-// Função para formatar e exibir resultados da busca
+// Função para formatar o registro para exibição
+function formatRecordForDisplay(record) {
+    // Substituir emojis e outros caracteres especiais por HTML
+    const formatted = record
+        .replace(/🔍/g, '🔍')
+        .replace(/👤/g, '👤')
+        .replace(/•/g, '•')
+        .replace(/\n/g, '<br>')
+        .replace(/(NOME|CPF|NASCIMENTO|SEXO|MÃE|TELEFONE|ENDEREÇO|EMPRESAS|POSSÍVEIS PARENTES):/g, 
+                 '<span style="color: var(--primary); font-weight: bold;">$1:</span>');
+    
+    return formatted;
+}
+
+// Função para exibir os resultados da busca
 function displaySearchResults(results, container) {
     if (results.length === 0) {
         container.innerHTML = '<div style="text-align: center; padding: 15px; color: var(--danger);">Nenhum resultado encontrado para a busca.</div>';
@@ -3743,7 +3890,9 @@ function displaySearchResults(results, container) {
     let html = '';
     
     results.forEach(result => {
-        // Destaca campos importantes
+        // Formatar o registro completo para exibição formatada
+        const formattedRecord = formatRecordForDisplay(result.fullRecord);
+        
         html += `
         <div class="search-result-item">
             <div class="search-result-header">${result.name}</div>
@@ -3753,8 +3902,14 @@ function displaySearchResults(results, container) {
             <div style="margin: 5px 0;"><span style="font-weight: bold;">Mãe:</span> <span>${result.mother}</span></div>
             ${result.phone !== "Não informado" ? `<div style="margin: 5px 0;"><span style="font-weight: bold; color: var(--primary);">Telefone:</span> <span>${result.phone}</span></div>` : ''}
             ${result.plate !== "Não informado" ? `<div style="margin: 5px 0;"><span style="font-weight: bold; color: var(--primary);">Placa:</span> <span>${result.plate}</span></div>` : ''}
+            
             <div style="margin-top: 10px;">
+                <button class="btn btn--outline btn-view-full-record" data-record="${encodeURIComponent(result.fullRecord)}">Ver Registro Completo</button>
                 <button class="btn btn--outline btn-add-profile" data-record="${encodeURIComponent(result.fullRecord)}">Adicionar ao Sistema</button>
+            </div>
+            
+            <div class="full-record-container" style="display: none; margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; white-space: pre-wrap; font-family: monospace; max-height: 300px; overflow-y: auto;">
+                ${formattedRecord}
             </div>
         </div>
         `;
@@ -3762,11 +3917,24 @@ function displaySearchResults(results, container) {
     
     container.innerHTML = html;
     
-    // Adicionar event listeners para os botões "Adicionar ao Sistema"
+    // Adicionar event listeners para os botões
     document.querySelectorAll('.btn-add-profile').forEach(button => {
         button.addEventListener('click', function() {
             const recordData = decodeURIComponent(this.getAttribute('data-record'));
             addProfileFromRecord(recordData);
+        });
+    });
+    
+    document.querySelectorAll('.btn-view-full-record').forEach(button => {
+        button.addEventListener('click', function() {
+            const container = this.closest('.search-result-item').querySelector('.full-record-container');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                this.textContent = 'Ocultar Registro Completo';
+            } else {
+                container.style.display = 'none';
+                this.textContent = 'Ver Registro Completo';
+            }
         });
     });
 }
@@ -3774,7 +3942,7 @@ function displaySearchResults(results, container) {
 // Função para adicionar um perfil ao sistema a partir do registro
 function addProfileFromRecord(record) {
     const nameMatch = record.match(/NOME\s*:\s*([^\n]+)/i);
-    const cpfMatch = record.match(/CPF\/CNPJ\s*:\s*([^\n]+)/i);
+    const cpfMatch = record.match(/CPF\s*:|CPF\/CNPJ\s*:\s*([^\n]+)/i);
     const birthMatch = record.match(/NASCIMENTO\s*:\s*([^\n]+)/i);
     const genderMatch = record.match(/SEXO\s*:\s*([^\n]+)/i);
     const motherMatch = record.match(/MÃE\s*:\s*([^\n]+)/i);
