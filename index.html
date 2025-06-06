@@ -1799,7 +1799,6 @@
             border-radius: 8px;
             font-size: 14px;
             font-weight: 600;
-            display: none; /* Esconder por padrão */
         }
         
         .highlight {
@@ -1873,26 +1872,6 @@
             width: 20px;
             height: 20px;
             margin-right: 10px;
-        }
-        
-        /* Search Result Record Styling */
-        .db-record {
-            padding: 15px;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.03);
-            margin-bottom: 15px;
-            border-left: 3px solid var(--primary);
-            transition: all 0.2s ease;
-        }
-        
-        .db-record:hover {
-            background: rgba(255,255,255,0.05);
-        }
-        
-        .db-record-separator {
-            border: none;
-            border-top: 1px dashed rgba(255,255,255,0.1);
-            margin: 15px 0;
         }
         
         /* Responsive styles - these were overhauled */
@@ -2848,7 +2827,7 @@
         </div>
     </div>
     
-    <!-- Database Modal com Paginação Otimizada -->
+    <!-- Database Modal com Paginação -->
     <div class="modal" id="database-modal">
         <div class="modal__content">
             <div class="modal__close" id="database-modal-close">
@@ -2861,11 +2840,14 @@
             <div class="modal__body">
                 <div class="database-search-container">
                     <i class="fa fa-search database-search-icon"></i>
-                    <input type="text" id="database-search-input" class="database-search-input" placeholder="Pesquisar no banco de dados..." autocomplete="off">
+                    <input type="text" id="database-search-input" class="database-search-input" placeholder="Pesquisar no banco de dados..." autofocus>
+                    <div id="database-search-results" class="database-search-results" style="display: none;">
+                        Encontrado(s) <span id="database-search-count">0</span> resultado(s)
+                    </div>
                 </div>
                 <pre id="database-content" class="database-content">Carregando conteúdo do banco de dados...</pre>
                 
-                <!-- Paginação -->
+                <!-- Nova seção de paginação -->
                 <div class="database-pagination">
                     <div class="database-pagination-info">
                         Exibindo página <span id="current-page">1</span> de <span id="total-pages">1</span>
@@ -3366,10 +3348,7 @@ let currentPage = 1;
 let pageSize = 50;
 let totalPages = 1;
 let isSearchMode = false;
-let searchResults = [];
-
-// Variáveis para web workers
-let searchWorker = null;
+let searchResults = null;
 
 function calculateAge(birthDateStr) {
     if (!birthDateStr || birthDateStr === "Não informado") return null;
@@ -3409,71 +3388,6 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDataFile();
 });
 
-// Inicializar Web Worker para busca assíncrona
-function initWebWorker() {
-    // Verificar se o navegador suporta Web Workers
-    if (window.Worker) {
-        // Cria um worker inline usando Blob
-        const workerCode = `
-            self.onmessage = function(e) {
-                const { action, data, query, pageSize } = e.data;
-                
-                if (action === 'search') {
-                    // Dividir o conteúdo em registros
-                    const records = data.split(/\\n\\s*\\n/).filter(r => r.trim());
-                    
-                    // Filtrar registros com base no termo de busca (case insensitive)
-                    const normalizedQuery = query.toLowerCase();
-                    const matchedRecords = records.filter(record => 
-                        record.toLowerCase().includes(normalizedQuery)
-                    );
-                    
-                    // Calcular número de páginas
-                    const totalPages = Math.ceil(matchedRecords.length / pageSize);
-                    
-                    // Retornar resultados
-                    self.postMessage({
-                        results: matchedRecords,
-                        totalPages: totalPages,
-                        totalResults: matchedRecords.length
-                    });
-                }
-            };
-        `;
-        
-        const blob = new Blob([workerCode], { type: 'application/javascript' });
-        const workerURL = URL.createObjectURL(blob);
-        
-        try {
-            searchWorker = new Worker(workerURL);
-            
-            // Configurar receptor de mensagens do worker
-            searchWorker.onmessage = function(e) {
-                const { results, totalPages, totalResults } = e.data;
-                
-                // Atualizar variáveis globais
-                searchResults = results;
-                isSearchMode = results.length > 0;
-                
-                // Exibir resultados (primeira página)
-                displaySearchResults(results, totalPages, totalResults);
-            };
-            
-            console.log('Web Worker para busca inicializado com sucesso');
-        } catch (e) {
-            console.error('Erro ao inicializar Web Worker:', e);
-            // Fallback para o método de busca síncrono caso o worker falhe
-            searchWorker = null;
-        }
-        
-        // Limpar o URL do objeto após criar o worker
-        URL.revokeObjectURL(workerURL);
-    } else {
-        console.log('Web Workers não são suportados neste navegador');
-        searchWorker = null;
-    }
-}
-
 // Função para carregar o arquivo 1.txt
 function loadDataFile() {
     fetch('1.txt')
@@ -3489,9 +3403,6 @@ function loadDataFile() {
             
             // Pré-processar dados para paginação
             prepareDataForPagination(data);
-            
-            // Inicializar Web Worker para busca assíncrona
-            initWebWorker();
         })
         .catch(error => {
             console.error('Erro ao carregar arquivo:', error);
@@ -3521,148 +3432,41 @@ function prepareDataForPagination(data) {
     document.getElementById('total-records').textContent = records.length;
 }
 
-// Função otimizada para exibir a página atual
+// Função para exibir a página atual
 function displayCurrentPage() {
     const databaseContent = document.getElementById('database-content');
+    const loading = document.createElement('div');
+    loading.className = 'database-loading';
+    loading.innerHTML = '<div class="loading__spinner"></div> Carregando dados...';
+    databaseContent.innerHTML = '';
+    databaseContent.appendChild(loading);
     
-    // Mostrar indicador de carregamento
-    databaseContent.innerHTML = '<div class="database-loading"><div class="loading__spinner"></div> Carregando dados...</div>';
-    
-    // Usar requestAnimationFrame para garantir que o indicador de carregamento seja exibido
-    requestAnimationFrame(() => {
-        // E então usar setTimeout com um pequeno atraso para não bloquear a thread principal
-        setTimeout(() => {
-            if (isSearchMode && searchResults.length > 0) {
-                // Exibir resultados da busca paginados
-                const startIdx = (currentPage - 1) * pageSize;
-                const endIdx = Math.min(startIdx + pageSize, searchResults.length);
-                
-                if (startIdx >= searchResults.length) {
-                    // Caso a página atual não exista mais (por exemplo, após mudar o tamanho da página)
-                    currentPage = 1;
-                    displayCurrentPage();
-                    return;
-                }
-                
-                const pageRecords = searchResults.slice(startIdx, endIdx);
-                
-                // Destacar termos de busca
-                const query = document.getElementById('database-search-input').value.trim().toLowerCase();
-                
-                // Criar HTML para os registros formatados como cartões
-                let html = '';
-                pageRecords.forEach(record => {
-                    const highlightedRecord = record.replace(new RegExp(query, 'gi'), match => 
-                        `<span class="highlight">${match}</span>`
-                    );
-                    html += `<div class="db-record">${highlightedRecord}</div>`;
-                });
-                
-                databaseContent.innerHTML = html;
-                
-                // Atualizar informações de paginação
-                document.getElementById('current-page').textContent = currentPage;
-                document.getElementById('total-pages').textContent = Math.ceil(searchResults.length / pageSize);
-                document.getElementById('total-records').textContent = searchResults.length;
-            } else if (databasePages[currentPage - 1]) {
-                // Exibir página normal
-                const pageContent = databasePages[currentPage - 1];
-                
-                // Dividir em registros e formatá-los como cartões
-                const records = pageContent.split(/\n\n+/);
-                let html = '';
-                records.forEach(record => {
-                    if (record.trim()) {
-                        html += `<div class="db-record">${record}</div>`;
-                    }
-                });
-                
-                databaseContent.innerHTML = html;
-                
-                // Atualizar informações de paginação
-                document.getElementById('current-page').textContent = currentPage;
-            } else {
-                databaseContent.innerHTML = '<div style="text-align: center; padding: 30px; color: rgba(255,255,255,0.5);">Nenhum dado disponível para exibição.</div>';
-            }
+    // Usar setTimeout para dar tempo ao navegador renderizar o indicador de carregamento
+    setTimeout(() => {
+        if (isSearchMode && searchResults) {
+            // Exibir resultados da busca paginados
+            const startIdx = (currentPage - 1) * pageSize;
+            const endIdx = Math.min(startIdx + pageSize, searchResults.length);
+            const pageContent = searchResults.slice(startIdx, endIdx).join('\n\n');
+            databaseContent.textContent = pageContent;
             
-            // Atualizar estado dos botões de navegação
-            updatePaginationControls();
-        }, 50);
-    });
-}
-
-// Função para exibir resultados de busca com paginação
-function displaySearchResults(results, totalPages, totalResults) {
-    const databaseContent = document.getElementById('database-content');
-    
-    // Verificar se há resultados
-    if (results.length === 0) {
-        databaseContent.innerHTML = `
-            <div style="text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.7);">
-                <div style="font-size: 24px; margin-bottom: 10px; color: var(--warning);">
-                    <i class="fa fa-search"></i>
-                </div>
-                <div style="font-size: 16px; font-weight: 600; margin-bottom: 5px;">
-                    Nenhum resultado encontrado
-                </div>
-                <div style="font-size: 14px; color: rgba(255,255,255,0.5);">
-                    Sua busca não retornou resultados.
-                </div>
-            </div>
-        `;
+            // Atualizar informações de paginação
+            document.getElementById('current-page').textContent = currentPage;
+            document.getElementById('total-pages').textContent = Math.ceil(searchResults.length / pageSize);
+            document.getElementById('total-records').textContent = searchResults.length;
+        } else if (databasePages[currentPage - 1]) {
+            // Exibir página normal
+            databaseContent.textContent = databasePages[currentPage - 1];
+            
+            // Atualizar informações de paginação
+            document.getElementById('current-page').textContent = currentPage;
+        } else {
+            databaseContent.textContent = 'Nenhum dado disponível para exibição.';
+        }
         
-        // Reiniciar controles de paginação
-        document.getElementById('current-page').textContent = "0";
-        document.getElementById('total-pages').textContent = "0";
-        document.getElementById('total-records').textContent = "0";
-        
-        // Atualizar controles de paginação
-        const prevPageBtn = document.getElementById('prev-page');
-        const nextPageBtn = document.getElementById('next-page');
-        prevPageBtn.disabled = true;
-        nextPageBtn.disabled = true;
-        
-        return;
-    }
-    
-    // Resetar para a primeira página
-    currentPage = 1;
-    
-    // Exibir a primeira página de resultados
-    const startIdx = 0;
-    const endIdx = Math.min(pageSize, results.length);
-    const pageRecords = results.slice(startIdx, endIdx);
-    
-    // Destacar termos de busca
-    const query = document.getElementById('database-search-input').value.trim().toLowerCase();
-    
-    // Criar HTML para os registros formatados como cartões
-    let html = '';
-    pageRecords.forEach(record => {
-        const highlightedRecord = record.replace(new RegExp(query, 'gi'), match => 
-            `<span class="highlight">${match}</span>`
-        );
-        html += `<div class="db-record">${highlightedRecord}</div>`;
-    });
-    
-    databaseContent.innerHTML = html;
-    
-    // Atualizar informações de paginação
-    document.getElementById('current-page').textContent = 1;
-    document.getElementById('total-pages').textContent = totalPages;
-    document.getElementById('total-records').textContent = totalResults;
-    
-    // Atualizar estado dos botões de navegação
-    updatePaginationControls();
-    
-    // Mostrar notificação com resultados
-    showNotification('Busca concluída', `Encontrados ${totalResults} resultados`, 'success');
-    
-    // Rolar para o primeiro resultado destacado
-    const firstHighlight = databaseContent.querySelector('.highlight');
-    if (firstHighlight) {
-        firstHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+        // Atualizar estado dos botões de navegação
+        updatePaginationControls();
+    }, 10);
 }
 
 // Função para atualizar os controles de paginação
@@ -3671,13 +3475,7 @@ function updatePaginationControls() {
     const nextPageBtn = document.getElementById('next-page');
     
     prevPageBtn.disabled = currentPage <= 1;
-    
-    if (isSearchMode && searchResults.length > 0) {
-        const maxPage = Math.ceil(searchResults.length / pageSize);
-        nextPageBtn.disabled = currentPage >= maxPage;
-    } else {
-        nextPageBtn.disabled = currentPage >= totalPages;
-    }
+    nextPageBtn.disabled = currentPage >= totalPages;
 }
 
 // Função para normalizar textos (remover pontuação e acentos)
@@ -3749,7 +3547,7 @@ function searchInFile(query) {
 }
 
 // Função para formatar e exibir resultados da busca
-function displayFileSearchResults(results, container) {
+function displaySearchResults(results, container) {
     if (results.length === 0) {
         container.innerHTML = '<div style="text-align: center; padding: 15px; color: var(--danger);">Nenhum resultado encontrado para a busca.</div>';
         return;
@@ -3857,7 +3655,7 @@ function openFileSearchModal(query, results) {
     const fileSearchResultsContainer = document.getElementById('file-search-results-container');
     
     fileSearchQuery.value = query;
-    displayFileSearchResults(results, fileSearchResults);
+    displaySearchResults(results, fileSearchResults);
     fileSearchResultsContainer.style.display = 'block';
     fileSearchModal.classList.add('active');
 }
@@ -3870,28 +3668,13 @@ function showDatabaseContent() {
     databaseModal.classList.add('active');
     
     if (!fileDataCache) {
-        databaseContent.innerHTML = `
-            <div style="text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.7);">
-                <div style="font-size: 24px; margin-bottom: 10px; color: var(--danger);">
-                    <i class="fa fa-warning"></i>
-                </div>
-                <div style="font-size: 16px; font-weight: 600; margin-bottom: 5px;">
-                    Erro ao carregar arquivo
-                </div>
-                <div style="font-size: 14px; color: rgba(255,255,255,0.5);">
-                    Não foi possível carregar o arquivo 1.txt. Por favor, tente novamente.
-                </div>
-            </div>
-        `;
+        databaseContent.textContent = "Erro ao carregar o arquivo 1.txt. Por favor, tente novamente.";
         return;
     }
     
     // Resetar configurações de paginação
     isSearchMode = false;
     currentPage = 1;
-    
-    // Limpar campo de busca
-    document.getElementById('database-search-input').value = '';
     
     // Exibir a primeira página
     displayCurrentPage();
@@ -3902,55 +3685,76 @@ function showDatabaseContent() {
     }, 300);
 }
 
-// Função otimizada para buscar no banco de dados com Web Worker
+// Função para buscar no conteúdo do banco de dados exibido com paginação
 function searchInDatabase(query) {
     const databaseContent = document.getElementById('database-content');
+    const searchResults = document.getElementById('database-search-results');
+    const searchCount = document.getElementById('database-search-count');
     
-    // Se o campo estiver vazio, voltar ao modo normal
     if (!query || !fileDataCache) {
+        // Voltar ao modo normal de paginação
         isSearchMode = false;
         currentPage = 1;
         displayCurrentPage();
+        searchResults.style.display = 'none';
         return 0;
     }
     
-    // Mostrar indicador de carregamento
-    databaseContent.innerHTML = '<div class="database-loading"><div class="loading__spinner"></div> Processando busca...</div>';
+    // Normalizar a consulta para facilitar a busca
+    const normalizedQuery = query.toLowerCase();
     
-    // Se tivermos um Web Worker disponível, usar para busca assíncrona
-    if (searchWorker) {
-        searchWorker.postMessage({
-            action: 'search',
-            data: fileDataCache,
-            query: query,
-            pageSize: pageSize
+    // Dividir o conteúdo em registros
+    const records = fileDataCache.split(/\n\s*\n/).filter(r => r.trim());
+    
+    // Filtrar registros com base no termo de busca
+    const matchedRecords = records.filter(record => 
+        record.toLowerCase().includes(normalizedQuery)
+    );
+    
+    // Armazenar resultados para paginação
+    searchResults.style.display = matchedRecords.length > 0 ? 'block' : 'none';
+    searchCount.textContent = matchedRecords.length;
+    
+    if (matchedRecords.length > 0) {
+        // Entrar no modo de busca com paginação
+        isSearchMode = true;
+        searchResults = matchedRecords;
+        currentPage = 1;
+        totalPages = Math.ceil(matchedRecords.length / pageSize);
+        
+        // Criar conteúdo destacado para a primeira página
+        const startIdx = 0;
+        const endIdx = Math.min(pageSize, matchedRecords.length);
+        const pageRecords = matchedRecords.slice(startIdx, endIdx);
+        
+        // Destacar o termo de busca em cada registro
+        const highlightedRecords = pageRecords.map(record => {
+            return record.replace(new RegExp(query, 'gi'), match => 
+                `<span class="highlight">${match}</span>`
+            );
         });
         
-        // A exibição dos resultados ocorrerá no evento onmessage do worker
+        databaseContent.innerHTML = highlightedRecords.join('\n\n');
+        
+        // Atualizar informações de paginação
+        document.getElementById('current-page').textContent = currentPage;
+        document.getElementById('total-pages').textContent = totalPages;
+        document.getElementById('total-records').textContent = matchedRecords.length;
+        
+        // Atualizar controles de paginação
+        updatePaginationControls();
+        
+        // Rolar para o primeiro resultado
+        const firstHighlight = databaseContent.querySelector('.highlight');
+        if (firstHighlight) {
+            firstHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     } else {
-        // Fallback para busca síncrona (método antigo)
-        // Usar setTimeout para não bloquear a interface
-        setTimeout(() => {
-            // Dividir o conteúdo em registros
-            const records = fileDataCache.split(/\n\s*\n/).filter(r => r.trim());
-            
-            // Filtrar registros com base no termo de busca
-            const normalizedQuery = query.toLowerCase();
-            const matchedRecords = records.filter(record => 
-                record.toLowerCase().includes(normalizedQuery)
-            );
-            
-            // Atualizar variáveis globais
-            searchResults = matchedRecords;
-            isSearchMode = matchedRecords.length > 0;
-            
-            // Calcular número de páginas
-            const totalPages = Math.ceil(matchedRecords.length / pageSize);
-            
-            // Exibir resultados
-            displaySearchResults(matchedRecords, totalPages, matchedRecords.length);
-        }, 10);
+        // Nenhum resultado encontrado
+        databaseContent.textContent = 'Nenhum resultado encontrado para: ' + query;
     }
+    
+    return matchedRecords.length;
 }
 
 function initLogin() {
@@ -4223,21 +4027,15 @@ function initFileSearchModal() {
             return;
         }
         
-        // Mostrar indicador de processamento
-        fileSearchResults.innerHTML = '<div class="database-loading"><div class="loading__spinner"></div> Processando busca...</div>';
+        const results = searchInFile(query);
+        displaySearchResults(results, fileSearchResults);
         fileSearchResultsContainer.style.display = 'block';
         
-        // Usar setTimeout para evitar bloqueio da interface
-        setTimeout(() => {
-            const results = searchInFile(query);
-            displayFileSearchResults(results, fileSearchResults);
-            
-            if (results.length > 0) {
-                showNotification('Busca Concluída', `${results.length} resultado(s) encontrado(s)`, 'success');
-            } else {
-                showNotification('Busca Concluída', 'Nenhum resultado encontrado', 'warning');
-            }
-        }, 50);
+        if (results.length > 0) {
+            showNotification('Busca Concluída', `${results.length} resultado(s) encontrado(s)`, 'success');
+        } else {
+            showNotification('Busca Concluída', 'Nenhum resultado encontrado', 'warning');
+        }
     });
     
     // Permitir pesquisar pressionando Enter
@@ -4248,7 +4046,7 @@ function initFileSearchModal() {
     });
 }
 
-// Função para inicializar o modal de banco de dados com paginação otimizada
+// Função para inicializar o modal de banco de dados com paginação
 function initDatabaseModal() {
     const databaseBtn = document.getElementById('database-btn');
     const databaseModal = document.getElementById('database-modal');
@@ -4277,8 +4075,8 @@ function initDatabaseModal() {
         isSearchMode = false;
         currentPage = 1;
         displayCurrentPage();
+        document.getElementById('database-search-results').style.display = 'none';
         databaseSearchInput.focus();
-        showNotification('Busca limpa', 'Exibindo todos os registros', 'info');
     });
     
     // Controles de paginação
@@ -4290,13 +4088,7 @@ function initDatabaseModal() {
     });
     
     nextPageBtn.addEventListener('click', function() {
-        if (isSearchMode && searchResults.length > 0) {
-            const maxPage = Math.ceil(searchResults.length / pageSize);
-            if (currentPage < maxPage) {
-                currentPage++;
-                displayCurrentPage();
-            }
-        } else if (currentPage < totalPages) {
+        if (currentPage < totalPages) {
             currentPage++;
             displayCurrentPage();
         }
@@ -4307,65 +4099,29 @@ function initDatabaseModal() {
         
         // Recalcular paginação
         if (fileDataCache) {
-            if (isSearchMode && searchResults.length > 0) {
-                // Recalcular paginação para resultados de busca
-                const totalPages = Math.ceil(searchResults.length / pageSize);
-                if (currentPage > totalPages) {
-                    currentPage = 1;
-                }
-            } else {
-                // Recalcular paginação para dados normais
-                prepareDataForPagination(fileDataCache);
-                if (currentPage > totalPages) {
-                    currentPage = 1;
-                }
-            }
-            
-            displayCurrentPage();
-            showNotification('Visualização atualizada', `Exibindo ${pageSize} registros por página`, 'info');
-        }
-    });
-    
-    // Debounce para a busca
-    let searchTimeout;
-    databaseSearchInput.addEventListener('input', function() {
-        const query = this.value.trim();
-        
-        // Cancelar pesquisa anterior se estiver em andamento
-        clearTimeout(searchTimeout);
-        
-        // Se o campo estiver vazio, voltar ao modo normal
-        if (!query) {
-            isSearchMode = false;
+            prepareDataForPagination(fileDataCache);
             currentPage = 1;
             displayCurrentPage();
-            return;
         }
-        
-        // Atrasar a busca para evitar travamentos na digitação
-        searchTimeout = setTimeout(() => {
-            searchInDatabase(query);
-        }, 750); // Atraso longo para garantir que a interface não trave durante a digitação
     });
     
-    // Pesquisar ao pressionar Enter (executa imediatamente)
+    // Pesquisar com um pequeno atraso para melhor desempenho
+    let searchTimeout;
+    databaseSearchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        searchTimeout = setTimeout(() => {
+            searchInDatabase(query);
+        }, 300);
+    });
+    
+    // Pesquisar ao pressionar Enter
     databaseSearchInput.addEventListener('keyup', function(e) {
         if (e.key === 'Enter') {
             const query = this.value.trim();
             clearTimeout(searchTimeout);
             searchInDatabase(query);
-        }
-    });
-    
-    // Navegação com teclas de seta
-    document.addEventListener('keydown', function(e) {
-        // Só processa se o modal estiver ativo
-        if (!databaseModal.classList.contains('active')) return;
-        
-        if (e.key === 'ArrowLeft' && !prevPageBtn.disabled) {
-            prevPageBtn.click();
-        } else if (e.key === 'ArrowRight' && !nextPageBtn.disabled) {
-            nextPageBtn.click();
         }
     });
 }
@@ -5200,7 +4956,7 @@ function initConnectionGraph(profileId) {
     
     window.addEventListener('resize', function() {
         canvas.width = canvasContainer.offsetWidth;
-        canvas.height = canvasContainer.offsetHeight;
+        canvas.height = container.offsetHeight;
     });
 }
 
@@ -5374,6 +5130,29 @@ function applyFilters() {
         </div>
         ${filteredProfiles.length}
     `;
+}
+
+function initProfileModal() {
+    const profileModal = document.getElementById('profile-modal');
+    const profileModalClose = document.getElementById('profile-modal-close');
+    
+    profileModalClose.addEventListener('click', function() {
+        profileModal.classList.remove('active');
+    });
+    
+    const tabs = document.querySelectorAll('.tab');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            this.classList.add('active');
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+        });
+    });
 }
 
 function openProfileModal(profileId) {
