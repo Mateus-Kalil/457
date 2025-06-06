@@ -2954,6 +2954,7 @@
                                 <option value="cpf">CPF/CNPJ</option>
                                 <option value="telefone">Telefone</option>
                                 <option value="placa">Placa</option>
+                                <option value="pessoa">Apenas Pessoas</option>
                             </select>
                         </div>
                         <!-- Botão de busca adicionado -->
@@ -3509,7 +3510,21 @@ function displayCurrentPage() {
             const startIdx = (currentPage - 1) * pageSize;
             const endIdx = Math.min(startIdx + pageSize, searchResults.length);
             const pageContent = searchResults.slice(startIdx, endIdx).join('\n\n');
-            databaseContent.textContent = pageContent;
+            
+            // Verificar se estamos buscando uma pessoa ou organização
+            const isPerson = searchResults.some(record => 
+                /NOME\s*:|CPF\/CNPJ\s*:|NASCIMENTO\s*:|PESSOA\s*:/i.test(record)
+            );
+            
+            // Se for uma pessoa e tivermos uma consulta atual, destacar os resultados
+            if (isPerson && document.getElementById('database-search-input').value) {
+                const query = document.getElementById('database-search-input').value;
+                databaseContent.innerHTML = pageContent.replace(new RegExp(query, 'gi'), match => 
+                    `<span class="highlight">${match}</span>`
+                );
+            } else {
+                databaseContent.textContent = pageContent;
+            }
             
             // Atualizar informações de paginação
             document.getElementById('current-page').textContent = currentPage;
@@ -3552,8 +3567,8 @@ function normalizeText(text) {
     return normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
-// Função para buscar no arquivo 1.txt - versão otimizada
-function searchInFile(query) {
+// Função para buscar no arquivo 1.txt - versão melhorada
+function searchInFile(query, searchType = 'all') {
     // Mostrar notificação de busca em andamento para buscas potencialmente lentas
     if (query && query.length > 3) {
         showNotification('Buscando...', 'Analisando registros do arquivo', 'info');
@@ -3569,11 +3584,34 @@ function searchInFile(query) {
             // Normalizar a consulta para facilitar a busca
             const normalizedQuery = normalizeText(query);
             
-            // Dividir o conteúdo em registros 
+            // Dividir o conteúdo em registros (blocos separados por linhas em branco)
             const records = fileDataCache.split(/\n\s*\n/).filter(r => r.trim());
             
-            // Filtrar registros com base no termo de busca
+            // Filtrar registros com base no tipo de busca e termo
             const matchedRecords = records.filter(record => {
+                // Verificar se o registro parece ser de pessoa (tem campos como NOME ou CPF)
+                const isPerson = /NOME\s*:|CPF\/CNPJ\s*:|NASCIMENTO\s*:|PESSOA\s*:/i.test(record);
+                
+                // Se a busca for apenas por pessoas, filtrar não-pessoas
+                if (searchType === 'pessoa' && !isPerson) {
+                    return false;
+                }
+                
+                // Aplicar filtros por tipo específico
+                if (searchType === 'nome' && !record.match(/NOME\s*:/i)) {
+                    return false;
+                }
+                if (searchType === 'cpf' && !record.match(/CPF\/CNPJ\s*:/i)) {
+                    return false;
+                }
+                if (searchType === 'telefone' && !record.match(/TELEFONE\s*:/i)) {
+                    return false;
+                }
+                if (searchType === 'placa' && !record.match(/PLACA\s*:/i)) {
+                    return false;
+                }
+                
+                // Verificar se o termo de busca está no registro
                 const normalizedRecord = normalizeText(record);
                 return normalizedRecord.includes(normalizedQuery);
             });
@@ -3615,6 +3653,84 @@ function searchInFile(query) {
             resolve(uniqueResults);
         }, 10); // Pequeno delay para não bloquear a interface
     });
+}
+
+// Função para buscar no conteúdo do banco de dados exibido com paginação
+function searchInDatabase(query) {
+    const databaseContent = document.getElementById('database-content');
+    const searchResultsElement = document.getElementById('database-search-results');
+    const searchCount = document.getElementById('database-search-count');
+    
+    if (!query || !fileDataCache) {
+        // Voltar ao modo normal de paginação
+        isSearchMode = false;
+        currentPage = 1;
+        displayCurrentPage();
+        searchResultsElement.style.display = 'none';
+        return 0;
+    }
+    
+    // Normalizar a consulta para facilitar a busca
+    const normalizedQuery = query.toLowerCase();
+    
+    // Dividir o conteúdo em registros
+    const records = fileDataCache.split(/\n\s*\n/).filter(r => r.trim());
+    
+    // Separar registros de pessoas e organizações
+    const personRecords = records.filter(record => 
+        /NOME\s*:|CPF\/CNPJ\s*:|NASCIMENTO\s*:|PESSOA\s*:/i.test(record) &&
+        record.toLowerCase().includes(normalizedQuery)
+    );
+    
+    // Usar os registros de pessoas como resultados prioritários
+    let matchedRecords = personRecords.length > 0 ? personRecords : records.filter(record => 
+        record.toLowerCase().includes(normalizedQuery)
+    );
+    
+    // Armazenar resultados para paginação
+    searchResultsElement.style.display = matchedRecords.length > 0 ? 'block' : 'none';
+    searchCount.textContent = matchedRecords.length;
+    
+    if (matchedRecords.length > 0) {
+        // Entrar no modo de busca com paginação
+        isSearchMode = true;
+        searchResults = matchedRecords;
+        currentPage = 1;
+        totalPages = Math.ceil(matchedRecords.length / pageSize);
+        
+        // Criar conteúdo destacado para a primeira página
+        const startIdx = 0;
+        const endIdx = Math.min(pageSize, matchedRecords.length);
+        const pageRecords = matchedRecords.slice(startIdx, endIdx);
+        
+        // Destacar o termo de busca em cada registro
+        const highlightedRecords = pageRecords.map(record => {
+            return record.replace(new RegExp(query, 'gi'), match => 
+                `<span class="highlight">${match}</span>`
+            );
+        });
+        
+        databaseContent.innerHTML = highlightedRecords.join('\n\n');
+        
+        // Atualizar informações de paginação
+        document.getElementById('current-page').textContent = currentPage;
+        document.getElementById('total-pages').textContent = totalPages;
+        document.getElementById('total-records').textContent = matchedRecords.length;
+        
+        // Atualizar controles de paginação
+        updatePaginationControls();
+        
+        // Rolar para o primeiro resultado
+        const firstHighlight = databaseContent.querySelector('.highlight');
+        if (firstHighlight) {
+            firstHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    } else {
+        // Nenhum resultado encontrado
+        databaseContent.textContent = 'Nenhum resultado encontrado para: ' + query;
+    }
+    
+    return matchedRecords.length;
 }
 
 // Função para formatar e exibir resultados da busca
@@ -3754,78 +3870,6 @@ function showDatabaseContent() {
     setTimeout(() => {
         document.getElementById('database-search-input').focus();
     }, 300);
-}
-
-// Função para buscar no conteúdo do banco de dados exibido com paginação
-function searchInDatabase(query) {
-    const databaseContent = document.getElementById('database-content');
-    const searchResults = document.getElementById('database-search-results');
-    const searchCount = document.getElementById('database-search-count');
-    
-    if (!query || !fileDataCache) {
-        // Voltar ao modo normal de paginação
-        isSearchMode = false;
-        currentPage = 1;
-        displayCurrentPage();
-        searchResults.style.display = 'none';
-        return 0;
-    }
-    
-    // Normalizar a consulta para facilitar a busca
-    const normalizedQuery = query.toLowerCase();
-    
-    // Dividir o conteúdo em registros
-    const records = fileDataCache.split(/\n\s*\n/).filter(r => r.trim());
-    
-    // Filtrar registros com base no termo de busca
-    const matchedRecords = records.filter(record => 
-        record.toLowerCase().includes(normalizedQuery)
-    );
-    
-    // Armazenar resultados para paginação
-    searchResults.style.display = matchedRecords.length > 0 ? 'block' : 'none';
-    searchCount.textContent = matchedRecords.length;
-    
-    if (matchedRecords.length > 0) {
-        // Entrar no modo de busca com paginação
-        isSearchMode = true;
-        searchResults = matchedRecords;
-        currentPage = 1;
-        totalPages = Math.ceil(matchedRecords.length / pageSize);
-        
-        // Criar conteúdo destacado para a primeira página
-        const startIdx = 0;
-        const endIdx = Math.min(pageSize, matchedRecords.length);
-        const pageRecords = matchedRecords.slice(startIdx, endIdx);
-        
-        // Destacar o termo de busca em cada registro
-        const highlightedRecords = pageRecords.map(record => {
-            return record.replace(new RegExp(query, 'gi'), match => 
-                `<span class="highlight">${match}</span>`
-            );
-        });
-        
-        databaseContent.innerHTML = highlightedRecords.join('\n\n');
-        
-        // Atualizar informações de paginação
-        document.getElementById('current-page').textContent = currentPage;
-        document.getElementById('total-pages').textContent = totalPages;
-        document.getElementById('total-records').textContent = matchedRecords.length;
-        
-        // Atualizar controles de paginação
-        updatePaginationControls();
-        
-        // Rolar para o primeiro resultado
-        const firstHighlight = databaseContent.querySelector('.highlight');
-        if (firstHighlight) {
-            firstHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    } else {
-        // Nenhum resultado encontrado
-        databaseContent.textContent = 'Nenhum resultado encontrado para: ' + query;
-    }
-    
-    return matchedRecords.length;
 }
 
 function initLogin() {
@@ -4070,6 +4114,7 @@ function initFileSearchModal() {
     const fileSearchQuery = document.getElementById('file-search-query');
     const fileSearchResults = document.getElementById('file-search-results');
     const fileSearchResultsContainer = document.getElementById('file-search-results-container');
+    const fileSearchType = document.getElementById('file-search-type');
     
     fileSearchBtn.addEventListener('click', function() {
         fileSearchModal.classList.add('active');
@@ -4086,7 +4131,7 @@ function initFileSearchModal() {
         fileSearchQuery.value = '';
         fileSearchResults.innerHTML = '';
         fileSearchResultsContainer.style.display = 'none';
-        document.getElementById('file-search-type').value = 'all';
+        fileSearchType.value = 'all';
     });
     
     runFileSearchBtn.addEventListener('click', function() {
@@ -4106,6 +4151,7 @@ function initFileSearchModal() {
     
     function executeFileSearch() {
         const query = fileSearchQuery.value.trim();
+        const searchType = fileSearchType.value;
         
         if (!query) {
             showNotification('Erro', 'Digite um termo para busca', 'warning');
@@ -4122,7 +4168,7 @@ function initFileSearchModal() {
         fileSearchResultsContainer.style.display = 'block';
         
         // Executar a busca de forma assíncrona para não bloquear a interface
-        searchInFile(query).then(results => {
+        searchInFile(query, searchType).then(results => {
             displaySearchResults(results, fileSearchResults);
             
             if (results.length > 0) {
@@ -4233,7 +4279,8 @@ function initSearch() {
         
         // Buscar também no arquivo de forma assíncrona para não travar a interface
         if (query.length >= 3) { // Só realizar busca em arquivo para consultas com pelo menos 3 caracteres
-            searchInFile(query).then(results => {
+            // Buscar priorizando registros de pessoas
+            searchInFile(query, 'pessoa').then(results => {
                 lastSearchResults = results;
                 searchSpinner.classList.remove('active');
                 
