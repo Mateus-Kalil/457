@@ -2295,7 +2295,7 @@
         
         <div class="logo">
             <div class="logo__icon"></div>
-            <div class="logo__text">MK-OSINT <span>v2.8.3</span></div>
+            <div class="logo__text">MK-OSINT <span>v1.1</span></div>
         </div>
         
         <nav>
@@ -2322,16 +2322,7 @@
     <div class="container">
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
-            <div class="search">
-                <i class="fa fa-search search__icon"></i>
-                <input type="text" class="search__input" id="search-input" placeholder="Buscar...">
-                <!-- Adicionado botão de busca -->
-                <button id="search-button" class="search__button">
-                    <i class="fa fa-search"></i>
-                </button>
-                <!-- Adicionado indicador de carregamento -->
-                <div class="search__spinner" id="search-spinner"></div>
-            </div>
+            <!-- Removido a barra de busca conforme solicitado -->
             
             <div class="menu">
                 <div class="menu__title">Principal</div>
@@ -2340,10 +2331,6 @@
                         <i class="fa fa-dashboard menu__icon"></i>
                         Dashboard
                     </a>
-                    <a href="#" class="menu__item" data-section="profiles">
-                        <i class="fa fa-users menu__icon"></i>
-                        Perfis
-                    </a>
                     <a href="#" class="menu__item" data-section="classrooms">
                         <i class="fa fa-classroom menu__icon"></i>
                         Salas
@@ -2351,10 +2338,6 @@
                     <a href="#" class="menu__item" data-section="connections">
                         <i class="fa fa-network menu__icon"></i>
                         Conexões
-                    </a>
-                    <a href="#" class="menu__item" data-section="geolocation">
-                        <i class="fa fa-map menu__icon"></i>
-                        Geolocalização
                     </a>
                     <a href="#" class="menu__item" data-section="geolocation">
                         <i class="fa fa-map menu__icon"></i>
@@ -2391,10 +2374,7 @@
                 </div>
                 
                 <div class="action-buttons">
-                    <button class="btn btn--outline" id="file-search-btn">
-                        <i class="fa fa-search btn__icon"></i>
-                        Busca em Arquivo
-                    </button>
+                    <!-- Removido o botão "Busca em Arquivo" conforme solicitado -->
                     <button class="btn btn--outline" id="filter-btn">
                         <i class="fa fa-filter btn__icon"></i>
                         Filtrar
@@ -4273,7 +4253,6 @@ function initGlobalEvents() {
 
 // Função para inicializar o modal de busca em arquivo
 function initFileSearchModal() {
-    const fileSearchBtn = document.getElementById('file-search-btn');
     const fileSearchModal = document.getElementById('file-search-modal');
     const fileSearchModalClose = document.getElementById('file-search-modal-close');
     const clearFileSearchBtn = document.getElementById('clear-file-search');
@@ -4283,13 +4262,6 @@ function initFileSearchModal() {
     const fileSearchResults = document.getElementById('file-search-results');
     const fileSearchResultsContainer = document.getElementById('file-search-results-container');
     const fileSearchType = document.getElementById('file-search-type');
-    
-    fileSearchBtn.addEventListener('click', function() {
-        fileSearchModal.classList.add('active');
-        setTimeout(() => {
-            fileSearchQuery.focus();
-        }, 300);
-    });
     
     fileSearchModalClose.addEventListener('click', function() {
         fileSearchModal.classList.remove('active');
@@ -4412,70 +4384,6 @@ function initDatabaseModal() {
         if (e.key === 'Enter') {
             const query = this.value.trim();
             searchInDatabase(query);
-        }
-    });
-}
-
-// Modifica a função initSearch para incluir busca no arquivo APENAS quando o botão é clicado ou Enter é pressionado
-function initSearch() {
-    const searchInput = document.getElementById('search-input');
-    const searchButton = document.getElementById('search-button');
-    const searchSpinner = document.getElementById('search-spinner');
-    
-    // Função para executar a busca
-    function executeSearch() {
-        const query = searchInput.value.trim();
-        
-        if (query.length === 0) {
-            activeFilters.search = '';
-            applyFilters();
-            return;
-        }
-        
-        // Mostrar spinner durante a busca
-        searchSpinner.classList.add('active');
-        
-        // Definir o filtro de busca
-        activeFilters.search = query;
-        
-        // Sempre mostrar a sala quando uma busca é feita
-        showClassroom = true;
-        document.getElementById('classroom-btn').textContent = 'Ocultar Perfis 1TDCPH';
-        
-        // Aplicar filtros nos perfis do sistema
-        applyFilters();
-        
-        // Buscar também no arquivo de forma assíncrona para não travar a interface
-        if (query.length >= 3) { // Só realizar busca em arquivo para consultas com pelo menos 3 caracteres
-            // Buscar priorizando registros de pessoas
-            searchInFile(query, 'pessoa').then(results => {
-                lastSearchResults = results;
-                searchSpinner.classList.remove('active');
-                
-                if (results.length > 0) {
-                    showNotification('Resultados Encontrados', `${results.length} resultado(s) encontrado(s) no arquivo`, 'success');
-                    
-                    // Verificar se o modal de busca já está aberto antes de abri-lo novamente
-                    const fileSearchModal = document.getElementById('file-search-modal');
-                    if (!fileSearchModal.classList.contains('active')) {
-                        openFileSearchModal(query, results);
-                    }
-                } else if (document.querySelector('#profiles-table tbody').children.length === 0) {
-                    showNotification('Busca no Sistema', 'Nenhum perfil encontrado', 'info');
-                }
-            });
-        } else {
-            searchSpinner.classList.remove('active');
-        }
-    }
-    
-    // Evento de clique no botão de busca
-    searchButton.addEventListener('click', executeSearch);
-    
-    // Evento de pressionar Enter no campo de busca
-    searchInput.addEventListener('keyup', function(e) {
-        if (e.key === 'Enter') {
-            executeSearch();
         }
     });
 }
@@ -4646,10 +4554,6 @@ function initDashboard() {
     initFilters();
     
     initProfileModal();
-    
-    initSearch();
-
-    initClassroomButton();
     
     // Exibir dica sobre a senha para usuários em dispositivos móveis
     if (window.innerWidth <= 768) {
@@ -5676,6 +5580,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 1000);
 });
+
+// Inicializar o botão de sala
+initClassroomButton();
     </script>
 </body>
 </html>
