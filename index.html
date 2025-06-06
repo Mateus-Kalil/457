@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-<!-- Cabeçalho e CSS mantidos idênticos ao original com adições -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -9,7 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
     <style>
-        /* CSS mantido idêntico ao original */
         :root {
             --primary: #00f3ff;
             --secondary: #9933ff;
@@ -313,7 +311,7 @@
             width: 100%;
             padding: 10px 15px;
             padding-left: 40px;
-            padding-right: 45px; /* Espaço para o botão de busca */
+            padding-right: 45px;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 10px;
@@ -337,7 +335,6 @@
             font-size: 16px;
         }
         
-        /* Novo botão de busca adicionado */
         .search__button {
             position: absolute;
             right: 5px;
@@ -356,10 +353,9 @@
             background: rgba(0, 243, 255, 0.2);
         }
         
-        /* Adicionando um indicador de carregamento para a busca */
         .search__spinner {
             position: absolute;
-            right: 50px; /* Ajustado para dar espaço ao botão */
+            right: 50px;
             top: 50%;
             transform: translateY(-50%);
             width: 16px;
@@ -1358,7 +1354,6 @@
             color: rgba(255,255,255,0.5);
         }
         
-        /* Login Screen */
         .login-screen {
             position: fixed;
             top: 0;
@@ -1475,7 +1470,6 @@
             box-shadow: 0 0 0 3px rgba(0, 243, 255, 0.2);
         }
 
-        /* Melhorando a visibilidade de input de senha */
         input[type="password"] {
             color: white;
             letter-spacing: 2px;
@@ -1508,7 +1502,6 @@
             display: none;
         }
         
-        /* Settings Modal */
         .settings-section {
             margin-bottom: 25px;
         }
@@ -1627,7 +1620,6 @@
             pointer-events: none;
         }
         
-        /* Adicionado para o botão de sala */
         .classroom-btn {
             padding: 8px 15px;
             border-radius: 20px;
@@ -1648,7 +1640,6 @@
             box-shadow: 0 5px 15px rgba(0, 243, 255, 0.3);
         }
         
-        /* Mobile Menu */
         .mobile-menu-toggle {
             width: 36px;
             height: 36px;
@@ -1720,7 +1711,6 @@
             visibility: visible;
         }
         
-        /* Estilos para busca em arquivo */
         .search-result-item {
             margin-bottom: 15px;
             border-radius: 10px;
@@ -1750,7 +1740,6 @@
             padding: 6px 12px;
         }
         
-        /* Melhorias no seletor de tipo de busca */
         #file-search-type {
             background-color: rgba(255,255,255,0.1);
             color: white;
@@ -1766,7 +1755,6 @@
             padding: 10px;
         }
         
-        /* Estilos para o banco de dados */
         .database-content {
             max-height: 60vh;
             overflow-y: auto;
@@ -1849,7 +1837,6 @@
             border-radius: 3px;
         }
         
-        /* NOVA ADIÇÃO: Controles de paginação para o Banco de Dados */
         .database-pagination {
             display: flex;
             justify-content: space-between;
@@ -1915,7 +1902,6 @@
             margin-right: 10px;
         }
         
-        /* Estilo para blocos de resultados de busca */
         .search-result-record {
             margin-bottom: 20px;
             padding: 15px;
@@ -1927,7 +1913,6 @@
             line-height: 1.5;
         }
         
-        /* Estilo para visualização de registro completo */
         .full-record-container {
             margin-top: 15px;
             padding: 10px;
@@ -1941,7 +1926,6 @@
             line-height: 1.5;
         }
         
-        /* Responsive styles - these were overhauled */
         @media (min-width: 576px) {
             header {
                 padding: 15px 20px;
@@ -2115,7 +2099,6 @@
             }
         }
         
-        /* Icons (Font Awesome style) */
         .fa {
             font-family: sans-serif;
         }
@@ -2254,10 +2237,8 @@
     </style>
 </head>
 <body>
-    <!-- Conteúdo HTML mantido idêntico ao original com adições -->
     <canvas id="background-canvas"></canvas>
     
-    <!-- Preloader -->
     <div class="preloader">
         <div class="preloader__logo"></div>
         <div class="preloader__progress">
@@ -2266,7 +2247,6 @@
         <div class="preloader__text">Carregando sistema OSINT...</div>
     </div>
     
-    <!-- Login Screen -->
     <div class="login-screen" id="login-screen">
         <div class="login-box">
             <div class="login-logo">
@@ -2287,7 +2267,6 @@
         </div>
     </div>
     
-    <!-- Header -->
     <header>
         <div class="mobile-menu-toggle" id="mobile-menu-toggle">
             <span></span>
@@ -2315,14 +2294,10 @@
         </div>
     </header>
     
-    <!-- Sidebar Overlay (Mobile) -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
     
-    <!-- Main Container -->
     <div class="container">
-        <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
-            <!-- Removido a barra de busca conforme solicitado -->
             
             <div class="menu">
                 <div class="menu__title">Principal</div>
@@ -2365,7 +2340,6 @@
             </div>
         </div>
         
-        <!-- Main Content -->
         <div class="main-content">
             <div class="page-header">
                 <div>
@@ -2374,19 +2348,13 @@
                 </div>
                 
                 <div class="action-buttons">
-                    <!-- Removido o botão "Busca em Arquivo" conforme solicitado -->
-                    <button class="btn btn--outline" id="filter-btn">
-                        <i class="fa fa-filter btn__icon"></i>
-                        Filtrar
-                    </button>
                     <button class="btn btn--primary" id="database-btn">
                         <i class="fa fa-database btn__icon"></i>
-                        Banco de Dados
+                        🔎Busca de Dados
                     </button>
                 </div>
             </div>
             
-            <!-- Dashboard Content -->
             <div class="dashboard" id="dashboard-content">
                 <div class="card">
                     <div class="card__header">
@@ -2527,7 +2495,6 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Preenchido dinamicamente via JavaScript -->
                                 </tbody>
                             </table>
                         </div>
@@ -2557,7 +2524,6 @@
         </div>
     </div>
     
-    <!-- Profile Modal -->
     <div class="modal" id="profile-modal">
         <div class="modal__content">
             <div class="modal__close" id="profile-modal-close">
@@ -2636,7 +2602,6 @@
                                                 </tr>
                                             </thead>
                                             <tbody id="connections-table">
-                                                <!-- Preenchido dinamicamente via JavaScript -->
                                             </tbody>
                                         </table>
                                     </div>
@@ -2678,7 +2643,6 @@
         </div>
     </div>
     
-    <!-- Settings Modal -->
     <div class="modal" id="settings-modal">
         <div class="modal__content">
             <div class="modal__close" id="settings-modal-close">
@@ -2819,73 +2783,6 @@
         </div>
     </div>
     
-    <!-- Filter Modal -->
-    <div class="modal" id="filter-modal">
-        <div class="modal__content">
-            <div class="modal__close" id="filter-modal-close">
-                <i class="fa fa-close"></i>
-            </div>
-            <div class="modal__header">
-                <h2 class="modal__title">Filtrar Resultados</h2>
-                <div class="modal__subtitle">Refine a exibição dos dados</div>
-            </div>
-            <div class="modal__body">
-                <div class="settings-section">
-                    <h3 class="settings-section__title">Filtros</h3>
-                    <div class="settings-group">
-                        <div class="settings-item">
-                            <div>
-                                <div class="settings-item__label">Status</div>
-                                <div class="settings-item__description">Filtrar por status do perfil</div>
-                            </div>
-                            <div class="settings-dropdown">
-                                <select id="status-filter">
-                                    <option value="all" selected>Todos</option>
-                                    <option value="active">Verificados</option>
-                                    <option value="pending">Pendentes</option>
-                                    <option value="inactive">Inativos</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="settings-item">
-                            <div>
-                                <div class="settings-item__label">Gênero</div>
-                                <div class="settings-item__description">Filtrar por gênero</div>
-                            </div>
-                            <div class="settings-dropdown">
-                                <select id="gender-filter">
-                                    <option value="all" selected>Todos</option>
-                                    <option value="M">Masculino</option>
-                                    <option value="F">Feminino</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="settings-item">
-                            <div>
-                                <div class="settings-item__label">Idade</div>
-                                <div class="settings-item__description">Filtrar por faixa etária</div>
-                            </div>
-                            <div class="settings-dropdown">
-                                <select id="age-filter">
-                                    <option value="all" selected>Todos</option>
-                                    <option value="18-19">18-19 anos</option>
-                                    <option value="20-21">20-21 anos</option>
-                                    <option value="22-23">22-23 anos</option>
-                                    <option value="24+">24+ anos</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal__footer">
-                <button class="btn btn--outline" id="clear-filters">Limpar Filtros</button>
-                <button class="btn btn--primary" id="apply-filters">Aplicar Filtros</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Database Modal com Paginação -->
     <div class="modal" id="database-modal">
         <div class="modal__content">
             <div class="modal__close" id="database-modal-close">
@@ -2905,7 +2802,6 @@
                 </div>
                 <pre id="database-content" class="database-content">Carregando conteúdo do banco de dados...</pre>
                 
-                <!-- Nova seção de paginação -->
                 <div class="database-pagination">
                     <div class="database-pagination-info">
                         Exibindo página <span id="current-page">1</span> de <span id="total-pages">1</span>
@@ -2934,7 +2830,6 @@
         </div>
     </div>
     
-    <!-- File Search Modal -->
     <div class="modal" id="file-search-modal">
         <div class="modal__content">
             <div class="modal__close" id="file-search-modal-close">
@@ -2963,7 +2858,6 @@
                                 <option value="pessoa">Apenas Pessoas</option>
                             </select>
                         </div>
-                        <!-- Botão de busca adicionado -->
                         <button class="btn btn--primary" id="run-file-search-inner" style="margin-top: 15px; width: 100%;">
                             <i class="fa fa-search btn__icon"></i>
                             Buscar
@@ -2985,7 +2879,6 @@
         </div>
     </div>
     
-    <!-- Notification Popup -->
     <div class="notification" id="notification">
         <div class="notification__icon" style="background:rgba(0, 243, 255, 0.1); color:var(--primary)">
             <i class="fa fa-info"></i>
@@ -2999,7 +2892,6 @@
         </div>
     </div>
     
-    <!-- Floating Node Info Card -->
     <div class="floating-card" id="node-info">
         <div class="floating-card__title">
             <i class="fa fa-user" style="color: var(--primary)"></i>
@@ -3024,8 +2916,7 @@
     </div>
     
     <script>
-        // Dados do sistema com RMs adicionados
-        const profiles = [
+const profiles = [
     {
         id: 1,
         name: "Aquiles Fonseca de Almeida",
@@ -3401,12 +3292,9 @@ const relationships = [
 ];
 
 let showClassroom = false;
-// Variável para controlar o nível de acesso (normal ou admin)
 let isAdmin = false;
-// Armazenar os dados do arquivo para busca
 let fileDataCache = null;
 
-// Variáveis para paginação do banco de dados
 let databasePages = [];
 let currentPage = 1;
 let pageSize = 50;
@@ -3414,7 +3302,6 @@ let totalPages = 1;
 let isSearchMode = false;
 let searchResults = null;
 
-// Variável para armazenar os resultados da busca
 let lastSearchResults = [];
 let isSearching = false;
 
@@ -3452,11 +3339,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initLogin();
     initGlobalEvents();
     
-    // Carregar o arquivo 1.txt quando a página carregar
     loadDataFile();
 });
 
-// Função para carregar o arquivo 1.txt
 function loadDataFile() {
     fetch('1.txt')
         .then(response => {
@@ -3469,7 +3354,6 @@ function loadDataFile() {
             fileDataCache = data;
             console.log('Arquivo 1.txt carregado com sucesso');
             
-            // Pré-processar dados para paginação
             prepareDataForPagination(data);
         })
         .catch(error => {
@@ -3478,20 +3362,15 @@ function loadDataFile() {
         });
 }
 
-// Função para preparar os dados para paginação
 function prepareDataForPagination(data) {
-    // Tenta identificar blocos de consulta que começam com marcadores como "CONSULTA DE CPF" ou "CONSULTA DE CNPJ"
     const blockPattern = /(?:=+\s*CONSULTA|\🔍\s*CONSULTA|👤\s*DADOS PESSOAIS)/i;
     
-    // Dividir o conteúdo em registros completos
     const records = data.split(blockPattern)
         .filter(block => block && block.trim())
-        .map(block => blockPattern.source.charAt(0) + block); // Recolocar o primeiro caractere do padrão
+        .map(block => blockPattern.source.charAt(0) + block);
     
-    // Calcular o número total de páginas
     totalPages = Math.ceil(records.length / pageSize);
     
-    // Criar páginas
     databasePages = [];
     for (let i = 0; i < totalPages; i++) {
         const startIdx = i * pageSize;
@@ -3500,12 +3379,10 @@ function prepareDataForPagination(data) {
         databasePages.push(pageRecords.join('\n\n'));
     }
     
-    // Atualizar informações de paginação
     document.getElementById('total-pages').textContent = totalPages;
     document.getElementById('total-records').textContent = records.length;
 }
 
-// Função para exibir a página atual
 function displayCurrentPage() {
     const databaseContent = document.getElementById('database-content');
     const loading = document.createElement('div');
@@ -3514,17 +3391,13 @@ function displayCurrentPage() {
     databaseContent.innerHTML = '';
     databaseContent.appendChild(loading);
     
-    // Usar setTimeout para dar tempo ao navegador renderizar o indicador de carregamento
     setTimeout(() => {
         if (isSearchMode && searchResults) {
-            // Exibir resultados da busca paginados
             const startIdx = (currentPage - 1) * pageSize;
             const endIdx = Math.min(startIdx + pageSize, searchResults.length);
             const pageRecords = searchResults.slice(startIdx, endIdx);
             
-            // Formatar os resultados com estilo melhorado, preservando a formatação original
             const formattedRecords = pageRecords.map(record => {
-                // Verificar se há um termo de busca atual para destacar
                 const query = document.getElementById('database-search-input').value;
                 
                 if (query) {
@@ -3539,7 +3412,6 @@ function displayCurrentPage() {
             
             databaseContent.innerHTML = formattedRecords.join('');
             
-            // Adicionar estilos se não existirem
             if (!document.getElementById('search-result-style')) {
                 const style = document.createElement('style');
                 style.id = 'search-result-style';
@@ -3565,26 +3437,21 @@ function displayCurrentPage() {
                 document.head.appendChild(style);
             }
             
-            // Atualizar informações de paginação
             document.getElementById('current-page').textContent = currentPage;
             document.getElementById('total-pages').textContent = Math.ceil(searchResults.length / pageSize);
             document.getElementById('total-records').textContent = searchResults.length;
         } else if (databasePages && databasePages[currentPage - 1]) {
-            // Exibir página normal
             databaseContent.textContent = databasePages[currentPage - 1];
             
-            // Atualizar informações de paginação
             document.getElementById('current-page').textContent = currentPage;
         } else {
             databaseContent.textContent = 'Nenhum dado disponível para exibição.';
         }
         
-        // Atualizar estado dos botões de navegação
         updatePaginationControls();
     }, 10);
 }
 
-// Função para atualizar os controles de paginação
 function updatePaginationControls() {
     const prevPageBtn = document.getElementById('prev-page');
     const nextPageBtn = document.getElementById('next-page');
@@ -3593,27 +3460,21 @@ function updatePaginationControls() {
     nextPageBtn.disabled = currentPage >= totalPages;
 }
 
-// Função para normalizar textos (remover pontuação e acentos)
 function normalizeText(text) {
     if (!text) return '';
     
-    // Remover pontuação e converter para minúsculas
     const normalized = text.toLowerCase()
         .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '')
         .replace(/\s+/g, ' ');
     
-    // Remover acentos
     return normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
-// Função para escapar caracteres especiais em expressões regulares
 function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Função para buscar no arquivo 1.txt - versão melhorada
 function searchInFile(query, searchType = 'all') {
-    // Mostrar notificação de busca em andamento para buscas potencialmente lentas
     if (query && query.length > 3) {
         showNotification('Buscando...', 'Analisando registros do arquivo', 'info');
     }
@@ -3625,31 +3486,24 @@ function searchInFile(query, searchType = 'all') {
                 return;
             }
             
-            // Normalizar a consulta para facilitar a busca
             const normalizedQuery = normalizeText(query);
             
-            // Usar um padrão para identificar blocos de informação pessoal completos
             const blockPattern = /(?:=+\s*CONSULTA|\🔍\s*CONSULTA|👤\s*DADOS PESSOAIS|NOME\s*:|CPF\s*:|PESSOA\s*:)/i;
             
-            // Dividir o conteúdo em blocos completos
             const blocks = fileDataCache.split(blockPattern)
                 .filter(block => block && block.trim());
             
-            // Recriar os registros completos
             const records = [];
             for (let i = 0; i < blocks.length; i++) {
-                // Tentar encontrar o início do bloco (que foi removido pelo split)
                 let fullBlock = blocks[i];
                 const matches = fileDataCache.match(new RegExp(`(${blockPattern.source})${escapeRegExp(blocks[i].substring(0, 50))}`, 'i'));
                 
                 if (matches && matches[1]) {
                     fullBlock = matches[1] + fullBlock;
                 } else {
-                    // Se não conseguir encontrar, use um marcador genérico
                     fullBlock = "CONSULTA " + fullBlock;
                 }
                 
-                // Verificar onde termina este bloco (no próximo marcador ou várias linhas em branco)
                 const endMatch = fullBlock.match(/\n\s*\n\s*\n/);
                 if (endMatch) {
                     fullBlock = fullBlock.substring(0, endMatch.index + endMatch[0].length);
@@ -3658,20 +3512,15 @@ function searchInFile(query, searchType = 'all') {
                 records.push(fullBlock);
             }
             
-            // Filtrar registros com base no tipo de busca e termo
             const matchedRecords = records.filter(record => {
-                // Normalizar o registro para busca
                 const normalizedRecord = normalizeText(record);
                 
-                // Verificar se o registro parece ser de pessoa (tem campos como NOME ou CPF)
                 const isPerson = /nome|cpf|nascimento|dados pessoais/i.test(normalizedRecord);
                 
-                // Se a busca for apenas por pessoas, filtrar não-pessoas
                 if (searchType === 'pessoa' && !isPerson) {
                     return false;
                 }
                 
-                // Aplicar filtros por tipo específico
                 if (searchType === 'nome' && !record.match(/NOME\s*:/i)) {
                     return false;
                 }
@@ -3685,11 +3534,9 @@ function searchInFile(query, searchType = 'all') {
                     return false;
                 }
                 
-                // Verificar se o termo de busca está no registro
                 return normalizedRecord.includes(normalizedQuery);
             });
             
-            // Extrair informações relevantes dos registros
             const processedResults = matchedRecords.map(record => {
                 const nameMatch = record.match(/NOME\s*:\s*([^\n]+)/i);
                 const cpfMatch = record.match(/CPF\s*:|CPF\/CNPJ\s*:\s*([^\n]+)/i);
@@ -3711,7 +3558,6 @@ function searchInFile(query, searchType = 'all') {
                 };
             });
             
-            // Remover duplicatas baseadas no CPF
             const uniqueResults = [];
             const uniqueCPFs = new Set();
             
@@ -3725,18 +3571,16 @@ function searchInFile(query, searchType = 'all') {
             });
             
             resolve(uniqueResults);
-        }, 10); // Pequeno delay para não bloquear a interface
+        }, 10);
     });
 }
 
-// Função para buscar no conteúdo do banco de dados exibido com paginação
 function searchInDatabase(query) {
     const databaseContent = document.getElementById('database-content');
     const searchResultsElement = document.getElementById('database-search-results');
     const searchCount = document.getElementById('database-search-count');
     
     if (!query || !fileDataCache) {
-        // Voltar ao modo normal de paginação
         isSearchMode = false;
         currentPage = 1;
         displayCurrentPage();
@@ -3744,57 +3588,43 @@ function searchInDatabase(query) {
         return 0;
     }
     
-    // Normalizar a consulta para facilitar a busca
     const normalizedQuery = query.toLowerCase();
     
-    // Identificar registros de pessoas vs outros tipos de dados
-    // Uma entrada de pessoa geralmente contém campos como NOME, CPF, NASCIMENTO, etc.
     const personPattern = /(NOME|CPF|NASCIMENTO|DADOS PESSOAIS)/i;
     const companyPattern = /(RAZÃO SOCIAL|CNPJ|CAPITAL SOCIAL)/i;
     
-    // Dividir o conteúdo em registros completos - usando blocos maiores de texto
-    // Tentamos identificar blocos de consulta que começam com marcadores como "CONSULTA DE CPF" ou "CONSULTA DE CNPJ"
     const blockPattern = /(?:=+\s*CONSULTA|\🔍\s*CONSULTA|👤\s*DADOS PESSOAIS)/i;
     const records = fileDataCache.split(blockPattern)
         .filter(block => block && block.trim())
-        .map(block => blockPattern.source.charAt(0) + block); // Recolocar o primeiro caractere do padrão no início
+        .map(block => blockPattern.source.charAt(0) + block);
     
-    // Encontrar registros que contêm o termo de busca
     const matchedRecords = records.filter(record => 
         record.toLowerCase().includes(normalizedQuery)
     );
     
-    // Armazenar resultados para paginação
     searchResultsElement.style.display = matchedRecords.length > 0 ? 'block' : 'none';
     searchCount.textContent = matchedRecords.length;
     
     if (matchedRecords.length > 0) {
-        // Entrar no modo de busca com paginação
         isSearchMode = true;
         searchResults = matchedRecords;
         currentPage = 1;
         totalPages = Math.ceil(matchedRecords.length / pageSize);
         
-        // Criar conteúdo destacado para a primeira página
         const startIdx = 0;
         const endIdx = Math.min(pageSize, matchedRecords.length);
         const pageRecords = matchedRecords.slice(startIdx, endIdx);
         
-        // Destacar o termo de busca em cada registro completo
         const highlightedRecords = pageRecords.map(record => {
-            // Destacar os termos de busca mas preservar toda a formatação original
             const highlightedRecord = record.replace(new RegExp(query, 'gi'), match => 
                 `<span class="highlight">${match}</span>`
             );
             
-            // Adicionar cada registro em um container com estilo
             return `<div class="search-result-record">${highlightedRecord}</div>`;
         });
         
-        // Adicionar os registros ao conteúdo
         databaseContent.innerHTML = highlightedRecords.join('');
         
-        // Adicionar estilos diretamente para garantir a formatação correta
         const style = document.createElement('style');
         style.textContent = `
             .search-result-record {
@@ -3816,7 +3646,6 @@ function searchInDatabase(query) {
             }
         `;
         
-        // Remover estilo anterior se existir
         const existingStyle = document.getElementById('search-result-style');
         if (existingStyle) {
             existingStyle.remove();
@@ -3825,30 +3654,24 @@ function searchInDatabase(query) {
         style.id = 'search-result-style';
         document.head.appendChild(style);
         
-        // Atualizar informações de paginação
         document.getElementById('current-page').textContent = currentPage;
         document.getElementById('total-pages').textContent = totalPages;
         document.getElementById('total-records').textContent = matchedRecords.length;
         
-        // Atualizar controles de paginação
         updatePaginationControls();
         
-        // Rolar para o primeiro resultado
         const firstHighlight = databaseContent.querySelector('.highlight');
         if (firstHighlight) {
             firstHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     } else {
-        // Nenhum resultado encontrado
         databaseContent.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">Nenhum resultado encontrado para: ' + query + '</div>';
     }
     
     return matchedRecords.length;
 }
 
-// Função para formatar o registro para exibição
 function formatRecordForDisplay(record) {
-    // Substituir emojis e outros caracteres especiais por HTML
     const formatted = record
         .replace(/🔍/g, '🔍')
         .replace(/👤/g, '👤')
@@ -3860,7 +3683,6 @@ function formatRecordForDisplay(record) {
     return formatted;
 }
 
-// Função para exibir os resultados da busca
 function displaySearchResults(results, container) {
     if (results.length === 0) {
         container.innerHTML = '<div style="text-align: center; padding: 15px; color: var(--danger);">Nenhum resultado encontrado para a busca.</div>';
@@ -3870,7 +3692,6 @@ function displaySearchResults(results, container) {
     let html = '';
     
     results.forEach(result => {
-        // Formatar o registro completo para exibição formatada
         const formattedRecord = formatRecordForDisplay(result.fullRecord);
         
         html += `
@@ -3897,7 +3718,6 @@ function displaySearchResults(results, container) {
     
     container.innerHTML = html;
     
-    // Adicionar event listeners para os botões
     document.querySelectorAll('.btn-add-profile').forEach(button => {
         button.addEventListener('click', function() {
             const recordData = decodeURIComponent(this.getAttribute('data-record'));
@@ -3919,7 +3739,6 @@ function displaySearchResults(results, container) {
     });
 }
 
-// Função para adicionar um perfil ao sistema a partir do registro
 function addProfileFromRecord(record) {
     const nameMatch = record.match(/NOME\s*:\s*([^\n]+)/i);
     const cpfMatch = record.match(/CPF\s*:|CPF\/CNPJ\s*:\s*([^\n]+)/i);
@@ -3931,7 +3750,6 @@ function addProfileFromRecord(record) {
         const name = nameMatch[1].trim();
         const cpf = cpfMatch ? cpfMatch[1].trim() : "Não informado";
         
-        // Verificar se o perfil já existe
         const existingProfile = profiles.find(p => 
             (p.cpf === cpf && cpf !== "Não informado") || 
             (p.name.toLowerCase() === name.toLowerCase() && p.cpf === cpf)
@@ -3958,7 +3776,6 @@ function addProfileFromRecord(record) {
         
         profiles.push(newProfile);
         
-        // Adicionar conexões aleatórias para o novo perfil
         const randomConnections = Math.floor(Math.random() * 3) + 1;
         for (let i = 0; i < randomConnections; i++) {
             const targetId = Math.floor(Math.random() * 15) + 1;
@@ -3982,7 +3799,6 @@ function addProfileFromRecord(record) {
     }
 }
 
-// Função para abrir o modal de busca em arquivo com resultados
 function openFileSearchModal(query, results) {
     const fileSearchModal = document.getElementById('file-search-modal');
     const fileSearchQuery = document.getElementById('file-search-query');
@@ -3995,7 +3811,6 @@ function openFileSearchModal(query, results) {
     fileSearchModal.classList.add('active');
 }
 
-// Função para mostrar o conteúdo do banco de dados (arquivo 1.txt)
 function showDatabaseContent() {
     const databaseModal = document.getElementById('database-modal');
     const databaseContent = document.getElementById('database-content');
@@ -4007,14 +3822,11 @@ function showDatabaseContent() {
         return;
     }
     
-    // Resetar configurações de paginação
     isSearchMode = false;
     currentPage = 1;
     
-    // Exibir a primeira página
     displayCurrentPage();
     
-    // Focar automaticamente no campo de busca
     setTimeout(() => {
         document.getElementById('database-search-input').focus();
     }, 300);
@@ -4026,9 +3838,7 @@ function initLogin() {
     const accessCode = document.getElementById('access-code');
     const loginError = document.getElementById('login-error');
     
-    // Exibir a senha digitada como feedback visual
     accessCode.addEventListener('input', function() {
-        // Isso vai mostrar o feedback visual sem modificar o tipo do campo
         if (this.value.length > 0) {
             this.style.backgroundColor = 'rgba(255,255,255,0.1)';
         } else {
@@ -4047,7 +3857,6 @@ function initLogin() {
     function authenticate() {
         const code = accessCode.value.trim();
         
-        // Alerta com a senha para testes (apenas para desenvolvimento)
         if (code === '') {
             showLoginError("Digite a senha");
             return;
@@ -4218,7 +4027,6 @@ function initGlobalEvents() {
         
         showNotification('Navegação', `Acessando ${pageTitle.textContent}`, 'info');
         
-        // Em mobile, fechar o menu lateral após navegação
         if (window.innerWidth < 992) {
             sidebar.classList.remove('active');
             sidebarOverlay.classList.remove('active');
@@ -4251,7 +4059,6 @@ function initGlobalEvents() {
     });
 }
 
-// Função para inicializar o modal de busca em arquivo
 function initFileSearchModal() {
     const fileSearchModal = document.getElementById('file-search-modal');
     const fileSearchModalClose = document.getElementById('file-search-modal-close');
@@ -4282,7 +4089,6 @@ function initFileSearchModal() {
         executeFileSearch();
     });
     
-    // Permitir pesquisar pressionando Enter
     fileSearchQuery.addEventListener('keyup', function(e) {
         if (e.key === 'Enter') {
             executeFileSearch();
@@ -4303,11 +4109,9 @@ function initFileSearchModal() {
             return;
         }
         
-        // Mostrar indicador de carregamento
         fileSearchResults.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="loading__spinner" style="display: inline-block; margin-right: 10px;"></div> Buscando...</div>';
         fileSearchResultsContainer.style.display = 'block';
         
-        // Executar a busca de forma assíncrona para não bloquear a interface
         searchInFile(query, searchType).then(results => {
             displaySearchResults(results, fileSearchResults);
             
@@ -4320,7 +4124,6 @@ function initFileSearchModal() {
     }
 }
 
-// Função para inicializar o modal de banco de dados com paginação
 function initDatabaseModal() {
     const databaseBtn = document.getElementById('database-btn');
     const databaseModal = document.getElementById('database-modal');
@@ -4353,7 +4156,6 @@ function initDatabaseModal() {
         databaseSearchInput.focus();
     });
     
-    // Controles de paginação
     prevPageBtn.addEventListener('click', function() {
         if (currentPage > 1) {
             currentPage--;
@@ -4371,7 +4173,6 @@ function initDatabaseModal() {
     pageSizeSelect.addEventListener('change', function() {
         pageSize = parseInt(this.value);
         
-        // Recalcular paginação
         if (fileDataCache) {
             prepareDataForPagination(fileDataCache);
             currentPage = 1;
@@ -4379,7 +4180,6 @@ function initDatabaseModal() {
         }
     });
     
-    // Pesquisar com Enter ou botão de pesquisa (não automático ao digitar)
     databaseSearchInput.addEventListener('keyup', function(e) {
         if (e.key === 'Enter') {
             const query = this.value.trim();
@@ -4443,7 +4243,6 @@ function initBackgroundAnimation() {
     pointLight2.position.set(-10, -10, -10);
     scene.add(pointLight2);
     
-    // Reduzir o número de partículas em dispositivos móveis
     const isMobile = window.innerWidth < 768;
     const particlesCount = isMobile ? 300 : 800;
     const positions = new Float32Array(particlesCount * 3);
@@ -4513,7 +4312,6 @@ function initBackgroundAnimation() {
     const animate = () => {
         const elapsedTime = clock.getElapsedTime();
         
-        // Reduzir a velocidade de animação em dispositivos móveis para economizar bateria
         const speed = isMobile ? 0.01 : 0.03;
         particles.rotation.y = elapsedTime * speed;
         particles.rotation.x = elapsedTime * (speed * 0.6);
@@ -4521,7 +4319,6 @@ function initBackgroundAnimation() {
         lines.rotation.y = elapsedTime * (speed * 0.6);
         lines.rotation.x = elapsedTime * (speed * 0.4);
         
-        // Animar partículas apenas em desktops para poupar recursos em dispositivos móveis
         if (!isMobile) {
             const positions = particles.geometry.attributes.position.array;
             for(let i = 0; i < particlesCount; i++) {
@@ -4551,20 +4348,15 @@ function initDashboard() {
     
     initNetworkGraph();
     
-    initFilters();
-    
     initProfileModal();
     
-    // Exibir dica sobre a senha para usuários em dispositivos móveis
     if (window.innerWidth <= 768) {
         showNotification('Dica de acesso', 'Use a senha para acesso normal', 'info');
     }
     
-    // Verificar orientação para dispositivos móveis
     checkOrientation();
     window.addEventListener('resize', checkOrientation);
     
-    // Ajustar elementos quando a janela é redimensionada
     window.addEventListener('resize', function() {
         if (ageChart) {
             ageChart.resize();
@@ -4587,7 +4379,6 @@ function initDashboard() {
 }
 
 function checkOrientation() {
-    // Se estiver em modo paisagem em dispositivos pequenos, mostrar dica
     if (window.innerWidth < window.innerHeight && window.innerWidth < 768) {
         showNotification('Dica de uso', 'Gire o dispositivo para melhor visualização', 'info');
     }
@@ -4846,7 +4637,6 @@ function initNetworkGraph() {
         const nodeInfo = document.getElementById('node-info');
         let hoveredNode = null;
         
-        // Tratamento especial para dispositivos móveis (toque)
         const isMobile = 'ontouchstart' in window;
         
         if (isMobile) {
@@ -4910,11 +4700,9 @@ function initNetworkGraph() {
             if (hoveredNode) {
                 nodeInfo.style.display = 'block';
                 
-                // Posicionar info card de forma que fique sempre visível na tela
                 let leftPos = clientX + 10;
                 let topPos = clientY + 10;
                 
-                // Verificar limites da tela
                 const infoWidth = nodeInfo.offsetWidth;
                 const infoHeight = nodeInfo.offsetHeight;
                 const windowWidth = window.innerWidth;
@@ -5137,7 +4925,6 @@ function initConnectionGraph(profileId) {
         });
     }
     
-    // Suporte para dispositivos de toque
     const isMobile = 'ontouchstart' in window;
     
     if (isMobile) {
@@ -5245,56 +5032,6 @@ function updateConnectionsTable(profileId) {
     });
 }
 
-function initFilters() {
-    const filterBtn = document.getElementById('filter-btn');
-    const filterModal = document.getElementById('filter-modal');
-    const filterModalClose = document.getElementById('filter-modal-close');
-    const applyFiltersBtn = document.getElementById('apply-filters');
-    const clearFiltersBtn = document.getElementById('clear-filters');
-    
-    filterBtn.addEventListener('click', function() {
-        filterModal.classList.add('active');
-    });
-    
-    filterModalClose.addEventListener('click', function() {
-        filterModal.classList.remove('active');
-    });
-    
-    applyFiltersBtn.addEventListener('click', function() {
-        activeFilters.status = document.getElementById('status-filter').value;
-        activeFilters.gender = document.getElementById('gender-filter').value;
-        activeFilters.age = document.getElementById('age-filter').value;
-        
-        if (showClassroom) {
-            applyFilters();
-        }
-        
-        filterModal.classList.remove('active');
-        
-        showNotification('Filtros aplicados', 'A lista de perfis foi atualizada', 'success');
-    });
-    
-    clearFiltersBtn.addEventListener('click', function() {
-        document.getElementById('status-filter').value = 'all';
-        document.getElementById('gender-filter').value = 'all';
-        document.getElementById('age-filter').value = 'all';
-        
-        activeFilters = {
-            status: 'all',
-            gender: 'all',
-            age: 'all',
-            search: activeFilters.search,
-            classroom: activeFilters.classroom
-        };
-        
-        if (showClassroom) {
-            applyFilters();
-        }
-        
-        showNotification('Filtros limpos', 'Todos os filtros foram removidos', 'info');
-    });
-}
-
 function applyFilters() {
     let filteredProfiles = [...profiles];
     
@@ -5388,14 +5125,12 @@ function openProfileModal(profileId) {
     const profile = profiles.find(p => p.id == profileId);
     
     if (profile) {
-        // Lista de perfis restritos
         const restrictedProfiles = [
             "Leandro de Souza da Silva",
             "Aquiles Fonseca de Almeida",
             "Gabriel Pereira Catini"
         ];
         
-        // Verificar se o perfil está na lista restrita e se não estamos no modo admin
         const isRestricted = !isAdmin && restrictedProfiles.includes(profile.name);
         
         document.getElementById('profile-name').textContent = profile.name;
@@ -5442,7 +5177,6 @@ function populateProfilesTable(data) {
         return;
     }
     
-    // Lista de perfis restritos
     const restrictedProfiles = [
         "Leandro de Souza da Silva",
         "Aquiles Fonseca de Almeida",
@@ -5454,7 +5188,6 @@ function populateProfilesTable(data) {
         row.classList.add('profile-row');
         row.setAttribute('data-id', profile.id);
         
-        // Verificar se o perfil está na lista restrita e se não estamos no modo admin
         const isRestricted = !isAdmin && restrictedProfiles.includes(profile.name);
         
         let statusText = '';
@@ -5544,12 +5277,10 @@ function showNotification(title, message, type) {
     
     notification.classList.add('active');
     
-    // Se já existe um timeout para remover a notificação, limpe-o
     if (notification.timeoutId) {
         clearTimeout(notification.timeoutId);
     }
     
-    // Definir um novo timeout para remover a notificação
     notification.timeoutId = setTimeout(() => {
         notification.classList.remove('active');
     }, 5000);
@@ -5573,7 +5304,6 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', handleProfileEdit); 
     });
     
-    // Mostrar dica de senha ao carregar (em dispositivos móveis)
     setTimeout(function() {
         if (window.innerWidth <= 768) {
             showNotification('Dica de Acesso', 'Senhas', 'info');
@@ -5581,7 +5311,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 1000);
 });
 
-// Inicializar o botão de sala
 initClassroomButton();
     </script>
 </body>
