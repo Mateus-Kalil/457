@@ -1787,6 +1787,7 @@
             background: rgba(0, 243, 255, 0.5);
         }
         
+        /* Estilo modificado para a barra de pesquisa */
         .database-search-container {
             position: sticky;
             top: 0;
@@ -1800,6 +1801,7 @@
             width: 100%;
             padding: 10px 15px;
             padding-left: 40px;
+            padding-right: 50px; /* Espaço para o botão */
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(0, 243, 255, 0.3);
             border-radius: 8px;
@@ -1819,6 +1821,30 @@
             top: 50%;
             transform: translateY(-50%);
             color: var(--primary);
+        }
+
+        /* Novo estilo para o botão de pesquisa */
+        .database-search-button {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border: none;
+            color: white;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .database-search-button:hover {
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+        
+        .database-search-button:active {
+            transform: translateY(-50%) scale(0.95);
         }
         
         .database-search-results {
@@ -2796,6 +2822,8 @@
                 <div class="database-search-container">
                     <i class="fa fa-search database-search-icon"></i>
                     <input type="text" id="database-search-input" class="database-search-input" placeholder="Pesquisar no banco de dados..." autofocus>
+                    <!-- Botão de pesquisa adicionado dentro da barra de busca -->
+                    <button id="database-search-button" class="database-search-button">Buscar</button>
                     <div id="database-search-results" class="database-search-results" style="display: none;">
                         Encontrado(s) <span id="database-search-count">0</span> resultado(s)
                     </div>
@@ -2843,9 +2871,11 @@
                 <div class="settings-section">
                     <h3 class="settings-section__title">Consulta</h3>
                     <div class="settings-group">
-                        <div class="form-group">
+                        <div class="form-group" style="position: relative;">
                             <label for="file-search-query">Termo de Busca</label>
                             <input type="text" id="file-search-query" class="form-control" placeholder="Nome, CPF, Telefone ou Placa">
+                            <!-- Botão de pesquisa adicionado dentro da barra de busca -->
+                            <button id="run-file-search-inner" class="database-search-button" style="top: 50%; margin-top: -5px;">Buscar</button>
                         </div>
                         <div class="form-group">
                             <label for="file-search-type">Tipo de Busca</label>
@@ -2858,10 +2888,6 @@
                                 <option value="pessoa">Apenas Pessoas</option>
                             </select>
                         </div>
-                        <button class="btn btn--primary" id="run-file-search-inner" style="margin-top: 15px; width: 100%;">
-                            <i class="fa fa-search btn__icon"></i>
-                            Buscar
-                        </button>
                     </div>
                 </div>
                 
@@ -4129,6 +4155,7 @@ function initDatabaseModal() {
     const databaseModal = document.getElementById('database-modal');
     const databaseModalClose = document.getElementById('database-modal-close');
     const databaseSearchInput = document.getElementById('database-search-input');
+    const databaseSearchButton = document.getElementById('database-search-button');
     const clearDatabaseSearchBtn = document.getElementById('clear-database-search');
     const closeDatabaseBtn = document.getElementById('close-database');
     const prevPageBtn = document.getElementById('prev-page');
@@ -4145,6 +4172,12 @@ function initDatabaseModal() {
     
     closeDatabaseBtn.addEventListener('click', function() {
         databaseModal.classList.remove('active');
+    });
+    
+    // Adicionando o evento para o botão de pesquisa
+    databaseSearchButton.addEventListener('click', function() {
+        const query = databaseSearchInput.value.trim();
+        searchInDatabase(query);
     });
     
     clearDatabaseSearchBtn.addEventListener('click', function() {
