@@ -3138,33 +3138,32 @@ function loadAuthData() {
 
 function loadProfilesData() {
     return new Promise((resolve, reject) => {
-        const tdcphScript = document.createElement('script');
-        tdcphScript.src = '1TDCPH.html';
-        tdcphScript.onload = function() {
-            const tdcpfScript = document.createElement('script');
-            tdcpfScript.src = '1TDCPF.html';
-            tdcpfScript.onload = function() {
-                profiles = [...(window.profilesTDCPH || []), ...(window.profilesTDCPF || [])];
-                
-                initializeRelationships();
-                
-                resolve();
-            };
-            tdcpfScript.onerror = function() {
-                console.error("Erro ao carregar dados da turma 1TDCPF");
-                profiles = [...(window.profilesTDCPH || [])];
-                
-                initializeRelationships();
-                
-                resolve();
-            };
-            document.head.appendChild(tdcpfScript);
-        };
-        tdcphScript.onerror = function() {
-            console.error("Erro ao carregar dados da turma 1TDCPH");
-            reject(new Error("Não foi possível carregar os dados dos perfis"));
-        };
-        document.head.appendChild(tdcphScript);
+        fetch('1TDCPF.txt')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Arquivo 1TDCPF.txt não encontrado');
+                }
+                return response.text();
+            })
+            .then(data => {
+                try {
+                    // Tenta parsear o conteúdo do arquivo como JSON
+                    const profilesData = JSON.parse(data);
+                    window.profilesTDCPF = profilesData;
+                    profiles = [...profilesData];
+                    
+                    initializeRelationships();
+                    
+                    resolve();
+                } catch (error) {
+                    console.error("Erro ao parsear o conteúdo do arquivo:", error);
+                    reject(new Error("Formato do arquivo inválido"));
+                }
+            })
+            .catch(error => {
+                console.error("Erro ao carregar o arquivo:", error);
+                reject(error);
+            });
     });
 }
 
@@ -5093,129 +5092,102 @@ function handleProfileEdit() {
 }
 
 function initBackgroundAnimation() {
+    // Implementação da animação de neve caindo
     const canvas = document.getElementById('background-canvas');
-    const renderer = new THREE.WebGLRenderer({
-        canvas,
-        antialias: true,
-        alpha: true
-    });
+    const ctx = canvas.getContext('2d');
     
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
     
-    const scene = new THREE.Scene();
+    // Configurações da neve
+    const snowflakeCount = 200;
+    const snowflakes = [];
     
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 0, 15);
-    scene.add(camera);
-    
-    const ambientLight = new THREE.AmbientLight(0x404040, 2);
-    scene.add(ambientLight);
-    
-    const pointLight = new THREE.PointLight(0x00f3ff, 2);
-    pointLight.position.set(10, 10, 10);
-    scene.add(pointLight);
-    
-    const pointLight2 = new THREE.PointLight(0x9933ff, 2);
-    pointLight2.position.set(-10, -10, -10);
-    scene.add(pointLight2);
-    
-    const isMobile = window.innerWidth < 768;
-    const particlesCount = isMobile ? 300 : 800;
-    const positions = new Float32Array(particlesCount * 3);
-    
-    for(let i = 0; i < particlesCount * 3; i++) {
-            positions[i] = (Math.random() - 0.5) * 50;
-        }
-        
-        const particlesGeometry = new THREE.BufferGeometry();
-        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-
-        const particlesMaterial = new THREE.PointsMaterial({
-            size: 0.1,
-            sizeAttenuation: true,
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.8
+    // Criação dos flocos de neve
+    for (let i = 0; i < snowflakeCount; i++) {
+        snowflakes.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            radius: Math.random() * 3 + 1,
+            speed: Math.random() * 1 + 0.5,
+            wind: Math.random() * 0.5 - 0.25,
+            color: `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.5})`
         });
+    }
+    
+    // Função para desenhar neve
+    function drawSnow() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        const particles = new THREE.Points(particlesGeometry, particlesMaterial);
-        scene.add(particles);
+        // Desenhar um fundo com gradiente escuro
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, 'rgba(10, 14, 23, 1)');
+        gradient.addColorStop(1, 'rgba(18, 23, 37, 1)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        const linesGeometry = new THREE.BufferGeometry();
-        const lineCount = isMobile ? 15 : 30;
-        const linePositions = new Float32Array(lineCount * 6);
-        const lineColors = new Float32Array(lineCount * 6);
-        
-        for(let i = 0; i < lineCount; i++) {
-            const i6 = i * 6;
+        // Desenhar os flocos de neve
+        snowflakes.forEach(snowflake => {
+            ctx.beginPath();
+            ctx.arc(snowflake.x, snowflake.y, snowflake.radius, 0, Math.PI * 2);
+            ctx.fillStyle = snowflake.color;
+            ctx.fill();
             
-            linePositions[i6 + 0] = (Math.random() - 0.5) * 20;
-            linePositions[i6 + 1] = (Math.random() - 0.5) * 20;
-            linePositions[i6 + 2] = (Math.random() - 0.5) * 20;
+            // Movimentação dos flocos
+            snowflake.y += snowflake.speed;
+            snowflake.x += snowflake.wind;
             
-            linePositions[i6 + 3] = (Math.random() - 0.5) * 20;
-            linePositions[i6 + 4] = (Math.random() - 0.5) * 20;
-            linePositions[i6 + 5] = (Math.random() - 0.5) * 20;
+            // Adicionar um leve movimento oscilante
+            snowflake.x += Math.sin(snowflake.y / 50) * 0.3;
             
-            const color1 = new THREE.Color();
-            color1.setHSL(Math.random(), 0.8, 0.8);
-            const color2 = new THREE.Color();
-            color2.setHSL(Math.random(), 0.8, 0.8);
-            
-            lineColors[i6 + 0] = color1.r;
-            lineColors[i6 + 1] = color1.g;
-            lineColors[i6 + 2] = color1.b;
-            
-            lineColors[i6 + 3] = color2.r;
-            lineColors[i6 + 4] = color2.g;
-            lineColors[i6 + 5] = color2.b;
-        }
-        
-        linesGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
-        linesGeometry.setAttribute('color', new THREE.BufferAttribute(lineColors, 3));
-        
-        const linesMaterial = new THREE.LineBasicMaterial({
-            vertexColors: true,
-            transparent: true,
-            opacity: 0.2
-        });
-        
-        const lines = new THREE.LineSegments(linesGeometry, linesMaterial);
-        scene.add(lines);
-        
-        const clock = new THREE.Clock();
-        
-        const animate = () => {
-            const elapsedTime = clock.getElapsedTime();
-            
-            const speed = isMobile ? 0.01 : 0.03;
-            particles.rotation.y = elapsedTime * speed;
-            particles.rotation.x = elapsedTime * (speed * 0.6);
-            
-            lines.rotation.y = elapsedTime * (speed * 0.6);
-            lines.rotation.x = elapsedTime * (speed * 0.4);
-            
-            if (!isMobile) {
-                const positions = particles.geometry.attributes.position.array;
-                for(let i = 0; i < particlesCount; i++) {
-                    const i3 = i * 3;
-                    positions[i3 + 1] += Math.sin(elapsedTime + i) * 0.005;
-                }
-                particles.geometry.attributes.position.needsUpdate = true;
+            // Reiniciar posição quando sair da tela
+            if (snowflake.y > canvas.height) {
+                snowflake.y = -5;
+                snowflake.x = Math.random() * canvas.width;
             }
             
-            renderer.render(scene, camera);
-            window.requestAnimationFrame(animate);
-        };
-        
-        animate();
-        
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            // Reiniciar posição se sair pelos lados
+            if (snowflake.x > canvas.width) {
+                snowflake.x = 0;
+            } else if (snowflake.x < 0) {
+                snowflake.x = canvas.width;
+            }
         });
+        
+        // Desenhar algumas estrelas no fundo
+        for (let i = 0; i < 50; i++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height * 0.7; // Somente na parte superior
+            const size = Math.random() * 1.5;
+            const opacity = Math.random() * 0.7 + 0.3;
+            
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+            ctx.fill();
+        }
+        
+        // Adicionar alguns efeitos de "brilho" para flocos maiores
+        snowflakes.forEach(snowflake => {
+            if (snowflake.radius > 2) {
+                ctx.beginPath();
+                ctx.arc(snowflake.x, snowflake.y, snowflake.radius * 2, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, 0.1)`;
+                ctx.fill();
+            }
+        });
+        
+        requestAnimationFrame(drawSnow);
+    }
+    
+    // Iniciar a animação
+    drawSnow();
+    
+    // Ajustar o canvas quando a janela for redimensionada
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
