@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Dados 1TDCPF</title>
+</head>
+<body>
+<script>
+const profilesTDCPF = [
+    {
+        id: 30,
+        name: "Ana Clara Oliveira Santos",
+        rm: "571234",
+        birth: "15/03/2006",
+        cpf: "421.365.788-54",
+        gender: "F",
+        mother: "Maria Oliveira Santos",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "150306"
+    },
+    {
+        id: 31,
+        name: "Bruno Henrique Almeida",
+        rm: "572345",
+        birth: "23/08/2005",
+        cpf: "489.735.628-09",
+        gender: "M",
+        mother: "Márcia Almeida",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "230805"
+    },
+    {
+        id: 32,
+        name: "Camila Ferreira Lima",
+        rm: "573456",
+        birth: "07/06/2006",
+        cpf: "512.648.338-22",
+        gender: "F",
+        mother: "Beatriz Ferreira Lima",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "070606"
+    },
+    {
+        id: 33,
+        name: "Diego Martins Costa",
+        rm: "574567",
+        birth: "12/11/2005",
+        cpf: "452.789.118-37",
+        gender: "M",
+        mother: "Renata Martins",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "121105"
+    },
+    {
+        id: 34,
+        name: "Eduarda Silva Ribeiro",
+        rm: "575678",
+        birth: "29/04/2007",
+        cpf: "433.612.548-61",
+        gender: "F",
+        mother: "Daniela Silva Ribeiro",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "290407"
+    },
+    {
+        id: 35,
+        name: "Felipe Rodrigues Gomes",
+        rm: "576789",
+        birth: "18/09/2006",
+        cpf: "476.923.458-02",
+        gender: "M",
+        mother: "Amanda Rodrigues",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "180906"
+    },
+    {
+        id: 36,
+        name: "Gabriela Teixeira Souza",
+        rm: "577890",
+        birth: "03/02/2006",
+        cpf: "498.156.748-19",
+        gender: "F",
+        mother: "Carla Teixeira",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "030206"
+    },
+    {
+        id: 37,
+        name: "Henrique Cardoso Mendes",
+        rm: "578901",
+        birth: "25/07/2005",
+        cpf: "511.324.898-43",
+        gender: "M",
+        mother: "Patricia Cardoso",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "250705"
+    },
+    {
+        id: 38,
+        name: "Isabela Pereira Castro",
+        rm: "579012",
+        birth: "14/12/2006",
+        cpf: "463.789.218-75",
+        gender: "F",
+        mother: "Juliana Pereira",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "141206"
+    },
+    {
+        id: 39,
+        name: "João Victor Fernandes",
+        rm: "580123",
+        birth: "09/10/2005",
+        cpf: "492.176.538-90",
+        gender: "M",
+        mother: "Sandra Fernandes",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "091005"
+    },
+    {
+        id: 40,
+        name: "Laura Campos Dias",
+        rm: "581234",
+        birth: "22/01/2007",
+        cpf: "478.234.618-26",
+        gender: "F",
+        mother: "Viviane Campos",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "220107"
+    },
+    {
+        id: 41,
+        name: "Matheus Barbosa Oliveira",
+        rm: "582345",
+        birth: "17/05/2006",
+        cpf: "503.419.758-32",
+        gender: "M",
+        mother: "Fernanda Barbosa",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "170506"
+    },
+    {
+        id: 42,
+        name: "Natália Soares Alves",
+        rm: "583456",
+        birth: "08/08/2005",
+        cpf: "487.632.948-17",
+        gender: "F",
+        mother: "Cristina Soares",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "080805"
+    },
+    {
+        id: 43,
+        name: "Otávio Lopes Vieira",
+        rm: "584567",
+        birth: "31/03/2006",
+        cpf: "459.827.138-54",
+        gender: "M",
+        mother: "Luciana Lopes",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "310306"
+    },
+    {
+        id: 44,
+        name: "Patrícia Gonçalves Costa",
+        rm: "585678",
+        birth: "19/11/2006",
+        cpf: "512.743.858-09",
+        gender: "F",
+        mother: "Tatiane Gonçalves",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "191106"
+    },
+    {
+        id: 45,
+        name: "Rafael Moreira Rocha",
+        rm: "586789",
+        birth: "27/02/2005",
+        cpf: "481.596.278-61",
+        gender: "M",
+        mother: "Adriana Moreira",
+        status: "active",
+        classroom: "1TDCPF",
+        password: "270205"
+    }
+];
+</script>
+</body>
+</html>
