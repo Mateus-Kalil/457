@@ -7,6 +7,82 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    
+    <script>
+    (function() {
+        const _s8x = [
+            [102, 105, 97, 112, 104],
+            [77, 75, 53, 48, 52, 49],
+            [77, 75, 55, 52, 49]
+        ];
+        
+        const _m7r = ["s", "a", "t"];
+        const _v3t = ["a", "d", "t"];
+        const _z9k = ["n", "m", "e"];
+        
+        const _p1j = {
+            "_k8": String.fromCharCode(..._s8x[0]),
+            "_j7": String.fromCharCode(..._s8x[1]),
+            "_h5": String.fromCharCode(..._s8x[2])
+        };
+        
+        const _d5t = [
+            _m7r[0] + _v3t[0] + _z9k[0] + "d" + _m7r[0] + "rd",
+            _m7r[0] + "d" + _m7r[2] + _v3t[1] + "cher",
+            _v3t[0] + "d" + _m7r[2] + "i" + _z9k[0]
+        ];
+        
+        const _w7b = [
+            "Leandro de Souza da Silva",
+            "Aquiles Fonseca de Almeida", 
+            "Gabriel Pereira Catini"
+        ];
+        
+        const _t3c = ["Leandro de Souza da Silva"];
+        
+        window._s4 = function() {
+            const _r = {};
+            _r[_p1j._k8] = {
+                _v: _d5t[0],
+                _d: "Verificação nível 1 - padrão de segurança"
+            };
+            _r[_p1j._j7] = {
+                _v: _d5t[2],
+                _d: "Verificação nível 3 - superior"
+            };
+            _r[_p1j._h5] = {
+                _v: _d5t[1],
+                _d: "Verificação nível 2 - intermediário"
+            };
+            return _r;
+        }();
+        
+        window._f1 = _w7b;
+        window._f2 = _t3c;
+        
+        window.authData = {};
+        window.restrictedProfiles = [];
+        window.teacherRestrictedProfiles = [];
+        
+        setTimeout(function() {
+            window.authData[_p1j._k8] = {
+                level: "standard",
+                description: "Acesso padrão - com censura de dados sensíveis"
+            };
+            window.authData[_p1j._j7] = {
+                level: "admin",
+                description: "Acesso administrativo - sem censura de dados"
+            };
+            window.authData[_p1j._h5] = {
+                level: "teacher",
+                description: "Acesso de professor - com censura parcial"
+            };
+            window.restrictedProfiles = _w7b;
+            window.teacherRestrictedProfiles = _t3c;
+        }, 10);
+    })();
+    </script>
+    
     <style>
         :root {
             --primary: #00f3ff;
@@ -116,7 +192,6 @@
             opacity: 0.7;
         }
         
-        /* Adicionamos uma classe para mensagens de status */
         .preloader__status {
             margin-top: 10px;
             font-size: 12px;
@@ -1501,7 +1576,6 @@
             box-shadow: 0 5px 15px rgba(0, 243, 255, 0.3);
         }
 
-        /* Novo estilo para botão desabilitado */
         .login-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -1517,7 +1591,6 @@
             display: none;
         }
         
-        /* Novo estilo para o status de carregamento do login */
         .login-status {
             color: var(--primary);
             font-size: 12px;
@@ -1810,7 +1883,6 @@
             background: rgba(0, 243, 255, 0.5);
         }
         
-        /* Estilo modificado para a barra de pesquisa */
         .database-search-container {
             position: sticky;
             top: 0;
@@ -1824,7 +1896,7 @@
             width: 100%;
             padding: 10px 15px;
             padding-left: 40px;
-            padding-right: 50px; /* Espaço para o botão */
+            padding-right: 50px;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(0, 243, 255, 0.3);
             border-radius: 8px;
@@ -1846,7 +1918,6 @@
             color: var(--primary);
         }
 
-        /* Novo estilo para o botão de pesquisa */
         .database-search-button {
             position: absolute;
             right: 5px;
@@ -2847,7 +2918,6 @@
                 <div class="database-search-container">
                     <i class="fa fa-search database-search-icon"></i>
                     <input type="text" id="database-search-input" class="database-search-input" placeholder="Pesquisar no banco de dados..." autofocus>
-                    <!-- Botão de pesquisa adicionado dentro da barra de busca -->
                     <button id="database-search-button" class="database-search-button">Buscar</button>
                     <div id="database-search-results" class="database-search-results" style="display: none;">
                         Encontrado(s) <span id="database-search-count">0</span> resultado(s)
@@ -2899,7 +2969,6 @@
                         <div class="form-group" style="position: relative;">
                             <label for="file-search-query">Termo de Busca</label>
                             <input type="text" id="file-search-query" class="form-control" placeholder="Nome, CPF, Telefone ou Placa">
-                            <!-- Botão de pesquisa adicionado dentro da barra de busca -->
                             <button id="run-file-search-inner" class="database-search-button" style="top: 50%; margin-top: -5px;">Buscar</button>
                         </div>
                         <div class="form-group">
@@ -2967,7 +3036,6 @@
     </div>
     
     <script>
-// Variáveis globais
 let profiles = [];
 let authConfig = {};
 let restrictedProfileNames = [];
@@ -2993,16 +3061,13 @@ let ageChart = null;
 let networkGraph = null;
 let connectionGraph = null;
 
-// Quando o documento estiver carregado, inicializar o carregamento seguro
 document.addEventListener('DOMContentLoaded', function() {
-    // Elementos existentes
     const preloader = document.querySelector('.preloader');
     const preloaderBar = document.getElementById('preloader-bar');
     const preloaderText = document.querySelector('.preloader__text');
     const authStatus = document.getElementById('auth-status');
     const loginStatus = document.getElementById('login-status');
     
-    // Iniciar carregamento dos dados de autenticação
     loadAuthData()
         .then(() => {
             credentialsLoaded = true;
@@ -3011,7 +3076,6 @@ document.addEventListener('DOMContentLoaded', function() {
             loginStatus.textContent = 'Sistema pronto para login';
             loginStatus.style.color = '#00ff88';
             
-            // Habilitar o botão de login e campo de senha
             const loginBtn = document.getElementById('login-btn');
             const accessCode = document.getElementById('access-code');
             
@@ -3020,10 +3084,8 @@ document.addEventListener('DOMContentLoaded', function() {
             accessCode.placeholder = "Digite o código de acesso";
             accessCode.focus();
             
-            // Mostrar mensagem informando que o sistema está pronto
             preloaderText.textContent = 'Sistema pronto para login!';
             
-            // Agora vamos começar a preencher a barra de carregamento
             let progress = 0;
             const interval = setInterval(() => {
                 progress += Math.random() * 10;
@@ -3032,7 +3094,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     clearInterval(interval);
                     
                     setTimeout(() => {
-                        // Não removemos o preloader aqui, isso será feito após o login
                         preloaderBar.style.width = '100%';
                         preloaderBar.style.backgroundColor = '#00ff88';
                     }, 300);
@@ -3049,7 +3110,6 @@ document.addEventListener('DOMContentLoaded', function() {
             loginStatus.textContent = 'Erro ao carregar sistema de segurança';
             loginStatus.style.color = '#ff3366';
             
-            // Mostrar uma mensagem de erro no preloader
             preloaderText.textContent = 'Erro ao inicializar o sistema';
             preloaderText.style.color = '#ff3366';
         });
@@ -3058,14 +3118,10 @@ document.addEventListener('DOMContentLoaded', function() {
     initGlobalEvents();
 });
 
-// Função para carregar dados de autenticação separadamente
 function loadAuthData() {
     return new Promise((resolve, reject) => {
-        const authScript = document.createElement('script');
-        authScript.src = 'sj.html';
-        authScript.onload = function() {
-            // Copiar os dados do arquivo para nossas variáveis globais
-            if (window.authData) {
+        if (window._s4) {
+            setTimeout(() => {
                 authConfig = window.authData;
                 
                 if (window.restrictedProfiles) {
@@ -3073,32 +3129,23 @@ function loadAuthData() {
                 }
                 
                 resolve();
-            } else {
-                reject(new Error('Dados de autenticação não encontrados'));
-            }
-        };
-        authScript.onerror = function() {
-            reject(new Error('Não foi possível carregar o arquivo de autenticação'));
-        };
-        document.head.appendChild(authScript);
+            }, 500);
+        } else {
+            reject(new Error('Dados de autenticação não encontrados'));
+        }
     });
 }
 
-// Função para carregar dados dos perfis
 function loadProfilesData() {
     return new Promise((resolve, reject) => {
-        // Carregar dados da turma 1TDCPH
         const tdcphScript = document.createElement('script');
         tdcphScript.src = '1TDCPH.html';
         tdcphScript.onload = function() {
-            // Carregar dados da turma 1TDCPF
             const tdcpfScript = document.createElement('script');
             tdcpfScript.src = '1TDCPF.html';
             tdcpfScript.onload = function() {
-                // Combinar os perfis de ambas as turmas
                 profiles = [...(window.profilesTDCPH || []), ...(window.profilesTDCPF || [])];
                 
-                // Definir as relações entre perfis
                 initializeRelationships();
                 
                 resolve();
@@ -3107,7 +3154,6 @@ function loadProfilesData() {
                 console.error("Erro ao carregar dados da turma 1TDCPF");
                 profiles = [...(window.profilesTDCPH || [])];
                 
-                // Definir as relações entre perfis mesmo sem os dados da turma 1TDCPF
                 initializeRelationships();
                 
                 resolve();
@@ -3122,7 +3168,6 @@ function loadProfilesData() {
     });
 }
 
-// Função para inicializar as relações entre perfis
 function initializeRelationships() {
     relationships = [
         { source: 1, target: 7, type: "school" },
@@ -3143,13 +3188,11 @@ function initializeRelationships() {
         { source: 23, target: 28, type: "school" },
         { source: 24, target: 27, type: "friend" },
         { source: 26, target: 12, type: "school" },
-        // Relações adicionais entre turmas
         { source: 30, target: 31, type: "friend" },
         { source: 32, target: 34, type: "school" },
         { source: 36, target: 38, type: "friend" },
         { source: 40, target: 42, type: "school" },
         { source: 44, target: 30, type: "friend" },
-        // Relações entre as turmas
         { source: 7, target: 36, type: "family" },
         { source: 12, target: 34, type: "friend" },
         { source: 19, target: 41, type: "school" }
@@ -3188,7 +3231,6 @@ function initLogin() {
     const loginError = document.getElementById('login-error');
     const loginStatus = document.getElementById('login-status');
     
-    // Desabilitar o botão e campo até que as credenciais sejam carregadas
     loginBtn.disabled = !credentialsLoaded;
     accessCode.disabled = !credentialsLoaded;
     
@@ -3209,7 +3251,6 @@ function initLogin() {
     loginBtn.addEventListener('click', authenticate);
     
     function authenticate() {
-        // Verificar se as credenciais foram carregadas
         if (!credentialsLoaded) {
             showLoginError("Sistema ainda carregando, aguarde...");
             return;
@@ -3226,7 +3267,6 @@ function initLogin() {
             const authLevel = authConfig[code].level;
             isAdmin = authLevel === 'admin';
             
-            // Determinar quais perfis devem ser censurados com base no nível de acesso
             if (authLevel === 'admin') {
                 restrictedProfileNames = [];
             } else if (authLevel === 'teacher') {
@@ -3235,10 +3275,8 @@ function initLogin() {
                 restrictedProfileNames = window.restrictedProfiles || [];
             }
             
-            // Ocultar tela de login
             loginScreen.style.opacity = '0';
             
-            // Remover a tela de preloader também
             const preloader = document.querySelector('.preloader');
             preloader.style.opacity = '0';
             
@@ -3248,7 +3286,6 @@ function initLogin() {
                 initSystem();
             }, 500);
             
-            // Mostrar notificação com base no nível de acesso
             if (authLevel === 'admin') {
                 showNotification('Acesso Administrativo', 'Você está logado com acesso de administrador', 'info');
             } else if (authLevel === 'teacher') {
@@ -3277,7 +3314,6 @@ function initSystem() {
     const preloader = document.querySelector('.preloader');
     const preloaderBar = document.getElementById('preloader-bar');
     
-    // Carregar apenas os dados dos perfis
     loadProfilesData()
         .then(() => {
             let progress = 0;
@@ -4056,7 +4092,6 @@ function initDatabaseModal() {
         databaseModal.classList.remove('active');
     });
     
-    // Adicionando o evento para o botão de pesquisa
     databaseSearchButton.addEventListener('click', function() {
         const query = databaseSearchInput.value.trim();
         searchInDatabase(query);
@@ -4139,7 +4174,6 @@ function initDashboard() {
         }
     });
     
-    // Carregar arquivo de dados
     loadDataFile();
 }
 
@@ -4157,7 +4191,6 @@ function initClassroomButton() {
         showClassroom = !showClassroom;
         
         if (showClassroom) {
-            // Alternar entre as turmas quando o botão é clicado novamente
             if (classroomBtn.textContent.includes('1TDCPH')) {
                 currentClassroom = '1TDCPH';
             } else {
@@ -5092,1054 +5125,97 @@ function initBackgroundAnimation() {
     const positions = new Float32Array(particlesCount * 3);
     
     for(let i = 0; i < particlesCount * 3; i++) {
-        positions[i] = (Math.random() - 0.5) * 50;
-    }
-    
-    const particlesGeometry = new THREE.BufferGeometry();
-    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-
-    const particlesMaterial = new THREE.PointsMaterial({
-        size: 0.1,
-        sizeAttenuation: true,
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.8
-    });
-    
-    const particles = new THREE.Points(particlesGeometry, particlesMaterial);
-    scene.add(particles);
-    
-    const linesGeometry = new THREE.BufferGeometry();
-    const lineCount = isMobile ? 15 : 30;
-    const linePositions = new Float32Array(lineCount * 6);
-    const lineColors = new Float32Array(lineCount * 6);
-    
-    for(let i = 0; i < lineCount; i++) {
-        const i6 = i * 6;
-        
-        linePositions[i6 + 0] = (Math.random() - 0.5) * 20;
-        linePositions[i6 + 1] = (Math.random() - 0.5) * 20;
-        linePositions[i6 + 2] = (Math.random() - 0.5) * 20;
-        
-        linePositions[i6 + 3] = (Math.random() - 0.5) * 20;
-        linePositions[i6 + 4] = (Math.random() - 0.5) * 20;
-        linePositions[i6 + 5] = (Math.random() - 0.5) * 20;
-        
-        const color1 = new THREE.Color();
-        color1.setHSL(Math.random(), 0.8, 0.8);
-        const color2 = new THREE.Color();
-        color2.setHSL(Math.random(), 0.8, 0.8);
-        
-        lineColors[i6 + 0] = color1.r;
-        lineColors[i6 + 1] = color1.g;
-        lineColors[i6 + 2] = color1.b;
-        
-        lineColors[i6 + 3] = color2.r;
-        lineColors[i6 + 4] = color2.g;
-        lineColors[i6 + 5] = color2.b;
-    }
-    
-    linesGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
-    linesGeometry.setAttribute('color', new THREE.BufferAttribute(lineColors, 3));
-    
-    const linesMaterial = new THREE.LineBasicMaterial({
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.2
-    });
-    
-    const lines = new THREE.LineSegments(linesGeometry, linesMaterial);
-    scene.add(lines);
-    
-    const clock = new THREE.Clock();
-    
-    const animate = () => {
-        const elapsedTime = clock.getElapsedTime();
-        
-        const speed = isMobile ? 0.01 : 0.03;
-        particles.rotation.y = elapsedTime * speed;
-        particles.rotation.x = elapsedTime * (speed * 0.6);
-        
-        lines.rotation.y = elapsedTime * (speed * 0.6);
-        lines.rotation.x = elapsedTime * (speed * 0.4);
-        
-        if (!isMobile) {
-            const positions = particles.geometry.attributes.position.array;
-            for(let i = 0; i < particlesCount; i++) {
-                const i3 = i * 3;
-                positions[i3 + 1] += Math.sin(elapsedTime + i) * 0.005;
-            }
-            particles.geometry.attributes.position.needsUpdate = true;
+            positions[i] = (Math.random() - 0.5) * 50;
         }
         
-        renderer.render(scene, camera);
-        window.requestAnimationFrame(animate);
-    };
-    
-    animate();
-    
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-}
+        const particlesGeometry = new THREE.BufferGeometry();
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
-function initDashboard() {
-    populateProfilesTable([]); 
-    
-    initCharts();
-    
-    initNetworkGraph();
-    
-    initProfileModal();
-    
-    if (window.innerWidth <= 768) {
-        showNotification('Dica de acesso', 'Use a senha para acesso normal', 'info');
-    }
-    
-    checkOrientation();
-    window.addEventListener('resize', checkOrientation);
-    
-    window.addEventListener('resize', function() {
-        if (ageChart) {
-            ageChart.resize();
-        }
-        
-        const networkCanvas = document.getElementById('network-canvas');
-        if (networkCanvas) {
-            const container = networkCanvas.parentElement;
-            networkCanvas.width = container.offsetWidth;
-            networkCanvas.height = container.offsetHeight;
-        }
-        
-        const connectionCanvas = document.getElementById('connection-canvas');
-        if (connectionCanvas) {
-            const container = connectionCanvas.parentElement;
-            connectionCanvas.width = container.offsetWidth;
-            connectionCanvas.height = container.offsetHeight;
-        }
-    });
-    
-    // Carregar arquivo de dados
-    loadDataFile();
-}
-
-function checkOrientation() {
-    if (window.innerWidth < window.innerHeight && window.innerWidth < 768) {
-        showNotification('Dica de uso', 'Gire o dispositivo para melhor visualização', 'info');
-    }
-}
-
-// Modificar função initClassroomButton para suportar a seleção de turmas
-function initClassroomButton() {
-    const classroomBtn = document.getElementById('classroom-btn');
-    let currentClassroom = '1TDCPH';
-    
-    classroomBtn.addEventListener('click', function() {
-        showClassroom = !showClassroom;
-        
-        if (showClassroom) {
-            // Alternar entre as turmas quando o botão é clicado novamente
-            if (classroomBtn.textContent.includes('1TDCPH')) {
-                currentClassroom = '1TDCPH';
-            } else {
-                currentClassroom = '1TDCPF';
-            }
-            
-            const classroomProfiles = profiles.filter(p => p.classroom === currentClassroom);
-            populateProfilesTable(classroomProfiles);
-            
-            if (currentClassroom === '1TDCPH') {
-                classroomBtn.textContent = 'Mostrar Perfis 1TDCPF';
-            } else {
-                classroomBtn.textContent = 'Mostrar Perfis 1TDCPH';
-            }
-            
-            showNotification(`Sala ${currentClassroom}`, `Exibindo perfis da sala ${currentClassroom}`, 'info');
-            
-            document.getElementById('total-profiles').innerHTML = `
-                <div class="stat__icon stat__icon--blue">
-                    <i class="fa fa-users"></i>
-                </div>
-                ${classroomProfiles.length}
-            `;
-        } else {
-            populateProfilesTable([]);
-            classroomBtn.textContent = 'Mostrar Perfis 1TDCPH';
-            showNotification('Sala', 'Perfis ocultados', 'info');
-            
-            document.getElementById('total-profiles').innerHTML = `
-                <div class="stat__icon stat__icon--blue">
-                    <i class="fa fa-users"></i>
-                </div>
-                0
-            `;
-        }
-    });
-}
-
-function initCharts() {
-    const ageData = {
-        labels: ['18-19', '20-21', '22-23', '24-25', '26+'],
-        datasets: [{
-            label: 'Distribuição por Idade',
-            data: [12, 8, 5, 1, 1],
-            backgroundColor: [
-                'rgba(0, 243, 255, 0.7)',
-                'rgba(153, 51, 255, 0.7)',
-                'rgba(0, 255, 136, 0.7)',
-                'rgba(255, 204, 0, 0.7)',
-                'rgba(255, 51, 102, 0.7)'
-            ],
-            borderColor: [
-                'rgba(0, 243, 255, 1)',
-                'rgba(153, 51, 255, 1)',
-                'rgba(0, 255, 136, 1)',
-                'rgba(255, 204, 0, 1)',
-                'rgba(255, 51, 102, 1)'
-            ],
-            borderWidth: 1
-        }]
-    };
-    
-    const ageChartCtx = document.getElementById('age-chart');
-    
-    ageChart = new Chart(ageChartCtx, {
-        type: 'bar',
-        data: ageData,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
-                    ticks: {
-                        color: 'rgba(255, 255, 255, 0.7)'
-                    }
-                },
-                x: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
-                    ticks: {
-                        color: 'rgba(255, 255, 255, 0.7)'
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
-            }
-        }
-    });
-    
-    document.getElementById('age-chart-menu').addEventListener('click', function() {
-        showNotification('Opções do Gráfico', 'Opções adicionais de visualização do gráfico', 'info');
-    });
-    
-    document.getElementById('activity-menu').addEventListener('click', function() {
-        showNotification('Opções de Atividade', 'Filtrar ou exportar atividades recentes', 'info');
-    });
-    
-    document.getElementById('profiles-table-menu').addEventListener('click', function() {
-        showNotification('Opções da Tabela', 'Exportar ou imprimir lista de perfis', 'info');
-    });
-    
-    document.getElementById('network-menu').addEventListener('click', function() {
-        showNotification('Opções de Rede', 'Ajustar visualização do mapa de conexões', 'info');
-    });
-}
-
-function initNetworkGraph() {
-    const canvas = document.getElementById('network-canvas');
-    const ctx = canvas.getContext('2d');
-    
-    const canvasContainer = canvas.parentElement;
-    canvas.width = canvasContainer.offsetWidth;
-    canvas.height = canvasContainer.offsetHeight;
-    
-    const loading = document.getElementById('network-loading');
-    loading.classList.add('active');
-    
-    setTimeout(() => {
-        loading.classList.remove('active');
-        
-        const nodes = [];
-        const selectedProfiles = profiles.filter(p => p.id <= 15 && p.classroom === '1TDCPH');
-        
-        selectedProfiles.forEach(profile => {
-            nodes.push({
-                id: profile.id,
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                radius: 15,
-                color: profile.gender === 'F' ? '#ff00a5' : '#00f3ff',
-                name: profile.name,
-                rm: profile.rm,
-                cpf: profile.cpf,
-                birth: profile.birth,
-                connections: relationships.filter(r => r.source === profile.id || r.target === profile.id).length
-            });
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.1,
+            sizeAttenuation: true,
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.8
         });
         
-        const edges = [];
+        const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particles);
         
-        relationships.forEach(rel => {
-            const sourceNode = nodes.find(n => n.id === rel.source);
-            const targetNode = nodes.find(n => n.id === rel.target);
+        const linesGeometry = new THREE.BufferGeometry();
+        const lineCount = isMobile ? 15 : 30;
+        const linePositions = new Float32Array(lineCount * 6);
+        const lineColors = new Float32Array(lineCount * 6);
+        
+        for(let i = 0; i < lineCount; i++) {
+            const i6 = i * 6;
             
-            if (sourceNode && targetNode) {
-                let color;
-                switch(rel.type) {
-                    case 'family':
-                        color = '#00f3ff';
-                        break;
-                    case 'school':
-                        color = '#9933ff';
-                        break;
-                    case 'friend':
-                        color = '#00ff88';
-                        break;
-                    default:
-                        color = 'rgba(255, 255, 255, 0.3)';
-                }
-                
-                edges.push({
-                    source: sourceNode,
-                    target: targetNode,
-                    color: color
-                });
-            }
+            linePositions[i6 + 0] = (Math.random() - 0.5) * 20;
+            linePositions[i6 + 1] = (Math.random() - 0.5) * 20;
+            linePositions[i6 + 2] = (Math.random() - 0.5) * 20;
+            
+            linePositions[i6 + 3] = (Math.random() - 0.5) * 20;
+            linePositions[i6 + 4] = (Math.random() - 0.5) * 20;
+            linePositions[i6 + 5] = (Math.random() - 0.5) * 20;
+            
+            const color1 = new THREE.Color();
+            color1.setHSL(Math.random(), 0.8, 0.8);
+            const color2 = new THREE.Color();
+            color2.setHSL(Math.random(), 0.8, 0.8);
+            
+            lineColors[i6 + 0] = color1.r;
+            lineColors[i6 + 1] = color1.g;
+            lineColors[i6 + 2] = color1.b;
+            
+            lineColors[i6 + 3] = color2.r;
+            lineColors[i6 + 4] = color2.g;
+            lineColors[i6 + 5] = color2.b;
+        }
+        
+        linesGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+        linesGeometry.setAttribute('color', new THREE.BufferAttribute(lineColors, 3));
+        
+        const linesMaterial = new THREE.LineBasicMaterial({
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.2
         });
         
-        function applyForces() {
-            for (let i = 0; i < nodes.length; i++) {
-                for (let j = i + 1; j < nodes.length; j++) {
-                    const nodeA = nodes[i];
-                    const nodeB = nodes[j];
-                    
-                    const dx = nodeB.x - nodeA.x;
-                    const dy = nodeB.y - nodeA.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (distance < 100) {
-                        const force = 1 / distance * 5;
-                        const forceX = dx / distance * force;
-                        const forceY = dy / distance * force;
-                        
-                        nodeA.x -= forceX;
-                        nodeA.y -= forceY;
-                        nodeB.x += forceX;
-                        nodeB.y += forceY;
-                    }
+        const lines = new THREE.LineSegments(linesGeometry, linesMaterial);
+        scene.add(lines);
+        
+        const clock = new THREE.Clock();
+        
+        const animate = () => {
+            const elapsedTime = clock.getElapsedTime();
+            
+            const speed = isMobile ? 0.01 : 0.03;
+            particles.rotation.y = elapsedTime * speed;
+            particles.rotation.x = elapsedTime * (speed * 0.6);
+            
+            lines.rotation.y = elapsedTime * (speed * 0.6);
+            lines.rotation.x = elapsedTime * (speed * 0.4);
+            
+            if (!isMobile) {
+                const positions = particles.geometry.attributes.position.array;
+                for(let i = 0; i < particlesCount; i++) {
+                    const i3 = i * 3;
+                    positions[i3 + 1] += Math.sin(elapsedTime + i) * 0.005;
                 }
+                particles.geometry.attributes.position.needsUpdate = true;
             }
             
-            edges.forEach(edge => {
-                const dx = edge.target.x - edge.source.x;
-                const dy = edge.target.y - edge.source.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance > 50) {
-                    const force = (distance - 50) / 1000;
-                    const forceX = dx * force;
-                    const forceY = dy * force;
-                    
-                    edge.source.x += forceX;
-                    edge.source.y += forceY;
-                    edge.target.x -= forceX;
-                    edge.target.y -= forceY;
-                }
-            });
-            
-            nodes.forEach(node => {
-                if (node.x < node.radius) node.x = node.radius;
-                if (node.x > canvas.width - node.radius) node.x = canvas.width - node.radius;
-                if (node.y < node.radius) node.y = node.radius;
-                if (node.y > canvas.height - node.radius) node.y = canvas.height - node.radius;
-            });
-        }
-        
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            edges.forEach(edge => {
-                ctx.beginPath();
-                ctx.moveTo(edge.source.x, edge.source.y);
-                ctx.lineTo(edge.target.x, edge.target.y);
-                ctx.strokeStyle = edge.color;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            });
-            
-            nodes.forEach(node => {
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
-                ctx.fillStyle = node.color;
-                ctx.fill();
-                
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, node.radius - 3, 0, Math.PI * 2);
-                ctx.fillStyle = '#121725';
-                ctx.fill();
-                
-                ctx.font = 'bold 12px Arial';
-                ctx.fillStyle = '#ffffff';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(node.name.charAt(0), node.x, node.y);
-            });
-        }
-        
-        const nodeInfo = document.getElementById('node-info');
-        let hoveredNode = null;
-        
-        const isMobile = 'ontouchstart' in window;
-        
-        if (isMobile) {
-            canvas.addEventListener('touchstart', function(event) {
-                event.preventDefault();
-                const touch = event.touches[0];
-                checkHover(touch.clientX, touch.clientY);
-            });
-            
-            canvas.addEventListener('touchmove', function(event) {
-                event.preventDefault();
-                const touch = event.touches[0];
-                checkHover(touch.clientX, touch.clientY);
-            });
-            
-            canvas.addEventListener('touchend', function() {
-                if (hoveredNode) {
-                    const profileId = hoveredNode.id;
-                    openProfileModal(profileId);
-                }
-                nodeInfo.style.display = 'none';
-                hoveredNode = null;
-            });
-        } else {
-            canvas.addEventListener('mousemove', function(event) {
-                checkHover(event.clientX, event.clientY);
-            });
-            
-            canvas.addEventListener('mouseleave', function() {
-                nodeInfo.style.display = 'none';
-                hoveredNode = null;
-            });
-            
-            canvas.addEventListener('click', function(event) {
-                if (hoveredNode) {
-                    const profileId = hoveredNode.id;
-                    openProfileModal(profileId);
-                }
-            });
-        }
-        
-        function checkHover(clientX, clientY) {
-            const rect = canvas.getBoundingClientRect();
-            const x = clientX - rect.left;
-            const y = clientY - rect.top;
-            
-            hoveredNode = null;
-            
-            for (let i = 0; i < nodes.length; i++) {
-                const node = nodes[i];
-                const dx = x - node.x;
-                const dy = y - node.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < node.radius) {
-                    hoveredNode = node;
-                    break;
-                }
-            }
-            
-            if (hoveredNode) {
-                nodeInfo.style.display = 'block';
-                
-                let leftPos = clientX + 10;
-                let topPos = clientY + 10;
-                
-                const infoWidth = nodeInfo.offsetWidth;
-                const infoHeight = nodeInfo.offsetHeight;
-                const windowWidth = window.innerWidth;
-                const windowHeight = window.innerHeight;
-                
-                if (leftPos + infoWidth > windowWidth) {
-                    leftPos = clientX - infoWidth - 10;
-                }
-                
-                if (topPos + infoHeight > windowHeight) {
-                    topPos = clientY - infoHeight - 10;
-                }
-                
-                nodeInfo.style.left = leftPos + 'px';
-                nodeInfo.style.top = topPos + 'px';
-                
-                document.getElementById('node-name').textContent = hoveredNode.name;
-                document.getElementById('node-rm').textContent = hoveredNode.rm;
-                document.getElementById('node-cpf').textContent = hoveredNode.cpf;
-                document.getElementById('node-birth').textContent = hoveredNode.birth;
-                document.getElementById('node-connections').textContent = hoveredNode.connections;
-            } else {
-                nodeInfo.style.display = 'none';
-            }
-        }
-        
-        function animate() {
-            applyForces();
-            draw();
-            requestAnimationFrame(animate);
-        }
+            renderer.render(scene, camera);
+            window.requestAnimationFrame(animate);
+        };
         
         animate();
         
-        window.addEventListener('resize', function() {
-            canvas.width = canvasContainer.offsetWidth;
-            canvas.height = canvasContainer.offsetHeight;
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         });
-    }, 1000);
-}
-
-function initConnectionGraph(profileId) {
-    const canvas = document.getElementById('connection-canvas');
-    const ctx = canvas.getContext('2d');
-    
-    const canvasContainer = canvas.parentElement;
-    canvas.width = canvasContainer.offsetWidth;
-    canvas.height = canvasContainer.offsetHeight;
-    
-    const centerNode = {
-        id: parseInt(profileId),
-        x: canvas.width / 2,
-        y: canvas.height / 2,
-        radius: 25,
-        color: '#00f3ff',
-        fixed: true
-    };
-    
-    const nodes = [centerNode];
-    
-    const profileRelationships = relationships.filter(rel => 
-        rel.source === centerNode.id || rel.target === centerNode.id
-    );
-    
-    profileRelationships.forEach(rel => {
-        const connectedId = rel.source === centerNode.id ? rel.target : rel.source;
-        const connectedProfile = profiles.find(p => p.id === connectedId);
-        
-        if (connectedProfile) {
-            const angle = Math.random() * Math.PI * 2;
-            const distance = 100 + Math.random() * 50;
-            
-            let color;
-            switch(rel.type) {
-                case 'family':
-                    color = '#00f3ff';
-                    break;
-                case 'school':
-                    color = '#9933ff';
-                    break;
-                case 'friend':
-                    color = '#00ff88';
-                    break;
-                default:
-                    color = 'rgba(255,255,255,0.3)';
-            }
-            
-            nodes.push({
-                id: connectedProfile.id,
-                x: centerNode.x + Math.cos(angle) * distance,
-                y: centerNode.y + Math.sin(angle) * distance,
-                radius: 20,
-                color: color,
-                name: connectedProfile.name,
-                type: rel.type
-            });
-        }
-    });
-    
-    const edges = [];
-    
-    nodes.forEach(node => {
-        if (node.id !== centerNode.id) {
-            edges.push({
-                source: centerNode,
-                target: node,
-                color: node.color
-            });
-        }
-    });
-    
-    function applyForces() {
-        for (let i = 0; i < nodes.length; i++) {
-            for (let j = i + 1; j < nodes.length; j++) {
-                const nodeA = nodes[i];
-                const nodeB = nodes[j];
-                
-                if (nodeA.fixed || nodeB.fixed) continue;
-                
-                const dx = nodeB.x - nodeA.x;
-                const dy = nodeB.y - nodeA.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < 70) {
-                    const force = 1 / distance * 3;
-                    const forceX = dx / distance * force;
-                    const forceY = dy / distance * force;
-                    
-                    nodeA.x -= forceX;
-                    nodeA.y -= forceY;
-                    nodeB.x += forceX;
-                    nodeB.y += forceY;
-                }
-            }
-        }
-        
-        edges.forEach(edge => {
-            if (edge.source.fixed && edge.target.fixed) return;
-            
-            const dx = edge.target.x - edge.source.x;
-            const dy = edge.target.y - edge.source.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance > 100) {
-                const force = (distance - 100) / 1000;
-                const forceX = dx * force;
-                const forceY = dy * force;
-                
-                if (!edge.source.fixed) {
-                    edge.source.x += forceX;
-                    edge.source.y += forceY;
-                }
-                
-                if (!edge.target.fixed) {
-                    edge.target.x -= forceX;
-                    edge.target.y -= forceY;
-                }
-            }
-        });
-        
-        nodes.forEach(node => {
-            if (node.fixed) return;
-            
-            if (node.x < node.radius) node.x = node.radius;
-            if (node.x > canvas.width - node.radius) node.x = canvas.width - node.radius;
-            if (node.y < node.radius) node.y = node.radius;
-            if (node.y > canvas.height - node.radius) node.y = canvas.height - node.radius;
-        });
-    }
-    
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        edges.forEach(edge => {
-            ctx.beginPath();
-            ctx.moveTo(edge.source.x, edge.source.y);
-            ctx.lineTo(edge.target.x, edge.target.y);
-            ctx.strokeStyle = edge.color;
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        });
-        
-        nodes.forEach(node => {
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
-            ctx.fillStyle = node.color;
-            ctx.fill();
-            
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, node.radius - 3, 0, Math.PI * 2);
-            ctx.fillStyle = '#121725';
-            ctx.fill();
-            
-            ctx.font = 'bold 12px Arial';
-            ctx.fillStyle = '#ffffff';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(node.id === centerNode.id ? 'P' : node.name.charAt(0), node.x, node.y);
-            
-            if (node.id !== centerNode.id) {
-                let label;
-                switch(node.type) {
-                    case 'family':
-                        label = 'Família';
-                        break;
-                    case 'school':
-                        label = 'Escola';
-                        break;
-                    case 'friend':
-                        label = 'Amigo';
-                        break;
-                    default:
-                        label = 'Conexão';
-                }
-                
-                ctx.font = '10px Arial';
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-                ctx.fillText(label, node.x, node.y + node.radius + 12);
-            }
-        });
-    }
-    
-    const isMobile = 'ontouchstart' in window;
-    
-    if (isMobile) {
-        canvas.addEventListener('touchstart', function(event) {
-            event.preventDefault();
-            const touch = event.touches[0];
-            checkNodeClick(touch.clientX, touch.clientY);
-        });
-    } else {
-        canvas.addEventListener('click', function(event) {
-            checkNodeClick(event.clientX, event.clientY);
-        });
-    }
-    
-    function checkNodeClick(clientX, clientY) {
-        const rect = canvas.getBoundingClientRect();
-        const x = clientX - rect.left;
-        const y = clientY - rect.top;
-        
-        for (let i = 0; i < nodes.length; i++) {
-            const node = nodes[i];
-            if (node.id === centerNode.id) continue;
-            
-            const dx = x - node.x;
-            const dy = y - node.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance < node.radius) {
-                openProfileModal(node.id);
-                break;
-            }
-        }
-    }
-    
-    updateConnectionsTable(profileId);
-    
-    function animate() {
-        applyForces();
-        draw();
-        requestAnimationFrame(animate);
-    }
-    
-    animate();
-    
-    window.addEventListener('resize', function() {
-        canvas.width = canvasContainer.offsetWidth;
-        canvas.height = canvasContainer.offsetHeight;
-    });
-}
-
-function updateConnectionsTable(profileId) {
-    const connectionsTable = document.getElementById('connections-table');
-    connectionsTable.innerHTML = '';
-    
-    const profileRelationships = relationships.filter(rel => 
-        rel.source == profileId || rel.target == profileId
-    );
-    
-    if (profileRelationships.length === 0) {
-        const emptyRow = document.createElement('tr');
-        emptyRow.innerHTML = `
-            <td colspan="4" style="text-align: center; color: rgba(255,255,255,0.5);">
-                Nenhuma conexão encontrada para este perfil.
-            </td>
-        `;
-        connectionsTable.appendChild(emptyRow);
-        return;
-    }
-    
-    profileRelationships.forEach(rel => {
-        const connectedId = rel.source == profileId ? rel.target : rel.source;
-        const connectedProfile = profiles.find(p => p.id == connectedId);
-        
-        if (connectedProfile) {
-            const row = document.createElement('tr');
-            
-            let typeLabel, typeClass;
-            switch(rel.type) {
-                case 'family':
-                    typeLabel = 'Família';
-                    typeClass = 'blue';
-                    break;
-                case 'school':
-                    typeLabel = 'Escola';
-                    typeClass = 'purple';
-                    break;
-                case 'friend':
-                    typeLabel = 'Amigos';
-                    typeClass = 'green';
-                    break;
-                default:
-                    typeLabel = 'Outro';
-                    typeClass = '';
-            }
-            
-            row.innerHTML = `
-                <td>${connectedProfile.name}</td>
-                <td><span class="badge badge--${typeClass}">${typeLabel}</span></td>
-                <td>Alta</td>
-                <td>03/06/2025</td>
-            `;
-            
-            connectionsTable.appendChild(row);
-        }
-    });
-}
-
-function applyFilters() {
-    let filteredProfiles = [...profiles];
-    
-    if (showClassroom) {
-        filteredProfiles = filteredProfiles.filter(profile => profile.classroom === '1TDCPH');
-    } else {
-        filteredProfiles = [];
-        document.getElementById('total-profiles').innerHTML = `
-            <div class="stat__icon stat__icon--blue">
-                <i class="fa fa-users"></i>
-            </div>
-            0
-        `;
-        populateProfilesTable(filteredProfiles);
-        return;
-    }
-    
-    if (activeFilters.status !== 'all') {
-        filteredProfiles = filteredProfiles.filter(profile => profile.status === activeFilters.status);
-    }
-    
-    if (activeFilters.gender !== 'all') {
-        filteredProfiles = filteredProfiles.filter(profile => profile.gender === activeFilters.gender);
-    }
-    
-    if (activeFilters.age !== 'all') {
-        filteredProfiles = filteredProfiles.filter(profile => {
-            const age = calculateAge(profile.birth);
-            if (!age) return false;
-            
-            switch (activeFilters.age) {
-                case '18-19':
-                    return age >= 18 && age <= 19;
-                case '20-21':
-                    return age >= 20 && age <= 21;
-                case '22-23':
-                    return age >= 22 && age <= 23;
-                case '24+':
-                    return age >= 24;
-                default:
-                    return true;
-            }
-        });
-    }
-    
-    if (activeFilters.search) {
-        const searchTerm = activeFilters.search.toLowerCase();
-        filteredProfiles = filteredProfiles.filter(profile => 
-            profile.name.toLowerCase().includes(searchTerm) ||
-            profile.rm.toLowerCase().includes(searchTerm) ||
-            profile.cpf.toLowerCase().includes(searchTerm) ||
-            (profile.mother && profile.mother.toLowerCase().includes(searchTerm))
-        );
-    }
-    
-    populateProfilesTable(filteredProfiles);
-    
-    document.getElementById('total-profiles').innerHTML = `
-        <div class="stat__icon stat__icon--blue">
-            <i class="fa fa-users"></i>
-        </div>
-        ${filteredProfiles.length}
-    `;
-}
-
-function initProfileModal() {
-    const profileModal = document.getElementById('profile-modal');
-    const profileModalClose = document.getElementById('profile-modal-close');
-    
-    profileModalClose.addEventListener('click', function() {
-        profileModal.classList.remove('active');
-    });
-    
-    const tabs = document.querySelectorAll('.tab');
-    
-    tabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            const tabId = this.getAttribute('data-tab');
-            
-            tabs.forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
-            this.classList.add('active');
-            document.getElementById(`${tabId}-tab`).classList.add('active');
-        });
-    });
-}
-
-function openProfileModal(profileId) {
-    currentProfileId = profileId;
-    const profile = profiles.find(p => p.id == profileId);
-    
-    if (profile) {
-        const isRestricted = !isAdmin && restrictedProfileNames.includes(profile.name);
-        
-        document.getElementById('profile-name').textContent = profile.name;
-        document.getElementById('profile-rm').textContent = isRestricted ? '****' : profile.rm;
-        document.getElementById('profile-birth').textContent = isRestricted ? '****' : profile.birth;
-        document.getElementById('profile-cpf').textContent = isRestricted ? '****' : profile.cpf;
-        document.getElementById('profile-password').textContent = isRestricted ? '****' : profile.password;
-        document.getElementById('profile-mother').textContent = isRestricted ? '****' : profile.mother;
-        
-        const statusEl = document.getElementById('profile-status');
-        statusEl.innerHTML = '';
-        const statusSpan = document.createElement('span');
-        statusSpan.className = `data-table__status data-table__status--${profile.status}`;
-        statusSpan.textContent = profile.status === 'active' ? 'Verificado' : 
-                               profile.status === 'pending' ? 'Pendente' : 'Inativo';
-        statusEl.appendChild(statusSpan);
-        
-        const profileImage = document.getElementById('profile-image');
-        profileImage.textContent = profile.name.charAt(0);
-        
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.querySelector('.tab[data-tab="connections"]').classList.add('active');
-        document.getElementById('connections-tab').classList.add('active');
-        
-        initConnectionGraph(profileId);
-        
-        document.getElementById('profile-modal').classList.add('active');
-    }
-}
-
-function populateProfilesTable(data) {
-    const tableBody = document.querySelector('#profiles-table tbody');
-    tableBody.innerHTML = '';
-    
-    if (data.length === 0) {
-        const emptyRow = document.createElement('tr');
-        emptyRow.innerHTML = `
-            <td colspan="8" style="text-align: center; color: rgba(255,255,255,0.5);">
-                Nenhum perfil encontrado com os critérios selecionados.
-            </td>
-        `;
-        tableBody.appendChild(emptyRow);
-        return;
-    }
-    
-    data.forEach(profile => {
-        const row = document.createElement('tr');
-        row.classList.add('profile-row');
-        row.setAttribute('data-id', profile.id);
-        
-        const isRestricted = !isAdmin && restrictedProfileNames.includes(profile.name);
-        
-        let statusText = '';
-        switch(profile.status) {
-            case 'active':
-                statusText = 'Verificado';
-                break;
-            case 'pending':
-                statusText = 'Pendente';
-                break;
-            case 'inactive':
-                statusText = 'Inativo';
-                break;
-        }
-        
-        row.innerHTML = `
-            <td>${profile.name}</td>
-            <td>${isRestricted ? '****' : profile.rm}</td>
-            <td>${isRestricted ? '****' : profile.birth}</td>
-            <td>${isRestricted ? '****' : profile.cpf}</td>
-            <td>${isRestricted ? '****' : profile.password}</td>
-            <td>${isRestricted ? '****' : profile.mother}</td>
-            <td><span class="data-table__status data-table__status--${profile.status}">${statusText}</span></td>
-            <td>
-                <div class="data-table__actions">
-                    <div class="data-table__action edit-profile" data-id="${profile.id}">
-                        <i class="fa fa-edit"></i>
-                    </div>
-                    <div class="data-table__action view-profile" data-id="${profile.id}">
-                        <i class="fa fa-user"></i>
-                    </div>
-                </div>
-            </td>
-        `;
-        
-        tableBody.appendChild(row);
-    });
-    
-    document.querySelectorAll('.view-profile').forEach(button => {
-        button.addEventListener('click', function() {
-            const profileId = this.getAttribute('data-id');
-            openProfileModal(profileId);
-        });
-    });
-    
-    document.querySelectorAll('.edit-profile').forEach(button => {
-        button.addEventListener('click', function() {
-            const profileId = this.getAttribute('data-id');
-            showNotification('Edição de perfil', `Editando perfil ID ${profileId}`, 'info');
-        });
-    });
-}
-
-function showNotification(title, message, type) {
-    const notification = document.getElementById('notification');
-    const notificationIcon = notification.querySelector('.notification__icon');
-    const notificationTitle = notification.querySelector('.notification__title');
-    const notificationMessage = notification.querySelector('.notification__message');
-    
-    notificationIcon.style.background = '';
-    notificationIcon.style.color = '';
-    
-    switch(type) {
-        case 'success':
-            notificationIcon.style.background = 'rgba(0, 255, 136, 0.1)';
-            notificationIcon.style.color = 'var(--success)';
-            notificationIcon.innerHTML = '<i class="fa fa-check"></i>';
-            break;
-        case 'warning':
-            notificationIcon.style.background = 'rgba(255, 204, 0, 0.1)';
-            notificationIcon.style.color = 'var(--warning)';
-            notificationIcon.innerHTML = '<i class="fa fa-warning"></i>';
-            break;
-        case 'error':
-            notificationIcon.style.background = 'rgba(255, 51, 102, 0.1)';
-            notificationIcon.style.color = 'var(--danger)';
-            notificationIcon.innerHTML = '<i class="fa fa-warning"></i>';
-            break;
-        default:
-            notificationIcon.style.background = 'rgba(0, 243, 255, 0.1)';
-            notificationIcon.style.color = 'var(--primary)';
-            notificationIcon.innerHTML = '<i class="fa fa-info"></i>';
-    }
-    
-    notificationTitle.textContent = title;
-    notificationMessage.textContent = message;
-    
-    notification.classList.add('active');
-    
-    if (notification.timeoutId) {
-        clearTimeout(notification.timeoutId);
-    }
-    
-    notification.timeoutId = setTimeout(() => {
-        notification.classList.remove('active');
-    }, 5000);
-}
-
-function handleProfileEdit() {
-    const profileId = this.getAttribute('data-id');
-    
-    showNotification('Modo de edição', 'Editando perfil ID: ' + profileId, 'info');
 }
 
 document.addEventListener('DOMContentLoaded', function() {
