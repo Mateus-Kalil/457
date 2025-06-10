@@ -2048,9 +2048,22 @@
             line-height: 1.5;
         }
         
-        /* Animação de chuva otimizada */
+        /* Estilos para a animação de neve aprimorada */
+        .snowflake {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            filter: blur(0.5px);
+            opacity: 0.9;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        /* Animação de chuva para a tela de login */
         .raindrop {
-            position: fixed;
+            position: absolute;
             background: linear-gradient(to bottom, rgba(0, 243, 255, 0.1), rgba(0, 243, 255, 0.5));
             width: 2px;
             height: 15px;
@@ -2058,7 +2071,6 @@
             opacity: 0.7;
             pointer-events: none;
             z-index: 1;
-            will-change: transform;
         }
         
         @media (min-width: 576px) {
@@ -3081,129 +3093,6 @@ let ageChart = null;
 let networkGraph = null;
 let connectionGraph = null;
 
-// Variáveis para o controle de animação
-let raindrops = [];
-const maxRaindrops = 150; // Limite de gotas para evitar sobrecarga
-let animationRequestId = null;
-
-document.addEventListener('DOMContentLoaded', function() {
-    const isLoggedIn = sessionStorage.getItem('mk_osint_logged_in');
-    
-    // Inicializa apenas a animação de chuva (sem neve)
-    createRaindropsOptimized();
-    
-    initLogin();
-    initGlobalEvents();
-    
-    document.querySelectorAll('.edit-profile').forEach(button => { 
-        button.addEventListener('click', handleProfileEdit); 
-    });
-    
-    setTimeout(function() {
-        if (window.innerWidth <= 768) {
-            showNotification('Dica de Acesso', 'Senhas: fiaph (standard), MK5041 (admin), MK741 (teacher)', 'info');
-        }
-    }, 1000);
-});
-
-// Função otimizada para criar animação de chuva para todo o site
-function createRaindropsOptimized() {
-    // Limite o número de gotas baseado no desempenho do dispositivo
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const dropLimit = isMobile ? 75 : 150;
-    
-    function createRaindrop() {
-        // Evitar criar gotas em excesso para não sobrecarregar
-        if (raindrops.length >= dropLimit) return;
-        
-        const raindrop = document.createElement('div');
-        raindrop.className = 'raindrop';
-        document.body.appendChild(raindrop);
-        
-        // Propriedades otimizadas para melhor desempenho
-        const height = Math.random() * 15 + 10; // 10px a 25px
-        const width = Math.random() * 1 + 1; // 1px a 2px (mais finas para menos processamento)
-        const left = Math.random() * 100;
-        const speed = Math.random() * 1.5 + 1.5; // Velocidade controlada
-        const delay = Math.random() * 2;
-        const opacity = Math.random() * 0.5 + 0.3;
-        
-        // Aplicar estilos diretamente para evitar múltiplas repinturas
-        raindrop.style.cssText = `
-            height: ${height}px;
-            width: ${width}px;
-            left: ${left}vw;
-            opacity: ${opacity};
-            top: -${height}px;
-            box-shadow: 0 0 3px rgba(0, 243, 255, 0.3);
-        `;
-        
-        // Objeto para controlar a animação
-        const drop = {
-            element: raindrop,
-            speed: speed,
-            posY: -height,
-            posX: left,
-            remove: false
-        };
-        
-        raindrops.push(drop);
-    }
-    
-    function animateRaindrops() {
-        const windowHeight = window.innerHeight;
-        
-        // Crie mais gotas aleatoriamente
-        if (Math.random() < 0.3 && raindrops.length < dropLimit) {
-            createRaindrop();
-        }
-        
-        for (let i = 0; i < raindrops.length; i++) {
-            const drop = raindrops[i];
-            
-            // Atualiza posição
-            drop.posY += drop.speed;
-            
-            // Adiciona um pequeno movimento horizontal
-            drop.posX += (Math.random() - 0.5) * 0.1;
-            
-            // Aplica transformação por CSS transform (mais eficiente)
-            drop.element.style.transform = `translate3d(${(Math.random() - 0.5) * 3}px, ${drop.posY}px, 0)`;
-            
-            // Remove gotas que saíram da tela
-            if (drop.posY > windowHeight) {
-                drop.element.remove();
-                drop.remove = true;
-            }
-        }
-        
-        // Limpa as gotas removidas do array
-        raindrops = raindrops.filter(drop => !drop.remove);
-        
-        // Continua a animação
-        animationRequestId = requestAnimationFrame(animateRaindrops);
-    }
-    
-    // Inicia com algumas gotas
-    for (let i = 0; i < dropLimit / 3; i++) {
-        createRaindrop();
-    }
-    
-    // Inicia a animação
-    animateRaindrops();
-    
-    // Adiciona evento para parar animação quando a janela não estiver visível
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
-            // Pausa a animação para economizar recursos
-            cancelAnimationFrame(animationRequestId);
-        } else {
-            // Reinicia a animação
-            animationRequestId = requestAnimationFrame(animateRaindrops);
-        }
-    });
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     const preloader = document.querySelector('.preloader');
     const preloaderBar = document.getElementById('preloader-bar');
@@ -3211,8 +3100,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const authStatus = document.getElementById('auth-status');
     const loginStatus = document.getElementById('login-status');
     
-    // Inicializar apenas a animação de chuva para login e site
-    createRaindropsOptimized();
+    // Inicializar animações
+    createSnowflakes(); // Animação de neve para o sistema
+    createRaindrops(); // Animação de chuva para a tela de login
     
     loadAuthData()
         .then(() => {
@@ -3232,10 +3122,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             preloaderText.textContent = 'Sistema pronto para login!';
             
-            // Carregamento mais rápido
             let progress = 0;
             const interval = setInterval(() => {
-                progress += 20; // Aumenta a velocidade do carregamento
+                progress += Math.random() * 10;
                 if (progress > 100) {
                     progress = 100;
                     clearInterval(interval);
@@ -3243,11 +3132,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     setTimeout(() => {
                         preloaderBar.style.width = '100%';
                         preloaderBar.style.backgroundColor = '#00ff88';
-                    }, 100); // Reduzido o tempo de espera
+                    }, 300);
                 }
                 
                 preloaderBar.style.width = `${progress}%`;
-            }, 100); // Reduzido o intervalo
+            }, 200);
         })
         .catch(error => {
             console.error('Erro ao carregar dados de autenticação:', error);
@@ -3265,10 +3154,117 @@ document.addEventListener('DOMContentLoaded', function() {
     initGlobalEvents();
 });
 
+// Função para criar flocos de neve aprimorados
+function createSnowflakes() {
+    const container = document.body;
+    const snowflakeCount = Math.min(window.innerWidth / 3, 200); // Aumentando o número de flocos
+    
+    for (let i = 0; i < snowflakeCount; i++) {
+        const snowflake = document.createElement('div');
+        snowflake.className = 'snowflake';
+        
+        // Propriedades aleatórias para cada floco de neve com maior variação de tamanho
+        const size = Math.random() * 6 + 2; // 2px a 8px
+        const left = Math.random() * 100;
+        const animationDuration = Math.random() * 20 + 10; // 10s a 30s - mais lento para parecer mais real
+        const animationDelay = Math.random() * 5;
+        const opacity = Math.random() * 0.6 + 0.4; // Maior opacidade
+        
+        // Estilo do floco mais visível
+        snowflake.style.width = `${size}px`;
+        snowflake.style.height = `${size}px`;
+        snowflake.style.left = `${left}vw`;
+        snowflake.style.opacity = opacity;
+        snowflake.style.top = `-${size}px`;
+        snowflake.style.filter = 'blur(0.5px)'; // Menos blur para maior nitidez
+        
+        // Animação com trajetória ziguezague para mais realismo
+        const keyframes = `
+            @keyframes snowfall-${i} {
+                0% {
+                    transform: translateY(-10px) rotate(0deg);
+                }
+                25% {
+                    transform: translateY(${window.innerHeight * 0.25}px) translateX(${Math.random() * 50 - 25}px) rotate(${Math.random() * 180}deg);
+                }
+                50% {
+                    transform: translateY(${window.innerHeight * 0.5}px) translateX(${Math.random() * 50 - 25}px) rotate(${Math.random() * 360}deg);
+                }
+                75% {
+                    transform: translateY(${window.innerHeight * 0.75}px) translateX(${Math.random() * 50 - 25}px) rotate(${Math.random() * 540}deg);
+                }
+                100% {
+                    transform: translateY(${window.innerHeight + 100}px) translateX(${Math.random() * 50 - 25}px) rotate(${Math.random() * 720}deg);
+                }
+            }
+        `;
+        
+        snowflake.style.animation = `snowfall-${i} ${animationDuration}s linear ${animationDelay}s infinite`;
+        
+        const style = document.createElement('style');
+        style.innerHTML = keyframes;
+        document.head.appendChild(style);
+        
+        container.appendChild(snowflake);
+    }
+}
+
+// Função para criar animação de chuva na tela de login
+function createRaindrops() {
+    const loginScreen = document.getElementById('login-screen');
+    const raindropCount = Math.min(window.innerWidth / 2, 300);
+    
+    for (let i = 0; i < raindropCount; i++) {
+        const raindrop = document.createElement('div');
+        raindrop.className = 'raindrop';
+        
+        // Propriedades aleatórias para cada gota
+        const height = Math.random() * 20 + 10; // 10px a 30px
+        const width = Math.random() * 1.5 + 1; // 1px a 2.5px
+        const left = Math.random() * 100;
+        const animationDuration = Math.random() * 4 + 3; 
+        const animationDelay = Math.random() * 5;
+        const opacity = Math.random() * 0.6 + 0.4;
+        
+        // Estilo da gota de chuva
+        raindrop.style.height = `${height}px`;
+        raindrop.style.width = `${width}px`;
+        raindrop.style.left = `${left}vw`;
+        raindrop.style.opacity = opacity;
+        raindrop.style.top = `-${height}px`;
+        
+        // Adicionando sombra para maior destaque
+        raindrop.style.boxShadow = '0 0 5px rgba(0, 243, 255, 0.5)';
+        
+        // Animação de queda
+        const keyframes = `
+            @keyframes rainfall-${i} {
+                0% {
+                    transform: translateY(0) translateX(0);
+                }
+                85% {
+                    opacity: ${opacity};
+                }
+                100% {
+                    transform: translateY(${window.innerHeight + 100}px) translateX(${Math.random() * 10}px);
+                    opacity: 0;
+                }
+            }
+        `;
+        
+        raindrop.style.animation = `rainfall-${i} ${animationDuration}s linear ${animationDelay}s infinite`;
+        
+        const style = document.createElement('style');
+        style.innerHTML = keyframes;
+        document.head.appendChild(style);
+        
+        loginScreen.appendChild(raindrop);
+    }
+}
+
 function loadAuthData() {
     return new Promise((resolve, reject) => {
         if (window._s4) {
-            // Reduzido tempo de espera para 200ms
             setTimeout(() => {
                 authConfig = window.authData;
                 
@@ -3277,7 +3273,7 @@ function loadAuthData() {
                 }
                 
                 resolve();
-            }, 200);
+            }, 500);
         } else {
             reject(new Error('Dados de autenticação não encontrados'));
         }
@@ -3287,7 +3283,7 @@ function loadAuthData() {
 function loadProfilesData() {
     return new Promise((resolve, reject) => {
         try {
-            // Carregamento otimizado e em cache para perfis 1TDCPH
+            // Carregar e descriptografar perfis 1TDCPH - lista completa com 29 alunos
             const profilesTDCPH = [
                 {
                     id: 1,
@@ -3642,7 +3638,7 @@ function loadProfilesData() {
                 }
             ];
             
-            // Dados dos perfis 1TDCPF
+            // Carregar e descriptografar perfis 1TDCPF
             const profilesTDCPF = [
                 {
                     id: 30,
@@ -3682,10 +3678,8 @@ function loadProfilesData() {
                 }
             ];
             
-            // Precarregamento para acelerar a exibição
             profiles = [...profilesTDCPH, ...profilesTDCPF];
             
-            // Inicializa relacionamentos de forma mais eficiente
             initializeRelationships();
             
             resolve();
@@ -3697,7 +3691,6 @@ function loadProfilesData() {
 }
 
 function initializeRelationships() {
-    // Definição otimizada de relacionamentos
     relationships = [
         { source: 1, target: 7, type: "school" },
         { source: 1, target: 19, type: "friend" },
@@ -3809,12 +3802,11 @@ function initLogin() {
             const preloader = document.querySelector('.preloader');
             preloader.style.opacity = '0';
             
-            // Acesso mais rápido ao sistema
             setTimeout(() => {
                 loginScreen.style.display = 'none';
                 preloader.style.display = 'none';
                 initSystem();
-            }, 300); // Reduzido o tempo de transição
+            }, 500);
             
             if (authLevel === 'admin') {
                 showNotification('Acesso Administrativo', 'Você está logado com acesso de administrador', 'info');
@@ -3844,13 +3836,11 @@ function initSystem() {
     const preloader = document.querySelector('.preloader');
     const preloaderBar = document.getElementById('preloader-bar');
     
-    // Carregamento mais rápido de dados
     loadProfilesData()
         .then(() => {
-            // Acelerado o progresso de carregamento
             let progress = 0;
             const interval = setInterval(() => {
-                progress += 30; // Aumenta a velocidade do carregamento significativamente
+                progress += Math.random() * 10;
                 if (progress > 100) {
                     progress = 100;
                     clearInterval(interval);
@@ -3859,21 +3849,16 @@ function initSystem() {
                         preloader.style.opacity = '0';
                         setTimeout(() => {
                             preloader.style.display = 'none';
-                            
-                            // Inicializa componentes principais em paralelo
-                            Promise.all([
-                                initBackgroundAnimation(),
-                                initDashboard(),
-                                initFileSearchModal(),
-                                initDatabaseModal()
-                            ]).catch(err => console.error("Erro na inicialização:", err));
-                            
-                        }, 300); // Reduzido o tempo de transição
-                    }, 200); // Reduzido o tempo de espera
+                            initBackgroundAnimation();
+                            initDashboard();
+                            initFileSearchModal();
+                            initDatabaseModal();
+                        }, 500);
+                    }, 500);
                 }
                 
                 preloaderBar.style.width = `${progress}%`;
-            }, 100); // Acelerado o intervalo
+            }, 200);
         })
         .catch(error => {
             console.error("Erro ao inicializar o sistema:", error);
@@ -3881,27 +3866,36 @@ function initSystem() {
             setTimeout(() => {
                 preloader.style.display = 'none';
                 showNotification('Erro', 'Não foi possível carregar os dados do sistema', 'error');
-            }, 300);
+            }, 500);
         });
 }
 
 function loadDataFile() {
-    // Simula carregamento de arquivo para demonstração
-    // Em um ambiente real, isso seria uma requisição AJAX otimizada
-    setTimeout(() => {
-        // Simulação de dados já carregados para maior velocidade
-        fileDataCache = "Dados carregados com sucesso";
-        console.log('Arquivo 1.txt carregado com sucesso');
-        
-        prepareDataForPagination(fileDataCache);
-    }, 300); // Carregamento mais rápido
+    fetch('1.txt')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Arquivo 1.txt não encontrado');
+            }
+            return response.text();
+        })
+        .then(data => {
+            fileDataCache = data;
+            console.log('Arquivo 1.txt carregado com sucesso');
+            
+            prepareDataForPagination(data);
+        })
+        .catch(error => {
+            console.error('Erro ao carregar arquivo:', error);
+            showNotification('Arquivo', 'Não foi possível carregar o arquivo 1.txt', 'warning');
+        });
 }
 
 function prepareDataForPagination(data) {
     const blockPattern = /(?:=+\s*CONSULTA|\🔍\s*CONSULTA|👤\s*DADOS PESSOAIS)/i;
     
-    // Simulação de blocos para maior velocidade
-    const records = ["Registro 1", "Registro 2", "Registro 3"];
+    const records = data.split(blockPattern)
+        .filter(block => block && block.trim())
+        .map(block => blockPattern.source.charAt(0) + block);
     
     totalPages = Math.ceil(records.length / pageSize);
     
@@ -3919,21 +3913,21 @@ function prepareDataForPagination(data) {
 
 function displayCurrentPage() {
     const databaseContent = document.getElementById('database-content');
+    const loading = document.createElement('div');
+    loading.className = 'database-loading';
+    loading.innerHTML = '<div class="loading__spinner"></div> Carregando dados...';
+    databaseContent.innerHTML = '';
+    databaseContent.appendChild(loading);
     
-    // Otimização: Não cria elementos extras desnecessários
-    databaseContent.innerHTML = '<div class="database-loading"><div class="loading__spinner"></div> Carregando dados...</div>';
-    
-    // Renderização mais rápida
-    requestAnimationFrame(() => {
+    setTimeout(() => {
         if (isSearchMode && searchResults) {
             const startIdx = (currentPage - 1) * pageSize;
             const endIdx = Math.min(startIdx + pageSize, searchResults.length);
             const pageRecords = searchResults.slice(startIdx, endIdx);
             
-            const query = document.getElementById('database-search-input').value;
-            
-            // Cria HTML com um único join para melhor performance
             const formattedRecords = pageRecords.map(record => {
+                const query = document.getElementById('database-search-input').value;
+                
                 if (query) {
                     const highlightedRecord = record.replace(new RegExp(query, 'gi'), match => 
                         `<span class="highlight">${match}</span>`
@@ -3942,9 +3936,9 @@ function displayCurrentPage() {
                 } else {
                     return `<div class="search-result-record">${record}</div>`;
                 }
-            }).join('');
+            });
             
-            databaseContent.innerHTML = formattedRecords;
+            databaseContent.innerHTML = formattedRecords.join('');
             
             if (!document.getElementById('search-result-style')) {
                 const style = document.createElement('style');
@@ -3983,7 +3977,7 @@ function displayCurrentPage() {
         }
         
         updatePaginationControls();
-    });
+    }, 10);
 }
 
 function updatePaginationControls() {
@@ -3997,11 +3991,11 @@ function updatePaginationControls() {
 function normalizeText(text) {
     if (!text) return '';
     
-    // Otimizado para menos operações
-    return text.toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    const normalized = text.toLowerCase()
         .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '')
         .replace(/\s+/g, ' ');
+    
+    return normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 function escapeRegExp(string) {
@@ -4014,29 +4008,98 @@ function searchInFile(query, searchType = 'all') {
     }
     
     return new Promise((resolve) => {
-        // Busca mais rápida
         setTimeout(() => {
             if (!query || !fileDataCache) {
                 resolve([]);
                 return;
             }
             
-            // Dados simulados para performance
-            const results = [
-                {
-                    name: "Ana Maria Silva",
-                    cpf: "123.456.789-00",
-                    birth: "01/05/1985",
-                    gender: "F",
-                    mother: "Maria José Silva",
-                    phone: "(11) 98765-4321",
-                    plate: "ABC-1234",
-                    fullRecord: "CONSULTA 123\nNOME: Ana Maria Silva\nCPF: 123.456.789-00\nNASCIMENTO: 01/05/1985\nMÃE: Maria José Silva"
-                }
-            ];
+            const normalizedQuery = normalizeText(query);
             
-            resolve(results);
-        }, 200); // Busca mais rápida
+            const blockPattern = /(?:=+\s*CONSULTA|\🔍\s*CONSULTA|👤\s*DADOS PESSOAIS|NOME\s*:|CPF\s*:|PESSOA\s*:)/i;
+            
+            const blocks = fileDataCache.split(blockPattern)
+                .filter(block => block && block.trim());
+            
+            const records = [];
+            for (let i = 0; i < blocks.length; i++) {
+                let fullBlock = blocks[i];
+                const matches = fileDataCache.match(new RegExp(`(${blockPattern.source})${escapeRegExp(blocks[i].substring(0, 50))}`, 'i'));
+                
+                if (matches && matches[1]) {
+                    fullBlock = matches[1] + fullBlock;
+                } else {
+                    fullBlock = "CONSULTA " + fullBlock;
+                }
+                
+                const endMatch = fullBlock.match(/\n\s*\n\s*\n/);
+                if (endMatch) {
+                    fullBlock = fullBlock.substring(0, endMatch.index + endMatch[0].length);
+                }
+                
+                records.push(fullBlock);
+            }
+            
+            const matchedRecords = records.filter(record => {
+                const normalizedRecord = normalizeText(record);
+                
+                const isPerson = /nome|cpf|nascimento|dados pessoais/i.test(normalizedRecord);
+                
+                if (searchType === 'pessoa' && !isPerson) {
+                    return false;
+                }
+                
+                if (searchType === 'nome' && !record.match(/NOME\s*:/i)) {
+                    return false;
+                }
+                if (searchType === 'cpf' && !record.match(/CPF\s*:|CPF\/CNPJ\s*:/i)) {
+                    return false;
+                }
+                if (searchType === 'telefone' && !record.match(/TELEFONE\s*:/i)) {
+                    return false;
+                }
+                if (searchType === 'placa' && !record.match(/PLACA\s*:/i)) {
+                    return false;
+                }
+                
+                return normalizedRecord.includes(normalizedQuery);
+            });
+            
+            const processedResults = matchedRecords.map(record => {
+                const nameMatch = record.match(/NOME\s*:\s*([^\n]+)/i);
+                const cpfMatch = record.match(/CPF\s*:|CPF\/CNPJ\s*:\s*([^\n]+)/i);
+                const birthMatch = record.match(/NASCIMENTO\s*:\s*([^\n]+)/i);
+                const genderMatch = record.match(/SEXO\s*:\s*([^\n]+)/i);
+                const motherMatch = record.match(/MÃE\s*:\s*([^\n]+)/i);
+                const phoneMatch = record.match(/TELEFONE\s*:\s*([^\n]+)/i);
+                const plateMatch = record.match(/PLACA\s*:\s*([^\n]+)/i);
+                
+                return {
+                    name: nameMatch ? nameMatch[1].trim() : "Não informado",
+                    cpf: cpfMatch ? cpfMatch[1].trim() : "Não informado",
+                    birth: birthMatch ? birthMatch[1].trim() : "Não informado",
+                    gender: genderMatch ? genderMatch[1].trim() : "Não informado",
+                    mother: motherMatch ? motherMatch[1].trim() : "Não informado",
+                    phone: phoneMatch ? phoneMatch[1].trim() : "Não informado",
+                    plate: plateMatch ? plateMatch[1].trim() : "Não informado",
+                    fullRecord: record
+                };
+            });
+            
+            const uniqueResults = [];
+            const uniqueCPFs = new Set();
+            
+            processedResults.forEach(result => {
+                if (result.cpf === "Não informado" || !uniqueCPFs.has(result.cpf)) {
+                    if (result.cpf !== "Não informado") {
+                        uniqueCPFs.add(result.cpf);
+                    }
+                    uniqueResults.push(result);
+                }
+            });
+            
+            resolve(uniqueResults);
+        }, 10);
     });
 }
 
@@ -4053,8 +4116,19 @@ function searchInDatabase(query) {
         return 0;
     }
     
-    // Simulação de resultados para performance
-    const matchedRecords = ["Resultado da busca 1", "Resultado da busca 2"];
+    const normalizedQuery = query.toLowerCase();
+    
+    const personPattern = /(NOME|CPF|NASCIMENTO|DADOS PESSOAIS)/i;
+    const companyPattern = /(RAZÃO SOCIAL|CNPJ|CAPITAL SOCIAL)/i;
+    
+    const blockPattern = /(?:=+\s*CONSULTA|\🔍\s*CONSULTA|👤\s*DADOS PESSOAIS)/i;
+    const records = fileDataCache.split(blockPattern)
+        .filter(block => block && block.trim())
+        .map(block => blockPattern.source.charAt(0) + block);
+    
+    const matchedRecords = records.filter(record => 
+        record.toLowerCase().includes(normalizedQuery)
+    );
     
     searchResultsElement.style.display = matchedRecords.length > 0 ? 'block' : 'none';
     searchCount.textContent = matchedRecords.length;
@@ -4065,42 +4139,48 @@ function searchInDatabase(query) {
         currentPage = 1;
         totalPages = Math.ceil(matchedRecords.length / pageSize);
         
-        // Renderização mais eficiente
-        const highlightedRecords = matchedRecords.map(record => {
+        const startIdx = 0;
+        const endIdx = Math.min(pageSize, matchedRecords.length);
+        const pageRecords = matchedRecords.slice(startIdx, endIdx);
+        
+        const highlightedRecords = pageRecords.map(record => {
             const highlightedRecord = record.replace(new RegExp(query, 'gi'), match => 
                 `<span class="highlight">${match}</span>`
             );
             
             return `<div class="search-result-record">${highlightedRecord}</div>`;
-        }).join('');
+        });
         
-        databaseContent.innerHTML = highlightedRecords;
+        databaseContent.innerHTML = highlightedRecords.join('');
         
-        // Atualiza estilos apenas se necessário
-        if (!document.getElementById('search-result-style')) {
-            const style = document.createElement('style');
-            style.id = 'search-result-style';
-            style.textContent = `
-                .search-result-record {
-                    margin-bottom: 20px;
-                    padding: 15px;
-                    background: rgba(10, 14, 23, 0.7);
-                    border-left: 3px solid var(--primary);
-                    border-radius: 8px;
-                    white-space: pre-wrap;
-                    font-family: monospace;
-                    line-height: 1.5;
-                }
-                .highlight {
-                    background-color: rgba(255, 204, 0, 0.3);
-                    color: white;
-                    padding: 0 2px;
-                    border-radius: 3px;
-                    font-weight: bold;
-                }
-            `;
-            document.head.appendChild(style);
+        const style = document.createElement('style');
+        style.textContent = `
+            .search-result-record {
+                margin-bottom: 20px;
+                padding: 15px;
+                background: rgba(10, 14, 23, 0.7);
+                border-left: 3px solid var(--primary);
+                border-radius: 8px;
+                white-space: pre-wrap;
+                font-family: monospace;
+                line-height: 1.5;
+            }
+            .highlight {
+                background-color: rgba(255, 204, 0, 0.3);
+                color: white;
+                padding: 0 2px;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+        `;
+        
+        const existingStyle = document.getElementById('search-result-style');
+        if (existingStyle) {
+            existingStyle.remove();
         }
+        
+        style.id = 'search-result-style';
+        document.head.appendChild(style);
         
         document.getElementById('current-page').textContent = currentPage;
         document.getElementById('total-pages').textContent = totalPages;
@@ -4108,13 +4188,10 @@ function searchInDatabase(query) {
         
         updatePaginationControls();
         
-        // Scroll para o primeiro resultado em vez de apenas o highlight
-        requestAnimationFrame(() => {
-            const firstResult = databaseContent.querySelector('.search-result-record');
-            if (firstResult) {
-                firstResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        });
+        const firstHighlight = databaseContent.querySelector('.highlight');
+        if (firstHighlight) {
+            firstHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     } else {
         databaseContent.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">Nenhum resultado encontrado para: ' + query + '</div>';
     }
@@ -4123,12 +4200,15 @@ function searchInDatabase(query) {
 }
 
 function formatRecordForDisplay(record) {
-    // Otimizado para menos operações de replace
-    return record
-        .replace(/🔍|👤|•/g, (match) => match) // Substitui emojis
+    const formatted = record
+        .replace(/🔍/g, '🔍')
+        .replace(/👤/g, '👤')
+        .replace(/•/g, '•')
         .replace(/\n/g, '<br>')
         .replace(/(NOME|CPF|NASCIMENTO|SEXO|MÃE|TELEFONE|ENDEREÇO|EMPRESAS|POSSÍVEIS PARENTES):/g, 
                  '<span style="color: var(--primary); font-weight: bold;">$1:</span>');
+    
+    return formatted;
 }
 
 function displaySearchResults(results, container) {
@@ -4137,11 +4217,12 @@ function displaySearchResults(results, container) {
         return;
     }
     
-    // Construção de HTML mais eficiente com template strings e join
-    const html = results.map(result => {
+    let html = '';
+    
+    results.forEach(result => {
         const formattedRecord = formatRecordForDisplay(result.fullRecord);
         
-        return `
+        html += `
         <div class="search-result-item">
             <div class="search-result-header">${result.name}</div>
             <div style="margin: 5px 0;"><span style="font-weight: bold; color: var(--primary);">CPF/CNPJ:</span> <span>${result.cpf}</span></div>
@@ -4161,35 +4242,32 @@ function displaySearchResults(results, container) {
             </div>
         </div>
         `;
-    }).join('');
+    });
     
     container.innerHTML = html;
     
-    // Delegação de eventos para melhor performance
-    container.addEventListener('click', function(e) {
-        // Manipulação de botão de adicionar perfil
-        if (e.target.classList.contains('btn-add-profile')) {
-            const recordData = decodeURIComponent(e.target.getAttribute('data-record'));
+    document.querySelectorAll('.btn-add-profile').forEach(button => {
+        button.addEventListener('click', function() {
+            const recordData = decodeURIComponent(this.getAttribute('data-record'));
             addProfileFromRecord(recordData);
-        }
-        
-        // Manipulação de botão de visualização de registro
-        if (e.target.classList.contains('btn-view-full-record')) {
-            const container = e.target.closest('.search-result-item').querySelector('.full-record-container');
+        });
+    });
+    
+    document.querySelectorAll('.btn-view-full-record').forEach(button => {
+        button.addEventListener('click', function() {
+            const container = this.closest('.search-result-item').querySelector('.full-record-container');
             if (container.style.display === 'none') {
                 container.style.display = 'block';
-                e.target.textContent = 'Ocultar Registro Completo';
+                this.textContent = 'Ocultar Registro Completo';
             } else {
                 container.style.display = 'none';
-                e.target.textContent = 'Ver Registro Completo';
+                this.textContent = 'Ver Registro Completo';
             }
-        }
+        });
     });
 }
 
 function addProfileFromRecord(record) {
-    // Parse otimizado - um único regex com grupos de captura seria mais eficiente,
-    // mas mantendo separado para maior clareza
     const nameMatch = record.match(/NOME\s*:\s*([^\n]+)/i);
     const cpfMatch = record.match(/CPF\s*:|CPF\/CNPJ\s*:\s*([^\n]+)/i);
     const birthMatch = record.match(/NASCIMENTO\s*:\s*([^\n]+)/i);
@@ -4200,7 +4278,6 @@ function addProfileFromRecord(record) {
         const name = nameMatch[1].trim();
         const cpf = cpfMatch ? cpfMatch[1].trim() : "Não informado";
         
-        // Verificação mais eficiente - usando find com early return
         const existingProfile = profiles.find(p => 
             (p.cpf === cpf && cpf !== "Não informado") || 
             (p.name.toLowerCase() === name.toLowerCase() && p.cpf === cpf)
@@ -4225,15 +4302,12 @@ function addProfileFromRecord(record) {
             password: "*****"
         };
         
-        // Adiciona perfil de forma otimizada
         profiles.push(newProfile);
         
-        // Cria relações de forma otimizada
         const randomConnections = Math.floor(Math.random() * 3) + 1;
-        const types = ['school', 'friend', 'family'];
-        
         for (let i = 0; i < randomConnections; i++) {
             const targetId = Math.floor(Math.random() * 15) + 1;
+            const types = ['school', 'friend', 'family'];
             const randomType = types[Math.floor(Math.random() * types.length)];
             
             relationships.push({
@@ -4245,12 +4319,10 @@ function addProfileFromRecord(record) {
         
         showNotification('Perfil Adicionado', `${name} foi adicionado ao sistema`, 'success');
         
-        // Atualiza a UI se necessário
         if (showClassroom) {
             applyFilters();
         }
         
-        // Reinicializa o gráfico de forma eficiente
         initNetworkGraph();
     }
 }
@@ -4274,9 +4346,7 @@ function showDatabaseContent() {
     databaseModal.classList.add('active');
     
     if (!fileDataCache) {
-        // Inicia carregamento imediatamente em vez de mostrar erro
-        databaseContent.innerHTML = '<div class="database-loading"><div class="loading__spinner"></div> Carregando dados...</div>';
-        loadDataFile(); // Carrega dados sob demanda
+        databaseContent.textContent = "Erro ao carregar o arquivo 1.txt. Por favor, tente novamente.";
         return;
     }
     
@@ -4285,10 +4355,9 @@ function showDatabaseContent() {
     
     displayCurrentPage();
     
-    // Foca no input de busca mais rapidamente
-    requestAnimationFrame(() => {
+    setTimeout(() => {
         document.getElementById('database-search-input').focus();
-    });
+    }, 300);
 }
 
 function initGlobalEvents() {
@@ -4324,7 +4393,7 @@ function initGlobalEvents() {
             document.getElementById('login-screen').style.opacity = '1';
             document.getElementById('access-code').value = '';
             document.getElementById('access-code').focus();
-        }, 800);
+        }, 1500);
     });
     
     const settingsBtn = document.getElementById('settings-btn');
@@ -4431,19 +4500,16 @@ function initGlobalEvents() {
         }
     }
     
-    // Delegação de eventos para melhor performance
-    document.querySelector('nav').addEventListener('click', function(e) {
-        const navItem = e.target.closest('.nav__item[data-section]');
-        if (navItem) {
-            navigateTo(navItem.getAttribute('data-section'));
-        }
+    navItems.forEach(item => {
+        item.addEventListener('click', function() {
+            navigateTo(this.getAttribute('data-section'));
+        });
     });
     
-    document.querySelector('.sidebar').addEventListener('click', function(e) {
-        const menuItem = e.target.closest('.menu__item[data-section]');
-        if (menuItem) {
-            navigateTo(menuItem.getAttribute('data-section'));
-        }
+    menuItems.forEach(item => {
+        item.addEventListener('click', function() {
+            navigateTo(this.getAttribute('data-section'));
+        });
     });
     
     const notificationsBtn = document.getElementById('notifications-btn');
@@ -4481,7 +4547,20 @@ function initFileSearchModal() {
         fileSearchType.value = 'all';
     });
     
-    // Função otimizada para busca
+    runFileSearchBtn.addEventListener('click', function() {
+        executeFileSearch();
+    });
+    
+    runFileSearchInnerBtn.addEventListener('click', function() {
+        executeFileSearch();
+    });
+    
+    fileSearchQuery.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            executeFileSearch();
+        }
+    });
+    
     function executeFileSearch() {
         const query = fileSearchQuery.value.trim();
         const searchType = fileSearchType.value;
@@ -4492,21 +4571,13 @@ function initFileSearchModal() {
         }
         
         if (!fileDataCache) {
-            // Carrega dados sob demanda em vez de mostrar erro
-            loadDataFile();
-            fileSearchResults.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="loading__spinner" style="display: inline-block; margin-right: 10px;"></div> Carregando arquivo...</div>';
-            fileSearchResultsContainer.style.display = 'block';
-            
-            setTimeout(() => {
-                executeFileSearch();
-            }, 500);
+            showNotification('Erro', 'Arquivo 1.txt não carregado', 'error');
             return;
         }
         
         fileSearchResults.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="loading__spinner" style="display: inline-block; margin-right: 10px;"></div> Buscando...</div>';
         fileSearchResultsContainer.style.display = 'block';
         
-        // Busca otimizada
         searchInFile(query, searchType).then(results => {
             displaySearchResults(results, fileSearchResults);
             
@@ -4517,19 +4588,6 @@ function initFileSearchModal() {
             }
         });
     }
-    
-    // Uso de delegação de eventos para melhor performance
-    document.addEventListener('click', function(e) {
-        if (e.target === runFileSearchBtn || e.target === runFileSearchInnerBtn) {
-            executeFileSearch();
-        }
-    });
-    
-    fileSearchQuery.addEventListener('keyup', function(e) {
-        if (e.key === 'Enter') {
-            executeFileSearch();
-        }
-    });
 }
 
 function initDatabaseModal() {
@@ -4544,26 +4602,41 @@ function initDatabaseModal() {
     const nextPageBtn = document.getElementById('next-page');
     const pageSizeSelect = document.getElementById('page-size-select');
     
-    // Delegação de eventos para melhor performance
-    document.addEventListener('click', function(e) {
-        if (e.target === databaseBtn) {
-            showDatabaseContent();
-        } else if (e.target === databaseModalClose || e.target === closeDatabaseBtn) {
-            databaseModal.classList.remove('active');
-        } else if (e.target === databaseSearchButton) {
-            const query = databaseSearchInput.value.trim();
-            searchInDatabase(query);
-        } else if (e.target === clearDatabaseSearchBtn) {
-            databaseSearchInput.value = '';
-            isSearchMode = false;
-            currentPage = 1;
-            displayCurrentPage();
-            document.getElementById('database-search-results').style.display = 'none';
-            databaseSearchInput.focus();
-        } else if (e.target === prevPageBtn && currentPage > 1) {
+    databaseBtn.addEventListener('click', function() {
+        showDatabaseContent();
+    });
+    
+    databaseModalClose.addEventListener('click', function() {
+        databaseModal.classList.remove('active');
+    });
+    
+    closeDatabaseBtn.addEventListener('click', function() {
+        databaseModal.classList.remove('active');
+    });
+    
+    databaseSearchButton.addEventListener('click', function() {
+        const query = databaseSearchInput.value.trim();
+        searchInDatabase(query);
+    });
+    
+    clearDatabaseSearchBtn.addEventListener('click', function() {
+        databaseSearchInput.value = '';
+        isSearchMode = false;
+        currentPage = 1;
+        displayCurrentPage();
+        document.getElementById('database-search-results').style.display = 'none';
+        databaseSearchInput.focus();
+    });
+    
+    prevPageBtn.addEventListener('click', function() {
+        if (currentPage > 1) {
             currentPage--;
             displayCurrentPage();
-        } else if (e.target === nextPageBtn && currentPage < totalPages) {
+        }
+    });
+    
+    nextPageBtn.addEventListener('click', function() {
+        if (currentPage < totalPages) {
             currentPage++;
             displayCurrentPage();
         }
@@ -4588,51 +4661,43 @@ function initDatabaseModal() {
 }
 
 function initDashboard() {
-    // Inicializa a tabela vazia inicialmente para carregar mais rápido
     populateProfilesTable([]); 
     
-    // Carrega os componentes em paralelo
-    Promise.all([
-        initCharts(),
-        initNetworkGraph(),
-        initProfileModal(),
-        initClassroomButtons()
-    ]).catch(err => console.error("Erro na inicialização do dashboard:", err));
+    initCharts();
+    
+    initNetworkGraph();
+    
+    initProfileModal();
+    
+    initClassroomButtons();
     
     if (window.innerWidth <= 768) {
         showNotification('Dica de acesso', 'Use a senha para acesso normal', 'info');
     }
     
     checkOrientation();
+    window.addEventListener('resize', checkOrientation);
     
-    // Uso de throttle para reduzir número de chamadas em resize
-    let resizeTimeout;
     window.addEventListener('resize', function() {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(function() {
-            if (ageChart) {
-                ageChart.resize();
-            }
-            
-            const networkCanvas = document.getElementById('network-canvas');
-            if (networkCanvas) {
-                const container = networkCanvas.parentElement;
-                networkCanvas.width = container.offsetWidth;
-                networkCanvas.height = container.offsetHeight;
-            }
-            
-            const connectionCanvas = document.getElementById('connection-canvas');
-            if (connectionCanvas) {
-                const container = connectionCanvas.parentElement;
-                connectionCanvas.width = container.offsetWidth;
-                connectionCanvas.height = container.offsetHeight;
-            }
-            
-            checkOrientation();
-        }, 100);
+        if (ageChart) {
+            ageChart.resize();
+        }
+        
+        const networkCanvas = document.getElementById('network-canvas');
+        if (networkCanvas) {
+            const container = networkCanvas.parentElement;
+            networkCanvas.width = container.offsetWidth;
+            networkCanvas.height = container.offsetHeight;
+        }
+        
+        const connectionCanvas = document.getElementById('connection-canvas');
+        if (connectionCanvas) {
+            const container = connectionCanvas.parentElement;
+            connectionCanvas.width = container.offsetWidth;
+            connectionCanvas.height = container.offsetHeight;
+        }
     });
     
-    // Carrega o arquivo de dados somente quando necessário
     loadDataFile();
 }
 
@@ -4647,54 +4712,52 @@ function initClassroomButtons() {
     const btn1TDCPF = document.getElementById('btn-1TDCPF');
     const btnHide = document.getElementById('btn-hide');
     
-    // Delegação de eventos para melhor performance
-    document.querySelector('.classroom-btns').addEventListener('click', function(e) {
-        const button = e.target;
+    btn1TDCPH.addEventListener('click', function() {
+        showClassroom = true;
+        currentClassroom = "1TDCPH";
+        const classroomProfiles = profiles.filter(p => p.classroom === currentClassroom);
+        populateProfilesTable(classroomProfiles);
+        showNotification(`Sala ${currentClassroom}`, `Exibindo perfis da sala ${currentClassroom}`, 'info');
         
-        if (button === btn1TDCPH) {
-            showClassroom = true;
-            currentClassroom = "1TDCPH";
-            const classroomProfiles = profiles.filter(p => p.classroom === currentClassroom);
-            populateProfilesTable(classroomProfiles);
-            showNotification(`Sala ${currentClassroom}`, `Exibindo perfis da sala ${currentClassroom}`, 'info');
-            
-            document.getElementById('total-profiles').innerHTML = `
-                <div class="stat__icon stat__icon--blue">
-                    <i class="fa fa-users"></i>
-                </div>
-                ${classroomProfiles.length}
-            `;
-        } else if (button === btn1TDCPF) {
-            showClassroom = true;
-            currentClassroom = "1TDCPF";
-            const classroomProfiles = profiles.filter(p => p.classroom === currentClassroom);
-            populateProfilesTable(classroomProfiles);
-            showNotification(`Sala ${currentClassroom}`, `Exibindo perfis da sala ${currentClassroom}`, 'info');
-            
-            document.getElementById('total-profiles').innerHTML = `
-                <div class="stat__icon stat__icon--blue">
-                    <i class="fa fa-users"></i>
-                </div>
-                ${classroomProfiles.length}
-            `;
-        } else if (button === btnHide) {
-            showClassroom = false;
-            currentClassroom = "";
-            populateProfilesTable([]);
-            showNotification('Sala', 'Perfis ocultados', 'info');
-            
-            document.getElementById('total-profiles').innerHTML = `
-                <div class="stat__icon stat__icon--blue">
-                    <i class="fa fa-users"></i>
-                </div>
-                0
-            `;
-        }
+        document.getElementById('total-profiles').innerHTML = `
+            <div class="stat__icon stat__icon--blue">
+                <i class="fa fa-users"></i>
+            </div>
+            ${classroomProfiles.length}
+        `;
+    });
+    
+    btn1TDCPF.addEventListener('click', function() {
+        showClassroom = true;
+        currentClassroom = "1TDCPF";
+        const classroomProfiles = profiles.filter(p => p.classroom === currentClassroom);
+        populateProfilesTable(classroomProfiles);
+        showNotification(`Sala ${currentClassroom}`, `Exibindo perfis da sala ${currentClassroom}`, 'info');
+        
+        document.getElementById('total-profiles').innerHTML = `
+            <div class="stat__icon stat__icon--blue">
+                <i class="fa fa-users"></i>
+            </div>
+            ${classroomProfiles.length}
+        `;
+    });
+    
+    btnHide.addEventListener('click', function() {
+        showClassroom = false;
+        currentClassroom = "";
+        populateProfilesTable([]);
+        showNotification('Sala', 'Perfis ocultados', 'info');
+        
+        document.getElementById('total-profiles').innerHTML = `
+            <div class="stat__icon stat__icon--blue">
+                <i class="fa fa-users"></i>
+            </div>
+            0
+        `;
     });
 }
 
 function initCharts() {
-    // Dados otimizados para renderização mais rápida
     const ageData = {
         labels: ['18-19', '20-21', '22-23', '24-25', '26+'],
         datasets: [{
@@ -4720,14 +4783,10 @@ function initCharts() {
     
     const ageChartCtx = document.getElementById('age-chart');
     
-    // Configuração otimizada do gráfico
     ageChart = new Chart(ageChartCtx, {
         type: 'bar',
         data: ageData,
         options: {
-            animation: {
-                duration: 500 // Animação mais rápida
-            },
             responsive: true,
             maintainAspectRatio: false,
             scales: {
@@ -4757,17 +4816,20 @@ function initCharts() {
         }
     });
     
-    // Delegação de eventos para melhor performance
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('#age-chart-menu')) {
-            showNotification('Opções do Gráfico', 'Opções adicionais de visualização do gráfico', 'info');
-        } else if (e.target.closest('#activity-menu')) {
-            showNotification('Opções de Atividade', 'Filtrar ou exportar atividades recentes', 'info');
-        } else if (e.target.closest('#profiles-table-menu')) {
-            showNotification('Opções da Tabela', 'Exportar ou imprimir lista de perfis', 'info');
-        } else if (e.target.closest('#network-menu')) {
-            showNotification('Opções de Rede', 'Ajustar visualização do mapa de conexões', 'info');
-        }
+    document.getElementById('age-chart-menu').addEventListener('click', function() {
+        showNotification('Opções do Gráfico', 'Opções adicionais de visualização do gráfico', 'info');
+    });
+    
+    document.getElementById('activity-menu').addEventListener('click', function() {
+        showNotification('Opções de Atividade', 'Filtrar ou exportar atividades recentes', 'info');
+    });
+    
+    document.getElementById('profiles-table-menu').addEventListener('click', function() {
+        showNotification('Opções da Tabela', 'Exportar ou imprimir lista de perfis', 'info');
+    });
+    
+    document.getElementById('network-menu').addEventListener('click', function() {
+        showNotification('Opções de Rede', 'Ajustar visualização do mapa de conexões', 'info');
     });
 }
 
@@ -4775,31 +4837,25 @@ function initNetworkGraph() {
     const canvas = document.getElementById('network-canvas');
     const ctx = canvas.getContext('2d');
     
-    // Configuração de canvas otimizada
     const canvasContainer = canvas.parentElement;
     canvas.width = canvasContainer.offsetWidth;
     canvas.height = canvasContainer.offsetHeight;
     
-    // Indicador de carregamento
     const loading = document.getElementById('network-loading');
     loading.classList.add('active');
     
-    // Carregamento mais rápido
     setTimeout(() => {
         loading.classList.remove('active');
         
         const nodes = [];
         let selectedProfiles = [];
         
-        // Carregamento de perfis otimizado
         if (currentClassroom) {
             selectedProfiles = profiles.filter(p => p.classroom === currentClassroom);
         } else {
-            // Limitado a 15 perfis para melhor performance
             selectedProfiles = profiles.filter(p => p.id <= 15);
         }
         
-        // Criação de nós em batch para melhor performance
         selectedProfiles.forEach(profile => {
             nodes.push({
                 id: profile.id,
@@ -4817,7 +4873,6 @@ function initNetworkGraph() {
         
         const edges = [];
         
-        // Criação de arestas em batch para melhor performance
         relationships.forEach(rel => {
             const sourceNode = nodes.find(n => n.id === rel.source);
             const targetNode = nodes.find(n => n.id === rel.target);
@@ -4846,14 +4901,9 @@ function initNetworkGraph() {
             }
         });
         
-        // Algoritmo de forças otimizado
         function applyForces() {
-            // Limite de iterações para melhor performance
-            const maxIterations = 5;
-            
-            // Aplicação de força repulsiva entre nós
             for (let i = 0; i < nodes.length; i++) {
-                for (let j = i + 1; j < nodes.length && j < i + maxIterations; j++) {
+                for (let j = i + 1; j < nodes.length; j++) {
                     const nodeA = nodes[i];
                     const nodeB = nodes[j];
                     
@@ -4862,7 +4912,7 @@ function initNetworkGraph() {
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     
                     if (distance < 100) {
-                        const force = 1 / distance * 3; // Força reduzida para maior estabilidade
+                        const force = 1 / distance * 5;
                         const forceX = dx / distance * force;
                         const forceY = dy / distance * force;
                         
@@ -4874,7 +4924,6 @@ function initNetworkGraph() {
                 }
             }
             
-            // Aplicação de força atrativa nas arestas
             edges.forEach(edge => {
                 const dx = edge.target.x - edge.source.x;
                 const dy = edge.target.y - edge.source.y;
@@ -4892,7 +4941,6 @@ function initNetworkGraph() {
                 }
             });
             
-            // Limites de tela para nós
             nodes.forEach(node => {
                 if (node.x < node.radius) node.x = node.radius;
                 if (node.x > canvas.width - node.radius) node.x = canvas.width - node.radius;
@@ -4901,36 +4949,29 @@ function initNetworkGraph() {
             });
         }
         
-        // Função de desenho otimizada
         function draw() {
-            // Limpa o canvas de forma otimizada
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Desenha todas as arestas primeiro
-            ctx.lineWidth = 2;
             edges.forEach(edge => {
                 ctx.beginPath();
                 ctx.moveTo(edge.source.x, edge.source.y);
                 ctx.lineTo(edge.target.x, edge.target.y);
                 ctx.strokeStyle = edge.color;
+                ctx.lineWidth = 2;
                 ctx.stroke();
             });
             
-            // Desenha todos os nós
             nodes.forEach(node => {
-                // Desenha círculo externo
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
                 ctx.fillStyle = node.color;
                 ctx.fill();
                 
-                // Desenha círculo interno
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, node.radius - 3, 0, Math.PI * 2);
                 ctx.fillStyle = '#121725';
                 ctx.fill();
                 
-                // Desenha texto
                 ctx.font = 'bold 12px Arial';
                 ctx.fillStyle = '#ffffff';
                 ctx.textAlign = 'center';
@@ -4942,22 +4983,20 @@ function initNetworkGraph() {
         const nodeInfo = document.getElementById('node-info');
         let hoveredNode = null;
         
-        // Detecção de dispositivo móvel otimizada
-        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        const isMobile = 'ontouchstart' in window;
         
         if (isMobile) {
-            // Eventos touch otimizados
-            canvas.addEventListener('touchstart', handleTouch, { passive: true });
-            canvas.addEventListener('touchmove', handleTouch, { passive: true });
-            
-            function handleTouch(event) {
+            canvas.addEventListener('touchstart', function(event) {
+                event.preventDefault();
                 const touch = event.touches[0];
-                const rect = canvas.getBoundingClientRect();
-                const x = touch.clientX - rect.left;
-                const y = touch.clientY - rect.top;
-                
                 checkHover(touch.clientX, touch.clientY);
-            }
+            });
+            
+            canvas.addEventListener('touchmove', function(event) {
+                event.preventDefault();
+                const touch = event.touches[0];
+                checkHover(touch.clientX, touch.clientY);
+            });
             
             canvas.addEventListener('touchend', function() {
                 if (hoveredNode) {
@@ -4968,7 +5007,6 @@ function initNetworkGraph() {
                 hoveredNode = null;
             });
         } else {
-            // Eventos de mouse otimizados
             canvas.addEventListener('mousemove', function(event) {
                 checkHover(event.clientX, event.clientY);
             });
@@ -4986,7 +5024,6 @@ function initNetworkGraph() {
             });
         }
         
-        // Função de verificação de hover otimizada
         function checkHover(clientX, clientY) {
             const rect = canvas.getBoundingClientRect();
             const x = clientX - rect.left;
@@ -4994,7 +5031,6 @@ function initNetworkGraph() {
             
             hoveredNode = null;
             
-            // Encontra o nó sob o cursor
             for (let i = 0; i < nodes.length; i++) {
                 const node = nodes[i];
                 const dx = x - node.x;
@@ -5007,17 +5043,14 @@ function initNetworkGraph() {
                 }
             }
             
-            // Atualiza o painel flutuante
             if (hoveredNode) {
                 nodeInfo.style.display = 'block';
                 
-                // Posicionamento otimizado
                 let leftPos = clientX + 10;
                 let topPos = clientY + 10;
                 
-                // Ajusta posição para não sair da tela
-                const infoWidth = nodeInfo.offsetWidth || 280; // Fallback se não estiver visível ainda
-                const infoHeight = nodeInfo.offsetHeight || 180;
+                const infoWidth = nodeInfo.offsetWidth;
+                const infoHeight = nodeInfo.offsetHeight;
                 const windowWidth = window.innerWidth;
                 const windowHeight = window.innerHeight;
                 
@@ -5032,7 +5065,6 @@ function initNetworkGraph() {
                 nodeInfo.style.left = leftPos + 'px';
                 nodeInfo.style.top = topPos + 'px';
                 
-                // Atualiza conteúdo
                 document.getElementById('node-name').textContent = hoveredNode.name;
                 document.getElementById('node-rm').textContent = hoveredNode.rm;
                 document.getElementById('node-cpf').textContent = hoveredNode.cpf;
@@ -5043,47 +5075,29 @@ function initNetworkGraph() {
             }
         }
         
-        // Variável para controle de animação
-        let animating = true;
-        
-        // Função de animação otimizada
         function animate() {
-            if (animating) {
-                applyForces();
-                draw();
-                requestAnimationFrame(animate);
-            }
+            applyForces();
+            draw();
+            requestAnimationFrame(animate);
         }
         
-        // Inicia a animação
         animate();
         
-        // Pausa a animação quando a página não está visível
-        document.addEventListener('visibilitychange', function() {
-            animating = !document.hidden;
-            if (animating) {
-                animate();
-            }
-        });
-        
-        // Redimensionamento eficiente
         window.addEventListener('resize', function() {
             canvas.width = canvasContainer.offsetWidth;
             canvas.height = canvasContainer.offsetHeight;
         });
-    }, 500); // Tempo reduzido para 500ms
+    }, 1000);
 }
 
 function initConnectionGraph(profileId) {
     const canvas = document.getElementById('connection-canvas');
     const ctx = canvas.getContext('2d');
     
-    // Configuração de canvas otimizada
     const canvasContainer = canvas.parentElement;
     canvas.width = canvasContainer.offsetWidth;
     canvas.height = canvasContainer.offsetHeight;
     
-    // Nó central
     const centerNode = {
         id: parseInt(profileId),
         x: canvas.width / 2,
@@ -5095,12 +5109,10 @@ function initConnectionGraph(profileId) {
     
     const nodes = [centerNode];
     
-    // Filtragem eficiente de relacionamentos
     const profileRelationships = relationships.filter(rel => 
         rel.source === centerNode.id || rel.target === centerNode.id
     );
     
-    // Criação de nós em batch para melhor performance
     profileRelationships.forEach(rel => {
         const connectedId = rel.source === centerNode.id ? rel.target : rel.source;
         const connectedProfile = profiles.find(p => p.id === connectedId);
@@ -5138,7 +5150,6 @@ function initConnectionGraph(profileId) {
     
     const edges = [];
     
-    // Criação de arestas em batch para melhor performance
     nodes.forEach(node => {
         if (node.id !== centerNode.id) {
             edges.push({
@@ -5149,13 +5160,9 @@ function initConnectionGraph(profileId) {
         }
     });
     
-    // Algoritmo de forças otimizado
     function applyForces() {
-        // Limite de iterações para melhor performance
-        const maxIterations = 3;
-        
         for (let i = 0; i < nodes.length; i++) {
-            for (let j = i + 1; j < nodes.length && j < i + maxIterations; j++) {
+            for (let j = i + 1; j < nodes.length; j++) {
                 const nodeA = nodes[i];
                 const nodeB = nodes[j];
                 
@@ -5166,7 +5173,7 @@ function initConnectionGraph(profileId) {
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
                 if (distance < 70) {
-                    const force = 1 / distance * 2; // Força reduzida para maior estabilidade
+                    const force = 1 / distance * 3;
                     const forceX = dx / distance * force;
                     const forceY = dy / distance * force;
                     
@@ -5178,7 +5185,6 @@ function initConnectionGraph(profileId) {
             }
         }
         
-        // Força atrativa de aresta otimizada
         edges.forEach(edge => {
             if (edge.source.fixed && edge.target.fixed) return;
             
@@ -5187,7 +5193,7 @@ function initConnectionGraph(profileId) {
             const distance = Math.sqrt(dx * dx + dy * dy);
             
             if (distance > 100) {
-                const force = (distance - 100) / 500; // Força ajustada para maior estabilidade
+                const force = (distance - 100) / 1000;
                 const forceX = dx * force;
                 const forceY = dy * force;
                 
@@ -5203,7 +5209,6 @@ function initConnectionGraph(profileId) {
             }
         });
         
-        // Limites de tela
         nodes.forEach(node => {
             if (node.fixed) return;
             
@@ -5214,12 +5219,9 @@ function initConnectionGraph(profileId) {
         });
     }
     
-    // Função de desenho otimizada
     function draw() {
-        // Limpa o canvas de forma otimizada
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Desenha todas as arestas primeiro
         edges.forEach(edge => {
             ctx.beginPath();
             ctx.moveTo(edge.source.x, edge.source.y);
@@ -5229,28 +5231,23 @@ function initConnectionGraph(profileId) {
             ctx.stroke();
         });
         
-        // Desenha todos os nós
         nodes.forEach(node => {
-            // Desenha círculo externo
             ctx.beginPath();
             ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
             ctx.fillStyle = node.color;
             ctx.fill();
             
-            // Desenha círculo interno
             ctx.beginPath();
             ctx.arc(node.x, node.y, node.radius - 3, 0, Math.PI * 2);
             ctx.fillStyle = '#121725';
             ctx.fill();
             
-            // Desenha letra central
             ctx.font = 'bold 12px Arial';
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(node.id === centerNode.id ? 'P' : node.name.charAt(0), node.x, node.y);
             
-            // Rótulos para nós não centrais
             if (node.id !== centerNode.id) {
                 let label;
                 switch(node.type) {
@@ -5274,28 +5271,25 @@ function initConnectionGraph(profileId) {
         });
     }
     
-    // Detecção de dispositivo móvel otimizada
-    const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isMobile = 'ontouchstart' in window;
     
-    // Delegação de eventos otimizada
     if (isMobile) {
         canvas.addEventListener('touchstart', function(event) {
+            event.preventDefault();
             const touch = event.touches[0];
             checkNodeClick(touch.clientX, touch.clientY);
-        }, { passive: true });
+        });
     } else {
         canvas.addEventListener('click', function(event) {
             checkNodeClick(event.clientX, event.clientY);
         });
     }
     
-    // Função de verificação de clique otimizada
     function checkNodeClick(clientX, clientY) {
         const rect = canvas.getBoundingClientRect();
         const x = clientX - rect.left;
         const y = clientY - rect.top;
         
-        // Verifica todos os nós exceto o central
         for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i];
             if (node.id === centerNode.id) continue;
@@ -5311,33 +5305,16 @@ function initConnectionGraph(profileId) {
         }
     }
     
-    // Atualiza a tabela de conexões
     updateConnectionsTable(profileId);
     
-    // Variável para controle de animação
-    let animating = true;
-    
-    // Função de animação otimizada
     function animate() {
-        if (animating) {
-            applyForces();
-            draw();
-            requestAnimationFrame(animate);
-        }
+        applyForces();
+        draw();
+        requestAnimationFrame(animate);
     }
     
-    // Inicia a animação
     animate();
     
-    // Pausa a animação quando a página não está visível
-    document.addEventListener('visibilitychange', function() {
-        animating = !document.hidden;
-        if (animating) {
-            animate();
-        }
-    });
-    
-    // Redimensionamento eficiente
     window.addEventListener('resize', function() {
         canvas.width = canvasContainer.offsetWidth;
         canvas.height = canvasContainer.offsetHeight;
@@ -5348,13 +5325,11 @@ function updateConnectionsTable(profileId) {
     const connectionsTable = document.getElementById('connections-table');
     connectionsTable.innerHTML = '';
     
-    // Filtragem otimizada de relacionamentos
     const profileRelationships = relationships.filter(rel => 
         rel.source == profileId || rel.target == profileId
     );
     
     if (profileRelationships.length === 0) {
-        // Mensagem de nenhuma conexão
         const emptyRow = document.createElement('tr');
         emptyRow.innerHTML = `
             <td colspan="4" style="text-align: center; color: rgba(255,255,255,0.5);">
@@ -5365,12 +5340,13 @@ function updateConnectionsTable(profileId) {
         return;
     }
     
-    // Criação de HTML em batch para melhor performance
-    const html = profileRelationships.map(rel => {
+    profileRelationships.forEach(rel => {
         const connectedId = rel.source == profileId ? rel.target : rel.source;
         const connectedProfile = profiles.find(p => p.id == connectedId);
         
         if (connectedProfile) {
+            const row = document.createElement('tr');
+            
             let typeLabel, typeClass;
             switch(rel.type) {
                 case 'family':
@@ -5390,30 +5366,24 @@ function updateConnectionsTable(profileId) {
                     typeClass = '';
             }
             
-            return `
-            <tr>
+            row.innerHTML = `
                 <td>${connectedProfile.name}</td>
                 <td><span class="badge badge--${typeClass}">${typeLabel}</span></td>
                 <td>Alta</td>
                 <td>03/06/2025</td>
-            </tr>
             `;
+            
+            connectionsTable.appendChild(row);
         }
-        return '';
-    }).join('');
-    
-    connectionsTable.innerHTML = html;
+    });
 }
 
 function applyFilters() {
-    // Criação de novo array em vez de filtrar repetidamente o mesmo array
     let filteredProfiles = [...profiles];
     
-    // Aplicação de filtros em cascata para maior eficiência
     if (currentClassroom) {
         filteredProfiles = filteredProfiles.filter(profile => profile.classroom === currentClassroom);
     } else {
-        // Se não há sala selecionada, limpa a tabela e retorna
         filteredProfiles = [];
         document.getElementById('total-profiles').innerHTML = `
             <div class="stat__icon stat__icon--blue">
@@ -5438,13 +5408,17 @@ function applyFilters() {
             const age = calculateAge(profile.birth);
             if (!age) return false;
             
-            // Filtro de idade otimizado
             switch (activeFilters.age) {
-                case '18-19': return age >= 18 && age <= 19;
-                case '20-21': return age >= 20 && age <= 21;
-                case '22-23': return age >= 22 && age <= 23;
-                case '24+': return age >= 24;
-                default: return true;
+                case '18-19':
+                    return age >= 18 && age <= 19;
+                case '20-21':
+                    return age >= 20 && age <= 21;
+                case '22-23':
+                    return age >= 22 && age <= 23;
+                case '24+':
+                    return age >= 24;
+                default:
+                    return true;
             }
         });
     }
@@ -5452,14 +5426,13 @@ function applyFilters() {
     if (activeFilters.search) {
         const searchTerm = activeFilters.search.toLowerCase();
         filteredProfiles = filteredProfiles.filter(profile => 
-            (profile.name && profile.name.toLowerCase().includes(searchTerm)) ||
-            (profile.rm && profile.rm.toLowerCase().includes(searchTerm)) ||
-            (profile.cpf && profile.cpf.toLowerCase().includes(searchTerm)) ||
+            profile.name.toLowerCase().includes(searchTerm) ||
+            profile.rm.toLowerCase().includes(searchTerm) ||
+            profile.cpf.toLowerCase().includes(searchTerm) ||
             (profile.mother && profile.mother.toLowerCase().includes(searchTerm))
         );
     }
     
-    // Atualização da UI
     populateProfilesTable(filteredProfiles);
     
     document.getElementById('total-profiles').innerHTML = `
@@ -5478,21 +5451,18 @@ function initProfileModal() {
         profileModal.classList.remove('active');
     });
     
-    // Delegação de eventos para as tabs
-    const tabContainer = document.querySelector('.tabs');
-    tabContainer.addEventListener('click', function(e) {
-        const tab = e.target.closest('.tab');
-        if (!tab) return;
-        
-        const tabId = tab.getAttribute('data-tab');
-        
-        // Remove classe ativa de todas as tabs
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        
-        // Adiciona classe ativa à tab clicada
-        tab.classList.add('active');
-        document.getElementById(`${tabId}-tab`).classList.add('active');
+    const tabs = document.querySelectorAll('.tab');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            this.classList.add('active');
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+        });
     });
 }
 
@@ -5503,7 +5473,6 @@ function openProfileModal(profileId) {
     if (profile) {
         const isRestricted = !isAdmin && restrictedProfileNames.includes(profile.name);
         
-        // Atualiza informações do perfil
         document.getElementById('profile-name').textContent = profile.name;
         document.getElementById('profile-rm').textContent = isRestricted ? '****' : profile.rm;
         document.getElementById('profile-birth').textContent = isRestricted ? '****' : profile.birth;
@@ -5511,7 +5480,6 @@ function openProfileModal(profileId) {
         document.getElementById('profile-password').textContent = isRestricted ? '****' : profile.password;
         document.getElementById('profile-mother').textContent = isRestricted ? '****' : profile.mother;
         
-        // Atualiza status
         const statusEl = document.getElementById('profile-status');
         statusEl.innerHTML = '';
         const statusSpan = document.createElement('span');
@@ -5520,31 +5488,24 @@ function openProfileModal(profileId) {
                                profile.status === 'pending' ? 'Pendente' : 'Inativo';
         statusEl.appendChild(statusSpan);
         
-        // Atualiza avatar
         const profileImage = document.getElementById('profile-image');
         profileImage.textContent = profile.name.charAt(0);
         
-        // Seleciona a primeira tab por padrão
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelector('.tab[data-tab="connections"]').classList.add('active');
         document.getElementById('connections-tab').classList.add('active');
         
-        // Inicializa o gráfico de conexões
         initConnectionGraph(profileId);
         
-        // Mostra o modal
         document.getElementById('profile-modal').classList.add('active');
     }
 }
 
 function populateProfilesTable(data) {
     const tableBody = document.querySelector('#profiles-table tbody');
-    
-    // Limpa a tabela antes de adicionar novos dados
     tableBody.innerHTML = '';
     
-    // Verifica se há dados para exibir
     if (data.length === 0) {
         const emptyRow = document.createElement('tr');
         emptyRow.innerHTML = `
@@ -5556,19 +5517,27 @@ function populateProfilesTable(data) {
         return;
     }
     
-    // Construção de HTML em batch para melhor performance
-    const html = data.map(profile => {
+    data.forEach(profile => {
+        const row = document.createElement('tr');
+        row.classList.add('profile-row');
+        row.setAttribute('data-id', profile.id);
+        
         const isRestricted = !isAdmin && restrictedProfileNames.includes(profile.name);
         
         let statusText = '';
         switch(profile.status) {
-            case 'active': statusText = 'Verificado'; break;
-            case 'pending': statusText = 'Pendente'; break;
-            case 'inactive': statusText = 'Inativo'; break;
+            case 'active':
+                statusText = 'Verificado';
+                break;
+            case 'pending':
+                statusText = 'Pendente';
+                break;
+            case 'inactive':
+                statusText = 'Inativo';
+                break;
         }
         
-        return `
-        <tr class="profile-row" data-id="${profile.id}">
+        row.innerHTML = `
             <td>${profile.name}</td>
             <td>${isRestricted ? '****' : profile.rm}</td>
             <td>${isRestricted ? '****' : profile.birth}</td>
@@ -5586,25 +5555,23 @@ function populateProfilesTable(data) {
                     </div>
                 </div>
             </td>
-        </tr>
         `;
-    }).join('');
-    
-    tableBody.innerHTML = html;
-    
-    // Delegação de eventos para botões de perfil
-    tableBody.addEventListener('click', function(e) {
-        const viewButton = e.target.closest('.view-profile');
-        if (viewButton) {
-            const profileId = viewButton.getAttribute('data-id');
-            openProfileModal(profileId);
-        }
         
-        const editButton = e.target.closest('.edit-profile');
-        if (editButton) {
-            const profileId = editButton.getAttribute('data-id');
+        tableBody.appendChild(row);
+    });
+    
+    document.querySelectorAll('.view-profile').forEach(button => {
+        button.addEventListener('click', function() {
+            const profileId = this.getAttribute('data-id');
+            openProfileModal(profileId);
+        });
+    });
+    
+    document.querySelectorAll('.edit-profile').forEach(button => {
+        button.addEventListener('click', function() {
+            const profileId = this.getAttribute('data-id');
             showNotification('Edição de perfil', `Editando perfil ID ${profileId}`, 'info');
-        }
+        });
     });
 }
 
@@ -5614,11 +5581,9 @@ function showNotification(title, message, type) {
     const notificationTitle = notification.querySelector('.notification__title');
     const notificationMessage = notification.querySelector('.notification__message');
     
-    // Limpa estilos anteriores
     notificationIcon.style.background = '';
     notificationIcon.style.color = '';
     
-    // Define tipo de notificação
     switch(type) {
         case 'success':
             notificationIcon.style.background = 'rgba(0, 255, 136, 0.1)';
@@ -5641,39 +5606,37 @@ function showNotification(title, message, type) {
             notificationIcon.innerHTML = '<i class="fa fa-info"></i>';
     }
     
-    // Atualiza conteúdo
     notificationTitle.textContent = title;
     notificationMessage.textContent = message;
     
-    // Mostra notificação
     notification.classList.add('active');
     
-    // Remove notificação após um tempo
     if (notification.timeoutId) {
         clearTimeout(notification.timeoutId);
     }
     
     notification.timeoutId = setTimeout(() => {
         notification.classList.remove('active');
-    }, 3000); // Reduzido para 3 segundos
+    }, 5000);
 }
 
 function handleProfileEdit() {
     const profileId = this.getAttribute('data-id');
+    
     showNotification('Modo de edição', 'Editando perfil ID: ' + profileId, 'info');
 }
 
 function initBackgroundAnimation() {
-    // Utiliza o canvas existente apenas para efeitos de fundo básicos
-    console.log('Inicializando animação de fundo...');
+    // Mantendo apenas a animação de neve que já foi implementada na função createSnowflakes()
+    console.log('Iniciando efeito de neve aprimorado...');
 }
 
-// Inicio do sistema quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', function() {
     const isLoggedIn = sessionStorage.getItem('mk_osint_logged_in');
     
-    // Inicializa apenas a animação de chuva (sem neve)
-    createRaindropsOptimized();
+    // Inicializa as animações
+    createSnowflakes(); // Animação de neve para o sistema
+    createRaindrops(); // Animação de chuva para a tela de login
     
     initLogin();
     initGlobalEvents();
@@ -5682,7 +5645,6 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', handleProfileEdit); 
     });
     
-    // Mostra dica de acesso
     setTimeout(function() {
         if (window.innerWidth <= 768) {
             showNotification('Dica de Acesso', 'Senhas: fiaph (standard), MK5041 (admin), MK741 (teacher)', 'info');
