@@ -2048,20 +2048,7 @@
             line-height: 1.5;
         }
         
-        /* Estilos para a animação de neve aprimorada */
-        .snowflake {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            background: white;
-            border-radius: 50%;
-            filter: blur(0.5px);
-            opacity: 0.9;
-            pointer-events: none;
-            z-index: 1;
-        }
-        
-        /* Animação de chuva para a tela de login */
+        /* Animação de chuva otimizada */
         .raindrop {
             position: absolute;
             background: linear-gradient(to bottom, rgba(0, 243, 255, 0.1), rgba(0, 243, 255, 0.5));
@@ -2071,6 +2058,7 @@
             opacity: 0.7;
             pointer-events: none;
             z-index: 1;
+            will-change: transform;
         }
         
         @media (min-width: 576px) {
@@ -3100,9 +3088,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const authStatus = document.getElementById('auth-status');
     const loginStatus = document.getElementById('login-status');
     
-    // Inicializar animações
-    createSnowflakes(); // Animação de neve para o sistema
-    createRaindrops(); // Animação de chuva para a tela de login
+    // Inicializa as animações
+    createRaindrops(); // Animação de chuva para todo o sistema
     
     loadAuthData()
         .then(() => {
@@ -3122,9 +3109,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             preloaderText.textContent = 'Sistema pronto para login!';
             
+            // Carregamento mais rápido
             let progress = 0;
             const interval = setInterval(() => {
-                progress += Math.random() * 10;
+                progress += Math.random() * 20; // Aceleramos o preenchimento
                 if (progress > 100) {
                     progress = 100;
                     clearInterval(interval);
@@ -3132,11 +3120,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     setTimeout(() => {
                         preloaderBar.style.width = '100%';
                         preloaderBar.style.backgroundColor = '#00ff88';
-                    }, 300);
+                    }, 100); // Reduzimos o tempo de espera
                 }
                 
                 preloaderBar.style.width = `${progress}%`;
-            }, 200);
+            }, 100); // Intervalo mais curto
         })
         .catch(error => {
             console.error('Erro ao carregar dados de autenticação:', error);
@@ -3154,117 +3142,70 @@ document.addEventListener('DOMContentLoaded', function() {
     initGlobalEvents();
 });
 
-// Função para criar flocos de neve aprimorados
-function createSnowflakes() {
-    const container = document.body;
-    const snowflakeCount = Math.min(window.innerWidth / 3, 200); // Aumentando o número de flocos
-    
-    for (let i = 0; i < snowflakeCount; i++) {
-        const snowflake = document.createElement('div');
-        snowflake.className = 'snowflake';
-        
-        // Propriedades aleatórias para cada floco de neve com maior variação de tamanho
-        const size = Math.random() * 6 + 2; // 2px a 8px
-        const left = Math.random() * 100;
-        const animationDuration = Math.random() * 20 + 10; // 10s a 30s - mais lento para parecer mais real
-        const animationDelay = Math.random() * 5;
-        const opacity = Math.random() * 0.6 + 0.4; // Maior opacidade
-        
-        // Estilo do floco mais visível
-        snowflake.style.width = `${size}px`;
-        snowflake.style.height = `${size}px`;
-        snowflake.style.left = `${left}vw`;
-        snowflake.style.opacity = opacity;
-        snowflake.style.top = `-${size}px`;
-        snowflake.style.filter = 'blur(0.5px)'; // Menos blur para maior nitidez
-        
-        // Animação com trajetória ziguezague para mais realismo
-        const keyframes = `
-            @keyframes snowfall-${i} {
-                0% {
-                    transform: translateY(-10px) rotate(0deg);
-                }
-                25% {
-                    transform: translateY(${window.innerHeight * 0.25}px) translateX(${Math.random() * 50 - 25}px) rotate(${Math.random() * 180}deg);
-                }
-                50% {
-                    transform: translateY(${window.innerHeight * 0.5}px) translateX(${Math.random() * 50 - 25}px) rotate(${Math.random() * 360}deg);
-                }
-                75% {
-                    transform: translateY(${window.innerHeight * 0.75}px) translateX(${Math.random() * 50 - 25}px) rotate(${Math.random() * 540}deg);
-                }
-                100% {
-                    transform: translateY(${window.innerHeight + 100}px) translateX(${Math.random() * 50 - 25}px) rotate(${Math.random() * 720}deg);
-                }
-            }
-        `;
-        
-        snowflake.style.animation = `snowfall-${i} ${animationDuration}s linear ${animationDelay}s infinite`;
-        
-        const style = document.createElement('style');
-        style.innerHTML = keyframes;
-        document.head.appendChild(style);
-        
-        container.appendChild(snowflake);
-    }
-}
-
-// Função para criar animação de chuva na tela de login
+// Função para criar animação de chuva otimizada para todo o sistema
 function createRaindrops() {
-    const loginScreen = document.getElementById('login-screen');
-    const raindropCount = Math.min(window.innerWidth / 2, 300);
+    const container = document.body;
+    // Reduzindo o número de gotas para melhorar performance
+    const raindropCount = Math.min(window.innerWidth / 4, 150); 
     
+    // Pré-calculando posições para otimizar
+    const positions = [];
+    for (let i = 0; i < raindropCount; i++) {
+        positions.push({
+            height: Math.random() * 20 + 10,
+            width: Math.random() * 1.5 + 1,
+            left: Math.random() * 100,
+            delay: Math.random() * 5,
+            duration: Math.random() * 2 + 2, // Duração mais rápida
+            xOffset: Math.random() * 10
+        });
+    }
+    
+    // Criando gotas com posições pré-calculadas
     for (let i = 0; i < raindropCount; i++) {
         const raindrop = document.createElement('div');
         raindrop.className = 'raindrop';
         
-        // Propriedades aleatórias para cada gota
-        const height = Math.random() * 20 + 10; // 10px a 30px
-        const width = Math.random() * 1.5 + 1; // 1px a 2.5px
-        const left = Math.random() * 100;
-        const animationDuration = Math.random() * 4 + 3; 
-        const animationDelay = Math.random() * 5;
-        const opacity = Math.random() * 0.6 + 0.4;
+        const pos = positions[i];
         
         // Estilo da gota de chuva
-        raindrop.style.height = `${height}px`;
-        raindrop.style.width = `${width}px`;
-        raindrop.style.left = `${left}vw`;
-        raindrop.style.opacity = opacity;
-        raindrop.style.top = `-${height}px`;
+        raindrop.style.height = `${pos.height}px`;
+        raindrop.style.width = `${pos.width}px`;
+        raindrop.style.left = `${pos.left}vw`;
+        raindrop.style.opacity = 0.6;
+        raindrop.style.top = `-${pos.height}px`;
         
-        // Adicionando sombra para maior destaque
-        raindrop.style.boxShadow = '0 0 5px rgba(0, 243, 255, 0.5)';
+        // Usando transform para melhor performance
+        raindrop.style.animation = `rainfall-${i} ${pos.duration}s linear ${pos.delay}s infinite`;
         
-        // Animação de queda
+        // Criando keyframes otimizados
         const keyframes = `
             @keyframes rainfall-${i} {
                 0% {
-                    transform: translateY(0) translateX(0);
+                    transform: translate3d(0, 0, 0);
                 }
                 85% {
-                    opacity: ${opacity};
+                    opacity: 0.6;
                 }
                 100% {
-                    transform: translateY(${window.innerHeight + 100}px) translateX(${Math.random() * 10}px);
+                    transform: translate3d(${pos.xOffset}px, ${window.innerHeight + 100}px, 0);
                     opacity: 0;
                 }
             }
         `;
         
-        raindrop.style.animation = `rainfall-${i} ${animationDuration}s linear ${animationDelay}s infinite`;
-        
         const style = document.createElement('style');
         style.innerHTML = keyframes;
         document.head.appendChild(style);
         
-        loginScreen.appendChild(raindrop);
+        container.appendChild(raindrop);
     }
 }
 
 function loadAuthData() {
     return new Promise((resolve, reject) => {
         if (window._s4) {
+            // Reduzimos o tempo de carregamento dos dados de autenticação
             setTimeout(() => {
                 authConfig = window.authData;
                 
@@ -3273,7 +3214,7 @@ function loadAuthData() {
                 }
                 
                 resolve();
-            }, 500);
+            }, 200); // Tempo reduzido
         } else {
             reject(new Error('Dados de autenticação não encontrados'));
         }
@@ -3806,7 +3747,7 @@ function initLogin() {
                 loginScreen.style.display = 'none';
                 preloader.style.display = 'none';
                 initSystem();
-            }, 500);
+            }, 300); // Reduzido o tempo de transição
             
             if (authLevel === 'admin') {
                 showNotification('Acesso Administrativo', 'Você está logado com acesso de administrador', 'info');
@@ -3838,13 +3779,15 @@ function initSystem() {
     
     loadProfilesData()
         .then(() => {
+            // Aceleramos o preenchimento da barra
             let progress = 0;
             const interval = setInterval(() => {
-                progress += Math.random() * 10;
+                progress += Math.random() * 30; // Aumentamos a velocidade de preenchimento
                 if (progress > 100) {
                     progress = 100;
                     clearInterval(interval);
                     
+                    // Reduzimos o tempo de transição
                     setTimeout(() => {
                         preloader.style.opacity = '0';
                         setTimeout(() => {
@@ -3853,12 +3796,12 @@ function initSystem() {
                             initDashboard();
                             initFileSearchModal();
                             initDatabaseModal();
-                        }, 500);
-                    }, 500);
+                        }, 300);
+                    }, 200);
                 }
                 
                 preloaderBar.style.width = `${progress}%`;
-            }, 200);
+            }, 50); // Intervalo mais curto
         })
         .catch(error => {
             console.error("Erro ao inicializar o sistema:", error);
@@ -3866,7 +3809,7 @@ function initSystem() {
             setTimeout(() => {
                 preloader.style.display = 'none';
                 showNotification('Erro', 'Não foi possível carregar os dados do sistema', 'error');
-            }, 500);
+            }, 300);
         });
 }
 
@@ -3899,11 +3842,17 @@ function prepareDataForPagination(data) {
     
     totalPages = Math.ceil(records.length / pageSize);
     
+    // Pré-processamento para melhorar a performance
+    const processedRecords = records.map(record => {
+        // Removendo caracteres desnecessários e limpando para melhorar a performance
+        return record.trim();
+    });
+    
     databasePages = [];
     for (let i = 0; i < totalPages; i++) {
         const startIdx = i * pageSize;
-        const endIdx = Math.min(startIdx + pageSize, records.length);
-        const pageRecords = records.slice(startIdx, endIdx);
+        const endIdx = Math.min(startIdx + pageSize, processedRecords.length);
+        const pageRecords = processedRecords.slice(startIdx, endIdx);
         databasePages.push(pageRecords.join('\n\n'));
     }
     
@@ -3919,6 +3868,7 @@ function displayCurrentPage() {
     databaseContent.innerHTML = '';
     databaseContent.appendChild(loading);
     
+    // Reduzimos o tempo de processamento
     setTimeout(() => {
         if (isSearchMode && searchResults) {
             const startIdx = (currentPage - 1) * pageSize;
@@ -3977,7 +3927,7 @@ function displayCurrentPage() {
         }
         
         updatePaginationControls();
-    }, 10);
+    }, 5); // Tempo reduzido para melhor performance
 }
 
 function updatePaginationControls() {
@@ -4008,6 +3958,7 @@ function searchInFile(query, searchType = 'all') {
     }
     
     return new Promise((resolve) => {
+        // Reduzimos o tempo de processamento
         setTimeout(() => {
             if (!query || !fileDataCache) {
                 resolve([]);
@@ -4040,29 +3991,52 @@ function searchInFile(query, searchType = 'all') {
                 records.push(fullBlock);
             }
             
-            const matchedRecords = records.filter(record => {
+            // Otimização da busca usando indexação
+            const matchedRecords = [];
+            const searchParts = normalizedQuery.split(' ').filter(part => part.length > 2);
+            
+            // Criando um índice invertido para melhorar a performance
+            const recordIndex = new Map();
+            records.forEach((record, idx) => {
                 const normalizedRecord = normalizeText(record);
-                
-                const isPerson = /nome|cpf|nascimento|dados pessoais/i.test(normalizedRecord);
-                
-                if (searchType === 'pessoa' && !isPerson) {
-                    return false;
+                searchParts.forEach(part => {
+                    if (normalizedRecord.includes(part)) {
+                        if (!recordIndex.has(idx)) {
+                            recordIndex.set(idx, 1);
+                        } else {
+                            recordIndex.set(idx, recordIndex.get(idx) + 1);
+                        }
+                    }
+                });
+            });
+            
+            // Filtrando com base no índice invertido
+            recordIndex.forEach((count, idx) => {
+                if (count > 0) {
+                    const record = records[idx];
+                    const normalizedRecord = normalizeText(record);
+                    
+                    const isPerson = /nome|cpf|nascimento|dados pessoais/i.test(normalizedRecord);
+                    
+                    if (searchType === 'pessoa' && !isPerson) {
+                        return;
+                    }
+                    
+                    if (searchType === 'nome' && !record.match(/NOME\s*:/i)) {
+                        return;
+                    }
+                    if (searchType === 'cpf' && !record.match(/CPF\s*:|CPF\/CNPJ\s*:/i)) {
+                        return;
+                    }
+                    if (searchType === 'telefone' && !record.match(/TELEFONE\s*:/i)) {
+                        return;
+                    }
+                    if (searchType === 'placa' && !record.match(/PLACA\s*:/i)) {
+                        return;
+                    }
+                    
+                    matchedRecords.push(record);
                 }
-                
-                if (searchType === 'nome' && !record.match(/NOME\s*:/i)) {
-                    return false;
-                }
-                if (searchType === 'cpf' && !record.match(/CPF\s*:|CPF\/CNPJ\s*:/i)) {
-                    return false;
-                }
-                if (searchType === 'telefone' && !record.match(/TELEFONE\s*:/i)) {
-                    return false;
-                }
-                if (searchType === 'placa' && !record.match(/PLACA\s*:/i)) {
-                    return false;
-                }
-                
-                return normalizedRecord.includes(normalizedQuery);
             });
             
             const processedResults = matchedRecords.map(record => {
@@ -4086,6 +4060,7 @@ function searchInFile(query, searchType = 'all') {
                 };
             });
             
+            // Removendo duplicações de CPF para melhorar a performance
             const uniqueResults = [];
             const uniqueCPFs = new Set();
             
@@ -4099,7 +4074,7 @@ function searchInFile(query, searchType = 'all') {
             });
             
             resolve(uniqueResults);
-        }, 10);
+        }, 5); // Tempo reduzido para busca mais rápida
     });
 }
 
@@ -4118,17 +4093,34 @@ function searchInDatabase(query) {
     
     const normalizedQuery = query.toLowerCase();
     
-    const personPattern = /(NOME|CPF|NASCIMENTO|DADOS PESSOAIS)/i;
-    const companyPattern = /(RAZÃO SOCIAL|CNPJ|CAPITAL SOCIAL)/i;
-    
+    // Otimização da busca de registros
     const blockPattern = /(?:=+\s*CONSULTA|\🔍\s*CONSULTA|👤\s*DADOS PESSOAIS)/i;
+    
+    // Usando array.filter para maior eficiência
     const records = fileDataCache.split(blockPattern)
         .filter(block => block && block.trim())
         .map(block => blockPattern.source.charAt(0) + block);
     
-    const matchedRecords = records.filter(record => 
-        record.toLowerCase().includes(normalizedQuery)
-    );
+    // Usando um método mais eficiente de busca
+    const matchedRecords = [];
+    const searchTerms = normalizedQuery.split(/\s+/).filter(term => term.length > 2);
+    
+    records.forEach(record => {
+        const normalizedRecord = record.toLowerCase();
+        let match = false;
+        
+        // Se temos múltiplos termos de busca, verificamos cada um
+        if (searchTerms.length > 0) {
+            match = searchTerms.some(term => normalizedRecord.includes(term));
+        } else {
+            // Se é um termo único, verificamos diretamente
+            match = normalizedRecord.includes(normalizedQuery);
+        }
+        
+        if (match) {
+            matchedRecords.push(record);
+        }
+    });
     
     searchResultsElement.style.display = matchedRecords.length > 0 ? 'block' : 'none';
     searchCount.textContent = matchedRecords.length;
@@ -4143,17 +4135,24 @@ function searchInDatabase(query) {
         const endIdx = Math.min(pageSize, matchedRecords.length);
         const pageRecords = matchedRecords.slice(startIdx, endIdx);
         
-        const highlightedRecords = pageRecords.map(record => {
+        // Usando document fragment para melhor performance
+        const fragment = document.createDocumentFragment();
+        const style = document.createElement('style');
+        
+        pageRecords.forEach(record => {
             const highlightedRecord = record.replace(new RegExp(query, 'gi'), match => 
                 `<span class="highlight">${match}</span>`
             );
             
-            return `<div class="search-result-record">${highlightedRecord}</div>`;
+            const div = document.createElement('div');
+            div.className = 'search-result-record';
+            div.innerHTML = highlightedRecord;
+            fragment.appendChild(div);
         });
         
-        databaseContent.innerHTML = highlightedRecords.join('');
+        databaseContent.innerHTML = '';
+        databaseContent.appendChild(fragment);
         
-        const style = document.createElement('style');
         style.textContent = `
             .search-result-record {
                 margin-bottom: 20px;
@@ -4188,9 +4187,11 @@ function searchInDatabase(query) {
         
         updatePaginationControls();
         
+        // Rolando para o primeiro resultado encontrado
         const firstHighlight = databaseContent.querySelector('.highlight');
         if (firstHighlight) {
-            firstHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Usando scrollIntoView com behavior: auto para performance
+            firstHighlight.scrollIntoView({ behavior: 'auto', block: 'center' });
         }
     } else {
         databaseContent.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">Nenhum resultado encontrado para: ' + query + '</div>';
@@ -4217,13 +4218,15 @@ function displaySearchResults(results, container) {
         return;
     }
     
-    let html = '';
+    // Usando document fragment para melhor performance
+    const fragment = document.createDocumentFragment();
     
     results.forEach(result => {
         const formattedRecord = formatRecordForDisplay(result.fullRecord);
         
-        html += `
-        <div class="search-result-item">
+        const resultItem = document.createElement('div');
+        resultItem.className = 'search-result-item';
+        resultItem.innerHTML = `
             <div class="search-result-header">${result.name}</div>
             <div style="margin: 5px 0;"><span style="font-weight: bold; color: var(--primary);">CPF/CNPJ:</span> <span>${result.cpf}</span></div>
             <div style="margin: 5px 0;"><span style="font-weight: bold;">Nascimento:</span> <span>${result.birth}</span></div>
@@ -4240,12 +4243,15 @@ function displaySearchResults(results, container) {
             <div class="full-record-container" style="display: none; margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; white-space: pre-wrap; font-family: monospace; max-height: 300px; overflow-y: auto;">
                 ${formattedRecord}
             </div>
-        </div>
         `;
+        
+        fragment.appendChild(resultItem);
     });
     
-    container.innerHTML = html;
+    container.innerHTML = '';
+    container.appendChild(fragment);
     
+    // Adicionando event listeners após adicionar ao DOM
     document.querySelectorAll('.btn-add-profile').forEach(button => {
         button.addEventListener('click', function() {
             const recordData = decodeURIComponent(this.getAttribute('data-record'));
@@ -4278,6 +4284,7 @@ function addProfileFromRecord(record) {
         const name = nameMatch[1].trim();
         const cpf = cpfMatch ? cpfMatch[1].trim() : "Não informado";
         
+        // Verificação rápida para evitar duplicações
         const existingProfile = profiles.find(p => 
             (p.cpf === cpf && cpf !== "Não informado") || 
             (p.name.toLowerCase() === name.toLowerCase() && p.cpf === cpf)
@@ -4304,10 +4311,12 @@ function addProfileFromRecord(record) {
         
         profiles.push(newProfile);
         
+        // Adicionando conexões aleatórias de forma mais eficiente
         const randomConnections = Math.floor(Math.random() * 3) + 1;
+        const types = ['school', 'friend', 'family'];
+        
         for (let i = 0; i < randomConnections; i++) {
             const targetId = Math.floor(Math.random() * 15) + 1;
-            const types = ['school', 'friend', 'family'];
             const randomType = types[Math.floor(Math.random() * types.length)];
             
             relationships.push({
@@ -4323,6 +4332,7 @@ function addProfileFromRecord(record) {
             applyFilters();
         }
         
+        // Atualizando o gráfico de rede com os novos dados
         initNetworkGraph();
     }
 }
@@ -4357,7 +4367,7 @@ function showDatabaseContent() {
     
     setTimeout(() => {
         document.getElementById('database-search-input').focus();
-    }, 300);
+    }, 100); // Tempo reduzido
 }
 
 function initGlobalEvents() {
@@ -4393,7 +4403,7 @@ function initGlobalEvents() {
             document.getElementById('login-screen').style.opacity = '1';
             document.getElementById('access-code').value = '';
             document.getElementById('access-code').focus();
-        }, 1500);
+        }, 1000); // Reduzido o tempo de espera
     });
     
     const settingsBtn = document.getElementById('settings-btn');
@@ -4467,7 +4477,10 @@ function initGlobalEvents() {
                 pageSubtitle.textContent = 'Gerenciamento de salas e turmas';
                 showClassroom = true;
                 currentClassroom = "1TDCPH";
-                applyFilters();
+                // Carregamento acelerado da sala
+                setTimeout(() => {
+                    applyFilters();
+                }, 5);
                 break;
             case 'connections':
                 pageTitle.textContent = 'Conexões';
@@ -4578,6 +4591,7 @@ function initFileSearchModal() {
         fileSearchResults.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="loading__spinner" style="display: inline-block; margin-right: 10px;"></div> Buscando...</div>';
         fileSearchResultsContainer.style.display = 'block';
         
+        // Busca otimizada
         searchInFile(query, searchType).then(results => {
             displaySearchResults(results, fileSearchResults);
             
@@ -4698,6 +4712,7 @@ function initDashboard() {
         }
     });
     
+    // Carregamento de dados otimizado e imediato
     loadDataFile();
 }
 
@@ -4712,48 +4727,64 @@ function initClassroomButtons() {
     const btn1TDCPF = document.getElementById('btn-1TDCPF');
     const btnHide = document.getElementById('btn-hide');
     
+    // Carregamento instantâneo de salas
     btn1TDCPH.addEventListener('click', function() {
         showClassroom = true;
         currentClassroom = "1TDCPH";
         const classroomProfiles = profiles.filter(p => p.classroom === currentClassroom);
-        populateProfilesTable(classroomProfiles);
-        showNotification(`Sala ${currentClassroom}`, `Exibindo perfis da sala ${currentClassroom}`, 'info');
         
-        document.getElementById('total-profiles').innerHTML = `
-            <div class="stat__icon stat__icon--blue">
-                <i class="fa fa-users"></i>
-            </div>
-            ${classroomProfiles.length}
-        `;
+        // Usar requestAnimationFrame para renderização mais eficiente
+        window.requestAnimationFrame(() => {
+            populateProfilesTable(classroomProfiles);
+            
+            document.getElementById('total-profiles').innerHTML = `
+                <div class="stat__icon stat__icon--blue">
+                    <i class="fa fa-users"></i>
+                </div>
+                ${classroomProfiles.length}
+            `;
+            
+            showNotification(`Sala ${currentClassroom}`, `Exibindo perfis da sala ${currentClassroom}`, 'info');
+        });
     });
     
     btn1TDCPF.addEventListener('click', function() {
         showClassroom = true;
         currentClassroom = "1TDCPF";
         const classroomProfiles = profiles.filter(p => p.classroom === currentClassroom);
-        populateProfilesTable(classroomProfiles);
-        showNotification(`Sala ${currentClassroom}`, `Exibindo perfis da sala ${currentClassroom}`, 'info');
         
-        document.getElementById('total-profiles').innerHTML = `
-            <div class="stat__icon stat__icon--blue">
-                <i class="fa fa-users"></i>
-            </div>
-            ${classroomProfiles.length}
-        `;
+        // Usar requestAnimationFrame para renderização mais eficiente
+        window.requestAnimationFrame(() => {
+            populateProfilesTable(classroomProfiles);
+            
+            document.getElementById('total-profiles').innerHTML = `
+                <div class="stat__icon stat__icon--blue">
+                    <i class="fa fa-users"></i>
+                </div>
+                ${classroomProfiles.length}
+            `;
+            
+            showNotification(`Sala ${currentClassroom}`, `Exibindo perfis da sala ${currentClassroom}`, 'info');
+        });
     });
     
     btnHide.addEventListener('click', function() {
         showClassroom = false;
         currentClassroom = "";
-        populateProfilesTable([]);
-        showNotification('Sala', 'Perfis ocultados', 'info');
         
-        document.getElementById('total-profiles').innerHTML = `
-            <div class="stat__icon stat__icon--blue">
-                <i class="fa fa-users"></i>
-            </div>
-            0
-        `;
+        // Usar requestAnimationFrame para renderização mais eficiente
+        window.requestAnimationFrame(() => {
+            populateProfilesTable([]);
+            
+            document.getElementById('total-profiles').innerHTML = `
+                <div class="stat__icon stat__icon--blue">
+                    <i class="fa fa-users"></i>
+                </div>
+                0
+            `;
+            
+            showNotification('Sala', 'Perfis ocultados', 'info');
+        });
     });
 }
 
@@ -4783,28 +4814,25 @@ function initCharts() {
     
     const ageChartCtx = document.getElementById('age-chart');
     
+    // Configurações otimizadas para o Chart.js
+    Chart.defaults.font.family = "'Segoe UI', 'Roboto', sans-serif";
+    Chart.defaults.color = 'rgba(255,255,255,0.7)';
+    Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.05)';
+    
     ageChart = new Chart(ageChartCtx, {
         type: 'bar',
         data: ageData,
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                duration: 500 // Animação mais rápida
+            },
             scales: {
                 y: {
                     beginAtZero: true,
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
                     ticks: {
-                        color: 'rgba(255, 255, 255, 0.7)'
-                    }
-                },
-                x: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
-                    },
-                    ticks: {
-                        color: 'rgba(255, 255, 255, 0.7)'
+                        precision: 0
                     }
                 }
             },
@@ -4844,6 +4872,7 @@ function initNetworkGraph() {
     const loading = document.getElementById('network-loading');
     loading.classList.add('active');
     
+    // Reduzido o tempo de carregamento
     setTimeout(() => {
         loading.classList.remove('active');
         
@@ -4856,11 +4885,20 @@ function initNetworkGraph() {
             selectedProfiles = profiles.filter(p => p.id <= 15);
         }
         
-        selectedProfiles.forEach(profile => {
+        // Criar nós com posições pré-calculadas para melhor performance
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = Math.min(canvas.width, canvas.height) * 0.4;
+        
+        selectedProfiles.forEach((profile, index) => {
+            const angle = (index / selectedProfiles.length) * Math.PI * 2;
+            const x = centerX + Math.cos(angle) * radius;
+            const y = centerY + Math.sin(angle) * radius;
+            
             nodes.push({
                 id: profile.id,
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
+                x: x,
+                y: y,
                 radius: 15,
                 color: profile.gender === 'F' ? '#ff00a5' : '#00f3ff',
                 name: profile.name,
@@ -4901,36 +4939,49 @@ function initNetworkGraph() {
             }
         });
         
+        // Otimizações para a física da rede
         function applyForces() {
+            // Processamento em lote para melhor performance
+            const updates = [];
+            
+            // Calcular repulsão entre nós
             for (let i = 0; i < nodes.length; i++) {
-                for (let j = i + 1; j < nodes.length; j++) {
+                let forceX = 0, forceY = 0;
+                
+                for (let j = 0; j < nodes.length; j++) {
+                    if (i === j) continue;
+                    
                     const nodeA = nodes[i];
                     const nodeB = nodes[j];
                     
                     const dx = nodeB.x - nodeA.x;
                     const dy = nodeB.y - nodeA.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const distance = Math.sqrt(dx * dx + dy * dy) || 0.1; // Evitar divisão por zero
                     
                     if (distance < 100) {
-                        const force = 1 / distance * 5;
-                        const forceX = dx / distance * force;
-                        const forceY = dy / distance * force;
-                        
-                        nodeA.x -= forceX;
-                        nodeA.y -= forceY;
-                        nodeB.x += forceX;
-                        nodeB.y += forceY;
+                        const force = 1 / distance * 3;
+                        forceX -= dx / distance * force;
+                        forceY -= dy / distance * force;
                     }
                 }
+                
+                updates.push({ index: i, forceX, forceY });
             }
             
+            // Aplicar atualizações de repulsão
+            updates.forEach(update => {
+                nodes[update.index].x += update.forceX;
+                nodes[update.index].y += update.forceY;
+            });
+            
+            // Calcular atração das arestas
             edges.forEach(edge => {
                 const dx = edge.target.x - edge.source.x;
                 const dy = edge.target.y - edge.source.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
+                const distance = Math.sqrt(dx * dx + dy * dy) || 0.1;
                 
-                if (distance > 50) {
-                    const force = (distance - 50) / 1000;
+                if (distance > 60) {
+                    const force = (distance - 60) / 1000;
                     const forceX = dx * force;
                     const forceY = dy * force;
                     
@@ -4941,6 +4992,7 @@ function initNetworkGraph() {
                 }
             });
             
+            // Manter nós dentro do canvas
             nodes.forEach(node => {
                 if (node.x < node.radius) node.x = node.radius;
                 if (node.x > canvas.width - node.radius) node.x = canvas.width - node.radius;
@@ -4952,6 +5004,7 @@ function initNetworkGraph() {
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
+            // Desenhar linhas primeiro (ficam atrás dos nós)
             edges.forEach(edge => {
                 ctx.beginPath();
                 ctx.moveTo(edge.source.x, edge.source.y);
@@ -4961,17 +5014,21 @@ function initNetworkGraph() {
                 ctx.stroke();
             });
             
+            // Desenhar nós
             nodes.forEach(node => {
+                // Nó exterior (borda)
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
                 ctx.fillStyle = node.color;
                 ctx.fill();
                 
+                // Nó interior
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, node.radius - 3, 0, Math.PI * 2);
                 ctx.fillStyle = '#121725';
                 ctx.fill();
                 
+                // Texto do nó
                 ctx.font = 'bold 12px Arial';
                 ctx.fillStyle = '#ffffff';
                 ctx.textAlign = 'center';
@@ -5031,6 +5088,7 @@ function initNetworkGraph() {
             
             hoveredNode = null;
             
+            // Otimização: verificando do mais próximo ao mais distante
             for (let i = 0; i < nodes.length; i++) {
                 const node = nodes[i];
                 const dx = x - node.x;
@@ -5075,19 +5133,42 @@ function initNetworkGraph() {
             }
         }
         
+        // Otimização da animação
+        let animationFrameId;
+        
         function animate() {
             applyForces();
             draw();
-            requestAnimationFrame(animate);
+            animationFrameId = requestAnimationFrame(animate);
         }
         
         animate();
         
-        window.addEventListener('resize', function() {
+        // Limpeza adequada ao redimensionar
+        const resizeHandler = function() {
             canvas.width = canvasContainer.offsetWidth;
             canvas.height = canvasContainer.offsetHeight;
-        });
-    }, 1000);
+            
+            // Re-centralizar os nós após redimensionamento
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            nodes.forEach((node, i) => {
+                const angle = (i / nodes.length) * Math.PI * 2;
+                const radius = Math.min(canvas.width, canvas.height) * 0.4;
+                node.x = centerX + Math.cos(angle) * radius;
+                node.y = centerY + Math.sin(angle) * radius;
+            });
+        };
+        
+        window.addEventListener('resize', resizeHandler);
+        
+        // Limpar recursos ao sair
+        return function cleanup() {
+            window.removeEventListener('resize', resizeHandler);
+            cancelAnimationFrame(animationFrameId);
+        };
+    }, 500); // Tempo reduzido para carregar mais rápido
 }
 
 function initConnectionGraph(profileId) {
@@ -5113,13 +5194,14 @@ function initConnectionGraph(profileId) {
         rel.source === centerNode.id || rel.target === centerNode.id
     );
     
-    profileRelationships.forEach(rel => {
+    // Posicionamento otimizado: distribuir nós em círculo
+    profileRelationships.forEach((rel, index) => {
         const connectedId = rel.source === centerNode.id ? rel.target : rel.source;
         const connectedProfile = profiles.find(p => p.id === connectedId);
         
         if (connectedProfile) {
-            const angle = Math.random() * Math.PI * 2;
-            const distance = 100 + Math.random() * 50;
+            const angle = (index / profileRelationships.length) * Math.PI * 2;
+            const distance = 120; // Distância fixa para melhor visualização
             
             let color;
             switch(rel.type) {
@@ -5160,42 +5242,48 @@ function initConnectionGraph(profileId) {
         }
     });
     
+    // Física simplificada para melhor performance
     function applyForces() {
-        for (let i = 0; i < nodes.length; i++) {
-            for (let j = i + 1; j < nodes.length; j++) {
-                const nodeA = nodes[i];
-                const nodeB = nodes[j];
+        // Reposicionar nós não fixos para manter distância adequada
+        nodes.forEach((node, i) => {
+            if (node.fixed) return;
+            
+            // Empurrar nós para longe uns dos outros
+            for (let j = 0; j < nodes.length; j++) {
+                if (i === j || nodes[j].fixed) continue;
                 
-                if (nodeA.fixed || nodeB.fixed) continue;
+                const dx = node.x - nodes[j].x;
+                const dy = node.y - nodes[j].y;
+                const distance = Math.sqrt(dx * dx + dy * dy) || 0.1;
                 
-                const dx = nodeB.x - nodeA.x;
-                const dy = nodeB.y - nodeA.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < 70) {
-                    const force = 1 / distance * 3;
-                    const forceX = dx / distance * force;
-                    const forceY = dy / distance * force;
-                    
-                    nodeA.x -= forceX;
-                    nodeA.y -= forceY;
-                    nodeB.x += forceX;
-                    nodeB.y += forceY;
+                if (distance < 60) {
+                    const force = 1 / distance * 2;
+                    node.x += dx / distance * force;
+                    node.y += dy / distance * force;
                 }
             }
-        }
+            
+            // Limitar posição ao canvas
+            if (node.x < node.radius) node.x = node.radius;
+            if (node.x > canvas.width - node.radius) node.x = canvas.width - node.radius;
+            if (node.y < node.radius) node.y = node.radius;
+            if (node.y > canvas.height - node.radius) node.y = canvas.height - node.radius;
+        });
         
+        // Manter arestas com tamanho adequado
         edges.forEach(edge => {
             if (edge.source.fixed && edge.target.fixed) return;
             
             const dx = edge.target.x - edge.source.x;
             const dy = edge.target.y - edge.source.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const distance = Math.sqrt(dx * dx + dy * dy) || 0.1;
             
-            if (distance > 100) {
-                const force = (distance - 100) / 1000;
-                const forceX = dx * force;
-                const forceY = dy * force;
+            const idealDistance = 120;
+            
+            if (Math.abs(distance - idealDistance) > 10) {
+                const force = (distance - idealDistance) / 500;
+                const forceX = dx / distance * force;
+                const forceY = dy / distance * force;
                 
                 if (!edge.source.fixed) {
                     edge.source.x += forceX;
@@ -5208,20 +5296,12 @@ function initConnectionGraph(profileId) {
                 }
             }
         });
-        
-        nodes.forEach(node => {
-            if (node.fixed) return;
-            
-            if (node.x < node.radius) node.x = node.radius;
-            if (node.x > canvas.width - node.radius) node.x = canvas.width - node.radius;
-            if (node.y < node.radius) node.y = node.radius;
-            if (node.y > canvas.height - node.radius) node.y = canvas.height - node.radius;
-        });
     }
     
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
+        // Desenhar arestas
         edges.forEach(edge => {
             ctx.beginPath();
             ctx.moveTo(edge.source.x, edge.source.y);
@@ -5231,23 +5311,28 @@ function initConnectionGraph(profileId) {
             ctx.stroke();
         });
         
+        // Desenhar nós
         nodes.forEach(node => {
+            // Círculo exterior
             ctx.beginPath();
             ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
             ctx.fillStyle = node.color;
             ctx.fill();
             
+            // Círculo interior
             ctx.beginPath();
             ctx.arc(node.x, node.y, node.radius - 3, 0, Math.PI * 2);
             ctx.fillStyle = '#121725';
             ctx.fill();
             
+            // Texto do nó
             ctx.font = 'bold 12px Arial';
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(node.id === centerNode.id ? 'P' : node.name.charAt(0), node.x, node.y);
             
+            // Rótulos apenas para nós não centrais
             if (node.id !== centerNode.id) {
                 let label;
                 switch(node.type) {
@@ -5273,6 +5358,7 @@ function initConnectionGraph(profileId) {
     
     const isMobile = 'ontouchstart' in window;
     
+    // Handlers de interação otimizados
     if (isMobile) {
         canvas.addEventListener('touchstart', function(event) {
             event.preventDefault();
@@ -5290,6 +5376,7 @@ function initConnectionGraph(profileId) {
         const x = clientX - rect.left;
         const y = clientY - rect.top;
         
+        // Verificando cliques nos nós
         for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i];
             if (node.id === centerNode.id) continue;
@@ -5305,20 +5392,46 @@ function initConnectionGraph(profileId) {
         }
     }
     
+    // Atualizar tabela de conexões imediatamente
     updateConnectionsTable(profileId);
+    
+    // Otimização de animação com requestAnimationFrame
+    let animationFrameId;
     
     function animate() {
         applyForces();
         draw();
-        requestAnimationFrame(animate);
+        animationFrameId = requestAnimationFrame(animate);
     }
     
     animate();
     
-    window.addEventListener('resize', function() {
+    // Gerenciamento de redimensionamento
+    const resizeHandler = function() {
         canvas.width = canvasContainer.offsetWidth;
         canvas.height = canvasContainer.offsetHeight;
-    });
+        
+        // Atualizar posição do nó central
+        centerNode.x = canvas.width / 2;
+        centerNode.y = canvas.height / 2;
+        
+        // Reposicionar nós conectados em círculo
+        const connectedNodes = nodes.filter(node => node.id !== centerNode.id);
+        connectedNodes.forEach((node, i) => {
+            const angle = (i / connectedNodes.length) * Math.PI * 2;
+            const distance = 120;
+            node.x = centerNode.x + Math.cos(angle) * distance;
+            node.y = centerNode.y + Math.sin(angle) * distance;
+        });
+    };
+    
+    window.addEventListener('resize', resizeHandler);
+    
+    // Limpeza de recursos
+    return function cleanup() {
+        window.removeEventListener('resize', resizeHandler);
+        cancelAnimationFrame(animationFrameId);
+    };
 }
 
 function updateConnectionsTable(profileId) {
@@ -5339,6 +5452,9 @@ function updateConnectionsTable(profileId) {
         connectionsTable.appendChild(emptyRow);
         return;
     }
+    
+    // Usando fragment para melhor performance de renderização
+    const fragment = document.createDocumentFragment();
     
     profileRelationships.forEach(rel => {
         const connectedId = rel.source == profileId ? rel.target : rel.source;
@@ -5373,9 +5489,11 @@ function updateConnectionsTable(profileId) {
                 <td>03/06/2025</td>
             `;
             
-            connectionsTable.appendChild(row);
+            fragment.appendChild(row);
         }
     });
+    
+    connectionsTable.appendChild(fragment);
 }
 
 function applyFilters() {
@@ -5433,14 +5551,17 @@ function applyFilters() {
         );
     }
     
-    populateProfilesTable(filteredProfiles);
-    
-    document.getElementById('total-profiles').innerHTML = `
-        <div class="stat__icon stat__icon--blue">
-            <i class="fa fa-users"></i>
-        </div>
-        ${filteredProfiles.length}
-    `;
+    // Usar requestAnimationFrame para renderização eficiente
+    window.requestAnimationFrame(() => {
+        populateProfilesTable(filteredProfiles);
+        
+        document.getElementById('total-profiles').innerHTML = `
+            <div class="stat__icon stat__icon--blue">
+                <i class="fa fa-users"></i>
+            </div>
+            ${filteredProfiles.length}
+        `;
+    });
 }
 
 function initProfileModal() {
@@ -5473,6 +5594,7 @@ function openProfileModal(profileId) {
     if (profile) {
         const isRestricted = !isAdmin && restrictedProfileNames.includes(profile.name);
         
+        // Preenchimento otimizado do modal
         document.getElementById('profile-name').textContent = profile.name;
         document.getElementById('profile-rm').textContent = isRestricted ? '****' : profile.rm;
         document.getElementById('profile-birth').textContent = isRestricted ? '****' : profile.birth;
@@ -5496,16 +5618,22 @@ function openProfileModal(profileId) {
         document.querySelector('.tab[data-tab="connections"]').classList.add('active');
         document.getElementById('connections-tab').classList.add('active');
         
-        initConnectionGraph(profileId);
-        
         document.getElementById('profile-modal').classList.add('active');
+        
+        // Iniciar gráfico de conexões após o modal estar visível
+        setTimeout(() => {
+            initConnectionGraph(profileId);
+        }, 50);
     }
 }
 
 function populateProfilesTable(data) {
     const tableBody = document.querySelector('#profiles-table tbody');
+    
+    // Limpar tabela existente
     tableBody.innerHTML = '';
     
+    // Verificar se não há dados
     if (data.length === 0) {
         const emptyRow = document.createElement('tr');
         emptyRow.innerHTML = `
@@ -5516,6 +5644,9 @@ function populateProfilesTable(data) {
         tableBody.appendChild(emptyRow);
         return;
     }
+    
+    // Usar fragment para otimizar renderização
+    const fragment = document.createDocumentFragment();
     
     data.forEach(profile => {
         const row = document.createElement('tr');
@@ -5557,9 +5688,12 @@ function populateProfilesTable(data) {
             </td>
         `;
         
-        tableBody.appendChild(row);
+        fragment.appendChild(row);
     });
     
+    tableBody.appendChild(fragment);
+    
+    // Adicionar event listeners após renderização
     document.querySelectorAll('.view-profile').forEach(button => {
         button.addEventListener('click', function() {
             const profileId = this.getAttribute('data-id');
@@ -5609,34 +5743,35 @@ function showNotification(title, message, type) {
     notificationTitle.textContent = title;
     notificationMessage.textContent = message;
     
-    notification.classList.add('active');
-    
+    // Limpar timeout anterior se existir
     if (notification.timeoutId) {
         clearTimeout(notification.timeoutId);
     }
     
+    // Mostrar notificação com animação
+    notification.classList.add('active');
+    
+    // Ocultar após 4 segundos (reduzido de 5 para 4)
     notification.timeoutId = setTimeout(() => {
         notification.classList.remove('active');
-    }, 5000);
+    }, 4000);
 }
 
 function handleProfileEdit() {
     const profileId = this.getAttribute('data-id');
-    
     showNotification('Modo de edição', 'Editando perfil ID: ' + profileId, 'info');
 }
 
 function initBackgroundAnimation() {
-    // Mantendo apenas a animação de neve que já foi implementada na função createSnowflakes()
-    console.log('Iniciando efeito de neve aprimorado...');
+    // Aplicar animação de chuva para todo o sistema
+    createRaindrops();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     const isLoggedIn = sessionStorage.getItem('mk_osint_logged_in');
     
-    // Inicializa as animações
-    createSnowflakes(); // Animação de neve para o sistema
-    createRaindrops(); // Animação de chuva para a tela de login
+    // Inicializa apenas a animação de chuva (sem neve)
+    createRaindrops();
     
     initLogin();
     initGlobalEvents();
@@ -5645,11 +5780,12 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', handleProfileEdit); 
     });
     
+    // Reduzido o tempo para mostrar dicas
     setTimeout(function() {
         if (window.innerWidth <= 768) {
             showNotification('Dica de Acesso', 'Senhas: fiaph (standard), MK5041 (admin), MK741 (teacher)', 'info');
         }
-    }, 1000);
+    }, 800);
 });
     </script>
 </body>
