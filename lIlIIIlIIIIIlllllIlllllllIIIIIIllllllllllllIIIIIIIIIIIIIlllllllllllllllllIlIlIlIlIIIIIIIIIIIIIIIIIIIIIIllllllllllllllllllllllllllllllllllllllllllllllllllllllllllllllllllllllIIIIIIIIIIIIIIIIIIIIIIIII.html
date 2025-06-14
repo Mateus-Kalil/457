@@ -3351,23 +3351,28 @@ let activeFilters = {
 };
 
 function loadDataFile() {
-    fetch('1.txt')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Arquivo 1.txt não encontrado');
-            }
-            return response.text();
-        })
-        .then(data => {
-            fileDataCache = data;
-            console.log('Arquivo 1.txt carregado com sucesso');
-            
-            prepareDataForPagination(data);
-        })
-        .catch(error => {
-            console.error('Erro ao carregar arquivo:', error);
-            showNotification('Arquivo', 'Não foi possível carregar o arquivo 1.txt', 'warning');
-        });
+    const arquivos = ['1.txt', '2.txt', '3.txt', '4.txt'];
+
+    Promise.all(arquivos.map(nome =>
+        fetch(nome)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Arquivo ${nome} não encontrado`);
+                }
+                return response.text();
+            })
+    ))
+    .then(conteudos => {
+        const data = conteudos.join('\n'); // Junta os arquivos com quebra de linha
+        fileDataCache = data;
+        console.log('Todos os arquivos carregados com sucesso');
+
+        prepareDataForPagination(data);
+    })
+    .catch(error => {
+        console.error('Erro ao carregar arquivos:', error);
+        showNotification('Arquivos', 'Não foi possível carregar um ou mais arquivos .txt', 'warning');
+    });
 }
 
 function prepareDataForPagination(data) {
