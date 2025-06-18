@@ -2130,7 +2130,7 @@
         
         <div class="logo">
             <div class="logo__icon"></div>
-            <div class="logo__text">MK-OSINT <span>v1.5</span></div>
+            <div class="logo__text">MK-OSINT <span>v1.6</span></div>
         </div>
         
         <nav>
@@ -2646,7 +2646,7 @@
             </div>
             <div class="modal__header">
                 <h2 class="modal__title">Banco de Dados</h2>
-                <div class="modal__subtitle">Visualização do arquivo 1.txt</div>
+                <div class="modal__subtitle">Pesquisa de dados</div>
             </div>
             <div class="modal__body">
                 <div class="database-search-container">
@@ -2657,7 +2657,7 @@
                         Encontrado(s) <span id="database-search-count">0</span> resultado(s)
                     </div>
                 </div>
-                <pre id="database-content" class="database-content">Carregando conteúdo do banco de dados...</pre>
+                <pre id="database-content" class="database-content">Digite um termo para busca</pre>
                 
                 <div class="database-pagination">
                     <div class="database-pagination-info">
@@ -2666,10 +2666,9 @@
                     </div>
                     <div class="database-pagination-controls">
                         <select id="page-size-select" class="database-pagination-select">
+                            <option value="10">10 por página</option>
+                            <option value="20" selected>20 por página</option>
                             <option value="50">50 por página</option>
-                            <option value="100">100 por página</option>
-                            <option value="200">200 por página</option>
-                            <option value="500">500 por página</option>
                         </select>
                         <button id="prev-page" class="database-pagination-btn" disabled>
                             <i class="fa fa-chevron-left"></i> Anterior
@@ -2689,6 +2688,10 @@
     
     <div class="modal" id="file-search-modal">
         <div class="modal__content">
+            <div class="modal__close" id="file-search-modal-close">
+                <i class="fa fa-close"></i>
+            </div>
+            <div class="modal__content">
             <div class="modal__close" id="file-search-modal-close">
                 <i class="fa fa-close"></i>
             </div>
@@ -2717,6 +2720,9 @@
                             </select>
                         </div>
                     </div>
+                    <div id="file-search-results-container" style="display: none;">
+                        <h3 class="settings-section__title" style="margin-top: 20px;">Resultados</h3>
+                        <div id="file-search-results" class="settings-group"></div>
                     </div>
                 </div>
             </div>
@@ -2770,17 +2776,22 @@ let relationships = [];
 let showClassroom = false;
 let currentClassroom = "";
 let isAdmin = true;
-let fileDataCache = null;
 
-let databasePages = [];
+let searchQueue = {
+    pending: false,
+    query: '',
+    searchType: '',
+    page: 1,
+    results: [],
+    totalResults: 0
+};
+
 let currentPage = 1;
-let pageSize = 50;
+let pageSize = 20;
 let totalPages = 1;
 let isSearchMode = false;
 let searchResults = null;
-
-let lastSearchResults = [];
-let isSearching = false;
+let currentSearchTerm = '';
 
 let currentProfileId = null;
 let ageChart = null;
@@ -2886,7 +2897,7 @@ function initSystem() {
         })
         .catch(error => {
             console.error("Erro ao inicializar o sistema:", error);
-            showNotification('Erro', 'dados do sistema carregado', 'success');
+            showNotification('Erro', 'Dados do sistema carregados', 'success');
         });
 }
 
@@ -3318,10 +3329,7 @@ function initializeRelationships() {
         { source: 23, target: 28, type: "school" },
         { source: 24, target: 27, type: "friend" },
         { source: 26, target: 12, type: "school" },
-        { source: 30, target: 31, type: "friend" },
-        { source: 7, target: 36, type: "family" },
-        { source: 12, target: 34, type: "friend" },
-        { source: 19, target: 41, type: "school" }
+        { source: 30, target: 31, type: "friend" }
     ];
 }
 
@@ -3350,133 +3358,6 @@ let activeFilters = {
     classroom: 'all'
 };
 
-function loadDataFile() {
-    const arquivos = ['1.txt', '2.txt', '3.txt', '4.txt'];
-
-    Promise.all(arquivos.map(nome =>
-        fetch(nome)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Arquivo ${nome} não encontrado`);
-                }
-                return response.text();
-            })
-    ))
-    .then(conteudos => {
-        const data = conteudos.join('\n'); // Junta os arquivos com quebra de linha
-        fileDataCache = data;
-        console.log('Todos os arquivos carregados com sucesso');
-
-        prepareDataForPagination(data);
-    })
-    .catch(error => {
-        console.error('Erro ao carregar arquivos:', error);
-        showNotification('Arquivos', 'Não foi possível carregar um ou mais arquivos .txt', 'warning');
-    });
-}
-
-function prepareDataForPagination(data) {
-    const blockPattern = /(?:=+\s*CONSULTA|\🔍\s*CONSULTA|👤\s*DADOS PESSOAIS)/i;
-    
-    const records = data.split(blockPattern)
-        .filter(block => block && block.trim())
-        .map(block => blockPattern.source.charAt(0) + block);
-    
-    totalPages = Math.ceil(records.length / pageSize);
-    
-    const processedRecords = records.map(record => {
-        return record.trim();
-    });
-    
-    databasePages = [];
-    for (let i = 0; i < totalPages; i++) {
-        const startIdx = i * pageSize;
-        const endIdx = Math.min(startIdx + pageSize, processedRecords.length);
-        const pageRecords = processedRecords.slice(startIdx, endIdx);
-        databasePages.push(pageRecords.join('\n\n'));
-    }
-    
-    document.getElementById('total-pages').textContent = totalPages;
-    document.getElementById('total-records').textContent = records.length;
-}
-
-function displayCurrentPage() {
-    const databaseContent = document.getElementById('database-content');
-    const loading = document.createElement('div');
-    loading.className = 'database-loading';
-    loading.innerHTML = '<div class="loading__spinner"></div> Carregando dados...';
-    databaseContent.innerHTML = '';
-    databaseContent.appendChild(loading);
-    
-    setTimeout(() => {
-        if (isSearchMode && searchResults) {
-            const startIdx = (currentPage - 1) * pageSize;
-            const endIdx = Math.min(startIdx + pageSize, searchResults.length);
-            const pageRecords = searchResults.slice(startIdx, endIdx);
-            
-            const formattedRecords = pageRecords.map(record => {
-                const query = document.getElementById('database-search-input').value;
-                
-                if (query) {
-                    const highlightedRecord = record.replace(new RegExp(query, 'gi'), match => 
-                        `<span class="highlight">${match}</span>`
-                    );
-                    return `<div class="search-result-record">${highlightedRecord}</div>`;
-                } else {
-                    return `<div class="search-result-record">${record}</div>`;
-                }
-            });
-            
-            databaseContent.innerHTML = formattedRecords.join('');
-            
-            if (!document.getElementById('search-result-style')) {
-                const style = document.createElement('style');
-                style.id = 'search-result-style';
-                style.textContent = `
-                    .search-result-record {
-                        margin-bottom: 20px;
-                        padding: 15px;
-                        background: rgba(10, 14, 23, 0.7);
-                        border-left: 3px solid var(--primary);
-                        border-radius: 8px;
-                        white-space: pre-wrap;
-                        font-family: monospace;
-                        line-height: 1.5;
-                    }
-                    .highlight {
-                        background-color: rgba(255, 204, 0, 0.3);
-                        color: white;
-                        padding: 0 2px;
-                        border-radius: 3px;
-                        font-weight: bold;
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-            
-            document.getElementById('current-page').textContent = currentPage;
-            document.getElementById('total-pages').textContent = Math.ceil(searchResults.length / pageSize);
-            document.getElementById('total-records').textContent = searchResults.length;
-        } else if (databasePages && databasePages[currentPage - 1]) {
-            databaseContent.textContent = databasePages[currentPage - 1];
-            
-            document.getElementById('current-page').textContent = currentPage;
-        } else {
-            databaseContent.textContent = 'Nenhum dado disponível para exibição.';
-        }
-        
-        updatePaginationControls();
-    }, 5);
-}
-
-function updatePaginationControls() {
-    const prevPageBtn = document.getElementById('prev-page');
-    const nextPageBtn = document.getElementById('next-page');
-    
-    prevPageBtn.disabled = currentPage <= 1;
-    nextPageBtn.disabled = currentPage >= totalPages;
-}
-
 function normalizeText(text) {
     if (!text) return '';
     
@@ -3491,239 +3372,190 @@ function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function searchInFile(query, searchType = 'all') {
-    if (query && query.length > 3) {
-        showNotification('Buscando...', 'Analisando registros do arquivo', 'info');
-    }
-    
+async function fetchSearchResults(query, searchType, page = 1, pageSize = 20) {
     return new Promise((resolve) => {
         setTimeout(() => {
-            if (!query || !fileDataCache) {
-                resolve([]);
-                return;
-            }
+            const arquivos = ['1.txt', '2.txt', '3.txt', '4.txt'];
+            const arquivo = arquivos[0]; 
             
-            const normalizedQuery = normalizeText(query);
             
-            const blockPattern = /(?:=+\s*CONSULTA|\🔍\s*CONSULTA|👤\s*DADOS PESSOAIS|NOME\s*:|CPF\s*:|PESSOA\s*:)/i;
-            
-            const blocks = fileDataCache.split(blockPattern)
-                .filter(block => block && block.trim());
-            
-            const records = [];
-            for (let i = 0; i < blocks.length; i++) {
-                let fullBlock = blocks[i];
-                const matches = fileDataCache.match(new RegExp(`(${blockPattern.source})${escapeRegExp(blocks[i].substring(0, 50))}`, 'i'));
-                
-                if (matches && matches[1]) {
-                    fullBlock = matches[1] + fullBlock;
-                } else {
-                    fullBlock = "CONSULTA " + fullBlock;
-                }
-                
-                const endMatch = fullBlock.match(/\n\s*\n\s*\n/);
-                if (endMatch) {
-                    fullBlock = fullBlock.substring(0, endMatch.index + endMatch[0].length);
-                }
-                
-                records.push(fullBlock);
-            }
-            
-            const recordIndex = new Map();
-            records.forEach((record, idx) => {
-                const normalizedRecord = normalizeText(record);
-                searchParts.forEach(part => {
-                    if (normalizedRecord.includes(part)) {
-                        if (!recordIndex.has(idx)) {
-                            recordIndex.set(idx, 1);
-                        } else {
-                            recordIndex.set(idx, recordIndex.get(idx) + 1);
+            fetch(arquivo)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Arquivo ${arquivo} não encontrado`);
+                    }
+                    
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let partialData = '';
+                    let matchCount = 0;
+                    let matches = [];
+                    
+                    function processChunk({ done, value }) {
+                        if (done) {
+                            
+                            return { matches, matchCount };
                         }
+                        
+                        
+                        const chunk = decoder.decode(value, { stream: true });
+                        partialData += chunk;
+                        
+                        
+                        const blockPattern = /(?:=+\s*CONSULTA|\🔍\s*CONSULTA|👤\s*DADOS PESSOAIS|NOME\s*:|CPF\s*:)/i;
+                        
+                        
+                        const blocks = partialData.split(blockPattern);
+                        
+                        
+                        if (blocks.length > 1) {
+                            
+                            for (let i = 0; i < blocks.length - 1; i++) {
+                                const block = blocks[i];
+                                
+                                
+                                if (normalizeText(block).includes(normalizeText(query))) {
+                                    matchCount++;
+                                    
+                                    
+                                    const nameMatch = block.match(/NOME\s*:\s*([^\n]+)/i);
+                                    const cpfMatch = block.match(/CPF\s*:|CPF\/CNPJ\s*:\s*([^\n]+)/i);
+                                    const birthMatch = block.match(/NASCIMENTO\s*:\s*([^\n]+)/i);
+                                    const genderMatch = block.match(/SEXO\s*:\s*([^\n]+)/i);
+                                    const motherMatch = block.match(/MÃE\s*:\s*([^\n]+)/i);
+                                    const phoneMatch = block.match(/TELEFONE\s*:\s*([^\n]+)/i);
+                                    
+                                    
+                                    if (
+                                        (searchType === 'nome' && !nameMatch) ||
+                                        (searchType === 'cpf' && !cpfMatch) ||
+                                        (searchType === 'telefone' && !phoneMatch) ||
+                                        (searchType === 'pessoa' && !nameMatch && !cpfMatch)
+                                    ) {
+                                        matchCount--;
+                                        continue;
+                                    }
+                                    
+                                    
+                                    if (matches.length < pageSize && 
+                                        matchCount > (page - 1) * pageSize && 
+                                        matchCount <= page * pageSize) {
+                                        
+                                        matches.push({
+                                            name: nameMatch ? nameMatch[1].trim() : "Não informado",
+                                            cpf: cpfMatch ? cpfMatch[1].trim() : "Não informado",
+                                            birth: birthMatch ? birthMatch[1].trim() : "Não informado",
+                                            gender: genderMatch ? genderMatch[1].trim() : "Não informado",
+                                            mother: motherMatch ? motherMatch[1].trim() : "Não informado",
+                                            phone: phoneMatch ? phoneMatch[1].trim() : "Não informado",
+                                            fullRecord: blockPattern.source.charAt(0) + block
+                                        });
+                                    }
+                                }
+                            }
+                            
+                            
+                            partialData = blocks[blocks.length - 1];
+                        }
+                        
+                        
+                        if (matches.length >= pageSize) {
+                            return { matches, matchCount };
+                        }
+                        
+                        
+                        return reader.read().then(processChunk);
                     }
+                    
+                    
+                    return reader.read().then(processChunk);
+                })
+                .then(({ matches, matchCount }) => {
+                    resolve({
+                        results: matches,
+                        totalCount: matchCount,
+                        totalPages: Math.ceil(matchCount / pageSize)
+                    });
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar no arquivo:', error);
+                    resolve({ results: [], totalCount: 0, totalPages: 0 });
                 });
-            });
-            
-            const matchedRecords = [];
-            const searchParts = normalizedQuery.split(' ').filter(part => part.length > 2);
-            
-            recordIndex.forEach((count, idx) => {
-                if (count > 0) {
-                    const record = records[idx];
-                    const normalizedRecord = normalizeText(record);
-                    
-                    const isPerson = /nome|cpf|nascimento|dados pessoais/i.test(normalizedRecord);
-                    
-                    if (searchType === 'pessoa' && !isPerson) {
-                        return;
-                    }
-                    
-                    if (searchType === 'nome' && !record.match(/NOME\s*:/i)) {
-                        return;
-                    }
-                    if (searchType === 'cpf' && !record.match(/CPF\s*:|CPF\/CNPJ\s*:/i)) {
-                        return;
-                    }
-                    if (searchType === 'telefone' && !record.match(/TELEFONE\s*:/i)) {
-                        return;
-                    }
-                    if (searchType === 'placa' && !record.match(/PLACA\s*:/i)) {
-                        return;
-                    }
-                    
-                    matchedRecords.push(record);
-                }
-            });
-            
-            const processedResults = matchedRecords.map(record => {
-                const nameMatch = record.match(/NOME\s*:\s*([^\n]+)/i);
-                const cpfMatch = record.match(/CPF\s*:|CPF\/CNPJ\s*:\s*([^\n]+)/i);
-                const birthMatch = record.match(/NASCIMENTO\s*:\s*([^\n]+)/i);
-                const genderMatch = record.match(/SEXO\s*:\s*([^\n]+)/i);
-                const motherMatch = record.match(/MÃE\s*:\s*([^\n]+)/i);
-                const phoneMatch = record.match(/TELEFONE\s*:\s*([^\n]+)/i);
-                const plateMatch = record.match(/PLACA\s*:\s*([^\n]+)/i);
-                
-                return {
-                    name: nameMatch ? nameMatch[1].trim() : "Não informado",
-                    cpf: cpfMatch ? cpfMatch[1].trim() : "Não informado",
-                    birth: birthMatch ? birthMatch[1].trim() : "Não informado",
-                    gender: genderMatch ? genderMatch[1].trim() : "Não informado",
-                    mother: motherMatch ? motherMatch[1].trim() : "Não informado",
-                    phone: phoneMatch ? phoneMatch[1].trim() : "Não informado",
-                    plate: plateMatch ? plateMatch[1].trim() : "Não informado",
-                    fullRecord: record
-                };
-            });
-            
-            const uniqueResults = [];
-            const uniqueCPFs = new Set();
-            
-            processedResults.forEach(result => {
-                if (result.cpf === "Não informado" || !uniqueCPFs.has(result.cpf)) {
-                    if (result.cpf !== "Não informado") {
-                        uniqueCPFs.add(result.cpf);
-                    }
-                    uniqueResults.push(result);
-                }
-            });
-            
-            resolve(uniqueResults);
-        }, 5);
+        }, 100); 
     });
 }
 
 function searchInDatabase(query) {
+    if (!query || query.length < 3) {
+        showNotification('Busca', 'Digite pelo menos 3 caracteres para buscar', 'warning');
+        return;
+    }
+    
     const databaseContent = document.getElementById('database-content');
     const searchResultsElement = document.getElementById('database-search-results');
     const searchCount = document.getElementById('database-search-count');
     
-    if (!query || !fileDataCache) {
-        isSearchMode = false;
-        currentPage = 1;
-        displayCurrentPage();
-        searchResultsElement.style.display = 'none';
-        return 0;
-    }
     
-    const normalizedQuery = query.toLowerCase();
+    databaseContent.innerHTML = '<div class="database-loading"><div class="loading__spinner"></div> Buscando dados...</div>';
     
-    const blockPattern = /(?:=+\s*CONSULTA|\🔍\s*CONSULTA|👤\s*DADOS PESSOAIS)/i;
     
-    const records = fileDataCache.split(blockPattern)
-        .filter(block => block && block.trim())
-        .map(block => blockPattern.source.charAt(0) + block);
+    currentSearchTerm = query;
+    isSearchMode = true;
+    currentPage = 1;
     
-    const matchedRecords = [];
-    const searchTerms = normalizedQuery.split(/\s+/).filter(term => term.length > 2);
     
-    records.forEach(record => {
-        const normalizedRecord = record.toLowerCase();
-        let match = false;
-        
-        if (searchTerms.length > 0) {
-            match = searchTerms.some(term => normalizedRecord.includes(term));
-        } else {
-            match = normalizedRecord.includes(normalizedQuery);
-        }
-        
-        if (match) {
-            matchedRecords.push(record);
-        }
-    });
-    
-    searchResultsElement.style.display = matchedRecords.length > 0 ? 'block' : 'none';
-    searchCount.textContent = matchedRecords.length;
-    
-    if (matchedRecords.length > 0) {
-        isSearchMode = true;
-        searchResults = matchedRecords;
-        currentPage = 1;
-        totalPages = Math.ceil(matchedRecords.length / pageSize);
-        
-        const startIdx = 0;
-        const endIdx = Math.min(pageSize, matchedRecords.length);
-        const pageRecords = matchedRecords.slice(startIdx, endIdx);
-        
-        const fragment = document.createDocumentFragment();
-        const style = document.createElement('style');
-        
-        pageRecords.forEach(record => {
-            const highlightedRecord = record.replace(new RegExp(query, 'gi'), match => 
-                `<span class="highlight">${match}</span>`
-            );
+    fetchSearchResults(query, 'all', currentPage, pageSize)
+        .then(({ results, totalCount, totalPages }) => {
+            if (currentSearchTerm !== query) {
+                
+                return;
+            }
             
-            const div = document.createElement('div');
-            div.className = 'search-result-record';
-            div.innerHTML = highlightedRecord;
-            fragment.appendChild(div);
+            searchResults = results;
+            totalPages = totalPages;
+            
+            searchResultsElement.style.display = totalCount > 0 ? 'block' : 'none';
+            searchCount.textContent = totalCount;
+            
+            if (totalCount > 0) {
+                const fragment = document.createDocumentFragment();
+                
+                results.forEach(record => {
+                    const highlightedRecord = record.fullRecord.replace(new RegExp(query, 'gi'), match => 
+                        `<span class="highlight">${match}</span>`
+                    );
+                    
+                    const div = document.createElement('div');
+                    div.className = 'search-result-record';
+                    div.innerHTML = highlightedRecord;
+                    fragment.appendChild(div);
+                });
+                
+                databaseContent.innerHTML = '';
+                databaseContent.appendChild(fragment);
+                
+                document.getElementById('current-page').textContent = currentPage;
+                document.getElementById('total-pages').textContent = totalPages;
+                document.getElementById('total-records').textContent = totalCount;
+                
+                updatePaginationControls();
+                
+                const firstHighlight = databaseContent.querySelector('.highlight');
+                if (firstHighlight) {
+                    firstHighlight.scrollIntoView({ behavior: 'auto', block: 'center' });
+                }
+            } else {
+                databaseContent.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">Nenhum resultado encontrado para: ' + query + '</div>';
+            }
         });
-        
-        databaseContent.innerHTML = '';
-        databaseContent.appendChild(fragment);
-        
-        style.textContent = `
-            .search-result-record {
-                margin-bottom: 20px;
-                padding: 15px;
-                background: rgba(10, 14, 23, 0.7);
-                border-left: 3px solid var(--primary);
-                border-radius: 8px;
-                white-space: pre-wrap;
-                font-family: monospace;
-                line-height: 1.5;
-            }
-            .highlight {
-                background-color: rgba(255, 204, 0, 0.3);
-                color: white;
-                padding: 0 2px;
-                border-radius: 3px;
-                font-weight: bold;
-            }
-        `;
-        
-        const existingStyle = document.getElementById('search-result-style');
-        if (existingStyle) {
-            existingStyle.remove();
-        }
-        
-        style.id = 'search-result-style';
-        document.head.appendChild(style);
-        
-        document.getElementById('current-page').textContent = currentPage;
-        document.getElementById('total-pages').textContent = totalPages;
-        document.getElementById('total-records').textContent = matchedRecords.length;
-        
-        updatePaginationControls();
-        
-        const firstHighlight = databaseContent.querySelector('.highlight');
-        if (firstHighlight) {
-            firstHighlight.scrollIntoView({ behavior: 'auto', block: 'center' });
-        }
-    } else {
-        databaseContent.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">Nenhum resultado encontrado para: ' + query + '</div>';
-    }
+}
+
+function updatePaginationControls() {
+    const prevPageBtn = document.getElementById('prev-page');
+    const nextPageBtn = document.getElementById('next-page');
     
-    return matchedRecords.length;
+    prevPageBtn.disabled = currentPage <= 1;
+    nextPageBtn.disabled = currentPage >= totalPages;
 }
 
 function formatRecordForDisplay(record) {
@@ -3758,7 +3590,6 @@ function displaySearchResults(results, container) {
             <div style="margin: 5px 0;"><span style="font-weight: bold;">Sexo:</span> <span>${result.gender}</span></div>
             <div style="margin: 5px 0;"><span style="font-weight: bold;">Mãe:</span> <span>${result.mother}</span></div>
             ${result.phone !== "Não informado" ? `<div style="margin: 5px 0;"><span style="font-weight: bold; color: var(--primary);">Telefone:</span> <span>${result.phone}</span></div>` : ''}
-            ${result.plate !== "Não informado" ? `<div style="margin: 5px 0;"><span style="font-weight: bold; color: var(--primary);">Placa:</span> <span>${result.plate}</span></div>` : ''}
             
             <div style="margin-top: 10px;">
                 <button class="btn btn--outline btn-view-full-record" data-record="${encodeURIComponent(result.fullRecord)}">Ver Registro Completo</button>
@@ -3858,37 +3689,187 @@ function addProfileFromRecord(record) {
     }
 }
 
-function openFileSearchModal(query, results) {
+function initFileSearchModal() {
     const fileSearchModal = document.getElementById('file-search-modal');
+    const fileSearchModalClose = document.getElementById('file-search-modal-close');
+    const clearFileSearchBtn = document.getElementById('clear-file-search');
+    const runFileSearchBtn = document.getElementById('run-file-search');
+    const runFileSearchInnerBtn = document.getElementById('run-file-search-inner');
     const fileSearchQuery = document.getElementById('file-search-query');
-    const fileSearchResults = document.getElementById('file-search-results');
     const fileSearchResultsContainer = document.getElementById('file-search-results-container');
+    const fileSearchResults = document.getElementById('file-search-results');
+    const fileSearchType = document.getElementById('file-search-type');
     
-    fileSearchQuery.value = query;
-    displaySearchResults(results, fileSearchResults);
-    fileSearchResultsContainer.style.display = 'block';
-    fileSearchModal.classList.add('active');
+    fileSearchModalClose.addEventListener('click', function() {
+        fileSearchModal.classList.remove('active');
+    });
+    
+    clearFileSearchBtn.addEventListener('click', function() {
+        fileSearchQuery.value = '';
+        fileSearchResults.innerHTML = '';
+        fileSearchResultsContainer.style.display = 'none';
+        fileSearchType.value = 'all';
+    });
+    
+    runFileSearchBtn.addEventListener('click', function() {
+        executeFileSearch();
+    });
+    
+    runFileSearchInnerBtn.addEventListener('click', function() {
+        executeFileSearch();
+    });
+    
+    fileSearchQuery.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            executeFileSearch();
+        }
+    });
+    
+    function executeFileSearch() {
+        const query = fileSearchQuery.value.trim();
+        const searchType = fileSearchType.value;
+        
+        if (!query || query.length < 3) {
+            showNotification('Erro', 'Digite pelo menos 3 caracteres para busca', 'warning');
+            return;
+        }
+        
+        fileSearchResults.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="loading__spinner" style="display: inline-block; margin-right: 10px;"></div> Buscando...</div>';
+        fileSearchResultsContainer.style.display = 'block';
+        
+        
+        fetchSearchResults(query, searchType, 1, 20)
+            .then(({ results }) => {
+                displaySearchResults(results, fileSearchResults);
+                
+                if (results.length > 0) {
+                    showNotification('Busca Concluída', `${results.length} resultado(s) encontrado(s)`, 'success');
+                } else {
+                    showNotification('Busca Concluída', 'Nenhum resultado encontrado', 'warning');
+                }
+            });
+    }
 }
 
-function showDatabaseContent() {
+function initDatabaseModal() {
+    const databaseBtn = document.getElementById('database-btn');
     const databaseModal = document.getElementById('database-modal');
+    const databaseModalClose = document.getElementById('database-modal-close');
+    const databaseSearchInput = document.getElementById('database-search-input');
+    const databaseSearchButton = document.getElementById('database-search-button');
+    const clearDatabaseSearchBtn = document.getElementById('clear-database-search');
+    const closeDatabaseBtn = document.getElementById('close-database');
+    const prevPageBtn = document.getElementById('prev-page');
+    const nextPageBtn = document.getElementById('next-page');
+    const pageSizeSelect = document.getElementById('page-size-select');
+    
+    databaseBtn.addEventListener('click', function() {
+        databaseModal.classList.add('active');
+        setTimeout(() => {
+            databaseSearchInput.focus();
+        }, 100);
+    });
+    
+    databaseModalClose.addEventListener('click', function() {
+        databaseModal.classList.remove('active');
+    });
+    
+    closeDatabaseBtn.addEventListener('click', function() {
+        databaseModal.classList.remove('active');
+    });
+    
+    databaseSearchButton.addEventListener('click', function() {
+        const query = databaseSearchInput.value.trim();
+        searchInDatabase(query);
+    });
+    
+    clearDatabaseSearchBtn.addEventListener('click', function() {
+        databaseSearchInput.value = '';
+        isSearchMode = false;
+        currentPage = 1;
+        document.getElementById('database-content').innerHTML = 'Digite um termo para busca';
+        document.getElementById('database-search-results').style.display = 'none';
+        databaseSearchInput.focus();
+    });
+    
+    prevPageBtn.addEventListener('click', function() {
+        if (currentPage > 1) {
+            currentPage--;
+            if (isSearchMode && currentSearchTerm) {
+                fetchSearchResults(currentSearchTerm, 'all', currentPage, pageSize)
+                    .then(({ results }) => {
+                        searchResults = results;
+                        displayCurrentPage();
+                    });
+            } else {
+                displayCurrentPage();
+            }
+        }
+    });
+    
+    nextPageBtn.addEventListener('click', function() {
+        if (currentPage < totalPages) {
+            currentPage++;
+            if (isSearchMode && currentSearchTerm) {
+                fetchSearchResults(currentSearchTerm, 'all', currentPage, pageSize)
+                    .then(({ results }) => {
+                        searchResults = results;
+                        displayCurrentPage();
+                    });
+            } else {
+                displayCurrentPage();
+            }
+        }
+    });
+    
+    pageSizeSelect.addEventListener('change', function() {
+        pageSize = parseInt(this.value);
+        
+        if (isSearchMode && currentSearchTerm) {
+            currentPage = 1;
+            fetchSearchResults(currentSearchTerm, 'all', currentPage, pageSize)
+                .then(({ results, totalPages: newTotalPages }) => {
+                    searchResults = results;
+                    totalPages = newTotalPages;
+                    displayCurrentPage();
+                });
+        }
+    });
+    
+    databaseSearchInput.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            const query = this.value.trim();
+            searchInDatabase(query);
+        }
+    });
+}
+
+function displayCurrentPage() {
     const databaseContent = document.getElementById('database-content');
     
-    databaseModal.classList.add('active');
-    
-    if (!fileDataCache) {
-        databaseContent.textContent = "Pesquise";
-        return;
+    if (isSearchMode && searchResults) {
+        const fragment = document.createDocumentFragment();
+        
+        searchResults.forEach(record => {
+            const highlightedRecord = record.fullRecord.replace(new RegExp(currentSearchTerm, 'gi'), match => 
+                `<span class="highlight">${match}</span>`
+            );
+            
+            const div = document.createElement('div');
+            div.className = 'search-result-record';
+            div.innerHTML = highlightedRecord;
+            fragment.appendChild(div);
+        });
+        
+        databaseContent.innerHTML = '';
+        databaseContent.appendChild(fragment);
+        
+        document.getElementById('current-page').textContent = currentPage;
+        
+        updatePaginationControls();
+    } else {
+        databaseContent.innerHTML = 'Digite um termo para busca';
     }
-    
-    isSearchMode = false;
-    currentPage = 1;
-    
-    displayCurrentPage();
-    
-    setTimeout(() => {
-        document.getElementById('database-search-input').focus();
-    }, 100);
 }
 
 function initGlobalEvents() {
@@ -4046,141 +4027,6 @@ function initGlobalEvents() {
     });
 }
 
-function initFileSearchModal() {
-    const fileSearchModal = document.getElementById('file-search-modal');
-    const fileSearchModalClose = document.getElementById('file-search-modal-close');
-    const clearFileSearchBtn = document.getElementById('clear-file-search');
-    const runFileSearchBtn = document.getElementById('run-file-search');
-    const runFileSearchInnerBtn = document.getElementById('run-file-search-inner');
-    const fileSearchQuery = document.getElementById('file-search-query');
-    const fileSearchResults = document.getElementById('file-search-results');
-    const fileSearchResultsContainer = document.getElementById('file-search-results-container');
-    const fileSearchType = document.getElementById('file-search-type');
-    
-    fileSearchModalClose.addEventListener('click', function() {
-        fileSearchModal.classList.remove('active');
-    });
-    
-    clearFileSearchBtn.addEventListener('click', function() {
-        fileSearchQuery.value = '';
-        fileSearchResults.innerHTML = '';
-        fileSearchResultsContainer.style.display = 'none';
-        fileSearchType.value = 'all';
-    });
-    
-    runFileSearchBtn.addEventListener('click', function() {
-        executeFileSearch();
-    });
-    
-    runFileSearchInnerBtn.addEventListener('click', function() {
-        executeFileSearch();
-    });
-    
-    fileSearchQuery.addEventListener('keyup', function(e) {
-        if (e.key === 'Enter') {
-            executeFileSearch();
-        }
-    });
-    
-    function executeFileSearch() {
-        const query = fileSearchQuery.value.trim();
-        const searchType = fileSearchType.value;
-        
-        if (!query) {
-            showNotification('Erro', 'Digite um termo para busca', 'warning');
-            return;
-        }
-        
-        if (!fileDataCache) {
-            showNotification('Erro', 'Arquivo 1.txt não carregado', 'error');
-            return;
-        }
-        
-        fileSearchResults.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="loading__spinner" style="display: inline-block; margin-right: 10px;"></div> Buscando...</div>';
-        fileSearchResultsContainer.style.display = 'block';
-        
-        searchInFile(query, searchType).then(results => {
-            displaySearchResults(results, fileSearchResults);
-            
-            if (results.length > 0) {
-                showNotification('Busca Concluída', `${results.length} resultado(s) encontrado(s)`, 'success');
-            } else {
-                showNotification('Busca Concluída', 'Nenhum resultado encontrado', 'warning');
-            }
-        });
-    }
-}
-
-function initDatabaseModal() {
-    const databaseBtn = document.getElementById('database-btn');
-    const databaseModal = document.getElementById('database-modal');
-    const databaseModalClose = document.getElementById('database-modal-close');
-    const databaseSearchInput = document.getElementById('database-search-input');
-    const databaseSearchButton = document.getElementById('database-search-button');
-    const clearDatabaseSearchBtn = document.getElementById('clear-database-search');
-    const closeDatabaseBtn = document.getElementById('close-database');
-    const prevPageBtn = document.getElementById('prev-page');
-    const nextPageBtn = document.getElementById('next-page');
-    const pageSizeSelect = document.getElementById('page-size-select');
-    
-    databaseBtn.addEventListener('click', function() {
-        showDatabaseContent();
-    });
-    
-    databaseModalClose.addEventListener('click', function() {
-        databaseModal.classList.remove('active');
-    });
-    
-    closeDatabaseBtn.addEventListener('click', function() {
-        databaseModal.classList.remove('active');
-    });
-    
-    databaseSearchButton.addEventListener('click', function() {
-        const query = databaseSearchInput.value.trim();
-        searchInDatabase(query);
-    });
-    
-    clearDatabaseSearchBtn.addEventListener('click', function() {
-        databaseSearchInput.value = '';
-        isSearchMode = false;
-        currentPage = 1;
-        displayCurrentPage();
-        document.getElementById('database-search-results').style.display = 'none';
-        databaseSearchInput.focus();
-    });
-    
-    prevPageBtn.addEventListener('click', function() {
-        if (currentPage > 1) {
-            currentPage--;
-            displayCurrentPage();
-        }
-    });
-    
-    nextPageBtn.addEventListener('click', function() {
-        if (currentPage < totalPages) {
-            currentPage++;
-            displayCurrentPage();
-        }
-    });
-    
-    pageSizeSelect.addEventListener('change', function() {
-        pageSize = parseInt(this.value);
-        
-        if (fileDataCache) {
-            prepareDataForPagination(fileDataCache);
-            currentPage = 1;
-            displayCurrentPage();
-        }
-    });
-    
-    databaseSearchInput.addEventListener('keyup', function(e) {
-        if (e.key === 'Enter') {
-            const query = this.value.trim();
-            searchInDatabase(query);
-        }
-    });
-}
-
 function initDashboard() {
     populateProfilesTable([]); 
     
@@ -4218,8 +4064,6 @@ function initDashboard() {
             connectionCanvas.height = container.offsetHeight;
         }
     });
-    
-    loadDataFile();
 }
 
 function checkOrientation() {
@@ -5205,10 +5049,6 @@ function showNotification(title, message, type) {
     }, 4000);
 }
 
-function initBackgroundAnimation() {
-    createRaindrops();
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     createRaindrops();
     
@@ -5257,6 +5097,356 @@ document.addEventListener('DOMContentLoaded', function() {
             showNotification('Bem-vindo', 'Sistema MK-OSINT inicializado com sucesso', 'success');
         }
     }, 800);
+});
+
+
+
+
+/**
+ * 
+ * 
+ * 
+ * 
+ */
+async function searchInFileOptimized(searchTerm, archivo) {
+    if (!searchTerm || searchTerm.length < 3) {
+        return [];
+    }
+    
+    try {
+        
+        const response = await fetch(archivo);
+        if (!response.ok) {
+            throw new Error(`Arquivo ${archivo} não encontrado`);
+        }
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let results = [];
+        let recordCount = 0;
+        
+        const processChunk = async ({ done, value }) => {
+            if (done) {
+                
+                processBufferForMatches();
+                return results;
+            }
+            
+            
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+            
+            
+            if (buffer.length > 500000) { 
+                processBufferForMatches();
+            }
+            
+            
+            return reader.read().then(processChunk);
+        };
+        
+        const processBufferForMatches = () => {
+            
+            const recordPattern = /((?:=+\s*CONSULTA|\🔍\s*CONSULTA|👤\s*DADOS PESSOAIS|NOME\s*:|CPF\/CNPJ\s*:|PESSOA\s*:))/g;
+            
+            
+            const parts = buffer.split(recordPattern);
+            
+            
+            if (parts.length > 2) {
+                
+                for (let i = 1; i < parts.length - 2; i += 2) {
+                    const recordStart = parts[i];
+                    const recordContent = parts[i + 1];
+                    const fullRecord = recordStart + recordContent;
+                    
+                    recordCount++;
+                    
+                    
+                    if (fullRecord.toLowerCase().includes(searchTerm.toLowerCase())) {
+                        
+                        const nameMatch = fullRecord.match(/NOME\s*:\s*([^\n]+)/i);
+                        const cpfMatch = fullRecord.match(/CPF\s*:|CPF\/CNPJ\s*:\s*([^\n]+)/i);
+                        const birthMatch = fullRecord.match(/NASCIMENTO\s*:\s*([^\n]+)/i);
+                        const genderMatch = fullRecord.match(/SEXO\s*:\s*([^\n]+)/i);
+                        const motherMatch = fullRecord.match(/MÃE\s*:\s*([^\n]+)/i);
+                        const phoneMatch = fullRecord.match(/TELEFONE\s*:\s*([^\n]+)/i);
+                        
+                        
+                        results.push({
+                            name: nameMatch ? nameMatch[1].trim() : "Não informado",
+                            cpf: cpfMatch ? cpfMatch[1].trim() : "Não informado",
+                            birth: birthMatch ? birthMatch[1].trim() : "Não informado",
+                            gender: genderMatch ? genderMatch[1].trim() : "Não informado",
+                            mother: motherMatch ? motherMatch[1].trim() : "Não informado",
+                            phone: phoneMatch ? phoneMatch[1].trim() : "Não informado",
+                            fullRecord: fullRecord
+                        });
+                        
+                        
+                        if (results.length >= 50) {
+                            buffer = recordStart + recordContent;
+                            return;
+                        }
+                    }
+                }
+                
+                
+                buffer = parts[parts.length - 2] + parts[parts.length - 1];
+            }
+        };
+        
+        
+        return await reader.read().then(processChunk);
+        
+    } catch (error) {
+        console.error('Erro ao buscar no arquivo:', error);
+        return [];
+    }
+}
+
+/**
+ *
+ * 
+ * 
+ * 
+ */
+async function progressiveFileSearch(query, searchType = 'all') {
+    if (!query || query.length < 3) {
+        return { results: [], totalCount: 0 };
+    }
+    
+    const arquivos = ['1.txt', '2.txt', '3.txt', '4.txt'];
+    let allResults = [];
+    let searchedFiles = 0;
+    
+    
+    for (const arquivo of arquivos) {
+        try {
+            
+            showNotification('Buscando...', `Analisando arquivo ${searchedFiles + 1}/4`, 'info');
+            
+            
+            const results = await searchInFileOptimized(query, arquivo);
+            
+            
+            const filteredResults = results.filter(result => {
+                switch (searchType) {
+                    case 'nome':
+                        return result.name !== "Não informado";
+                    case 'cpf':
+                        return result.cpf !== "Não informado";
+                    case 'telefone':
+                        return result.phone !== "Não informado";
+                    case 'pessoa':
+                        return result.name !== "Não informado" || 
+                               result.cpf !== "Não informado";
+                    default:
+                        return true;
+                }
+            });
+            
+            
+            allResults = allResults.concat(filteredResults);
+            searchedFiles++;
+            
+            
+            if (allResults.length >= 50) {
+                break;
+            }
+            
+        } catch (error) {
+            console.error(`Erro ao processar arquivo ${arquivo}:`, error);
+            continue;
+        }
+    }
+    
+    
+    const uniqueResults = [];
+    const seenCPFs = new Set();
+    
+    allResults.forEach(result => {
+        if (result.cpf === "Não informado" || !seenCPFs.has(result.cpf)) {
+            if (result.cpf !== "Não informado") {
+                seenCPFs.add(result.cpf);
+            }
+            uniqueResults.push(result);
+        }
+    });
+    
+    
+    const limitedResults = uniqueResults.slice(0, 50);
+    
+    return {
+        results: limitedResults,
+        totalCount: limitedResults.length,
+        searchedFiles
+    };
+}
+
+/**
+ *
+ * 
+ */
+function searchInDatabaseOptimized(query) {
+    if (!query || query.length < 3) {
+        showNotification('Busca', 'Digite pelo menos 3 caracteres para buscar', 'warning');
+        return;
+    }
+    
+    const databaseContent = document.getElementById('database-content');
+    const searchResultsElement = document.getElementById('database-search-results');
+    const searchCount = document.getElementById('database-search-count');
+    
+    
+    databaseContent.innerHTML = '<div class="database-loading"><div class="loading__spinner"></div> Buscando dados...</div>';
+    searchResultsElement.style.display = 'none';
+    
+    
+    currentSearchTerm = query;
+    isSearchMode = true;
+    currentPage = 1;
+    
+    
+    progressiveFileSearch(query, 'all')
+        .then(({ results, totalCount, searchedFiles }) => {
+            if (currentSearchTerm !== query) {
+                
+                return;
+            }
+            
+            searchResults = results;
+            totalPages = Math.ceil(results.length / pageSize);
+            
+            searchResultsElement.style.display = results.length > 0 ? 'block' : 'none';
+            searchCount.textContent = results.length;
+            
+            if (results.length > 0) {
+                const fragment = document.createDocumentFragment();
+                
+                
+                const startIdx = 0;
+                const endIdx = Math.min(pageSize, results.length);
+                const pageResults = results.slice(startIdx, endIdx);
+                
+                pageResults.forEach(record => {
+                    const highlightedRecord = record.fullRecord.replace(new RegExp(query, 'gi'), match => 
+                        `<span class="highlight">${match}</span>`
+                    );
+                    
+                    const div = document.createElement('div');
+                    div.className = 'search-result-record';
+                    div.innerHTML = highlightedRecord;
+                    fragment.appendChild(div);
+                });
+                
+                databaseContent.innerHTML = '';
+                databaseContent.appendChild(fragment);
+                
+                document.getElementById('current-page').textContent = currentPage;
+                document.getElementById('total-pages').textContent = totalPages;
+                document.getElementById('total-records').textContent = totalCount;
+                
+                updatePaginationControls();
+                
+                const firstHighlight = databaseContent.querySelector('.highlight');
+                if (firstHighlight) {
+                    firstHighlight.scrollIntoView({ behavior: 'auto', block: 'center' });
+                }
+                
+                showNotification('Busca Concluída', `${results.length} resultado(s) encontrado(s) em ${searchedFiles} arquivo(s)`, 'success');
+            } else {
+                databaseContent.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">Nenhum resultado encontrado para: ' + query + '</div>';
+                showNotification('Busca Concluída', 'Nenhum resultado encontrado', 'warning');
+            }
+        })
+        .catch(error => {
+            console.error('Erro na busca:', error);
+            databaseContent.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">Erro ao realizar busca. Tente novamente.</div>';
+            showNotification('Erro', 'Falha ao processar a busca', 'error');
+        });
+}
+
+/**
+ * 
+ */
+function executeFileSearchOptimized() {
+    const query = document.getElementById('file-search-query').value.trim();
+    const searchType = document.getElementById('file-search-type').value;
+    const fileSearchResults = document.getElementById('file-search-results');
+    const fileSearchResultsContainer = document.getElementById('file-search-results-container');
+    
+    if (!query || query.length < 3) {
+        showNotification('Erro', 'Digite pelo menos 3 caracteres para busca', 'warning');
+        return;
+    }
+    
+    fileSearchResults.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="loading__spinner" style="display: inline-block; margin-right: 10px;"></div> Buscando...</div>';
+    fileSearchResultsContainer.style.display = 'block';
+    
+    
+    progressiveFileSearch(query, searchType)
+        .then(({ results, searchedFiles }) => {
+            displaySearchResults(results, fileSearchResults);
+            
+            if (results.length > 0) {
+                showNotification('Busca Concluída', `${results.length} resultado(s) encontrado(s) em ${searchedFiles} arquivo(s)`, 'success');
+            } else {
+                showNotification('Busca Concluída', 'Nenhum resultado encontrado', 'warning');
+            }
+        })
+        .catch(error => {
+            console.error('Erro na busca:', error);
+            fileSearchResults.innerHTML = '<div style="text-align: center; padding: 15px; color: var(--danger);">Erro ao realizar busca. Tente novamente.</div>';
+            showNotification('Erro', 'Falha ao processar a busca', 'error');
+        });
+}
+
+
+window.searchInDatabase = searchInDatabaseOptimized;
+window.executeFileSearch = executeFileSearchOptimized;
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const databaseSearchButton = document.getElementById('database-search-button');
+    const runFileSearchBtn = document.getElementById('run-file-search');
+    const runFileSearchInnerBtn = document.getElementById('run-file-search-inner');
+    
+    if (databaseSearchButton) {
+        databaseSearchButton.addEventListener('click', function() {
+            const query = document.getElementById('database-search-input').value.trim();
+            searchInDatabaseOptimized(query);
+        });
+    }
+    
+    if (runFileSearchBtn) {
+        runFileSearchBtn.addEventListener('click', executeFileSearchOptimized);
+    }
+    
+    if (runFileSearchInnerBtn) {
+        runFileSearchInnerBtn.addEventListener('click', executeFileSearchOptimized);
+    }
+    
+    
+    const databaseSearchInput = document.getElementById('database-search-input');
+    if (databaseSearchInput) {
+        databaseSearchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                const query = this.value.trim();
+                searchInDatabaseOptimized(query);
+            }
+        });
+    }
+    
+    const fileSearchQuery = document.getElementById('file-search-query');
+    if (fileSearchQuery) {
+        fileSearchQuery.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                executeFileSearchOptimized();
+            }
+        });
+    }
 });
     </script>
 </body>
