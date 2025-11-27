@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MK SECURITY - OSINT GLOBAL DASHBOARD v4.0</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #00a2ff;
+            --secondary: #0072ff;
+            --accent: #00ff2a;
+            --danger: #ff0000;
+            --warning: #ffcc00;
+            --purple: #a855f7;
+            --bg-body: #050505;
+            --bg-panel: rgba(0, 15, 30, 0.9);
+            --border: rgba(0, 114, 255, 0.4);
+            --glass: blur(8px);
+            --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) #000;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: #fff;
+            font-family: var(--font-mono);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .dashboard-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1900px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 60px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.95);
+            border-bottom: 2px solid var(--primary);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 0 30px rgba(0, 162, 255, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--primary);
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .system-status {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 15px;
+            backdrop-filter: var(--glass);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .panel:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(0, 114, 255, 0.15);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .panel-title {
+            color: var(--primary);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 14px;
+        }
+
+        .panel-wide {
+            grid-column: span 2;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        input, select {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+            color: #0f0;
+            padding: 8px 12px;
+            border-radius: 2px;
+            width: 100%;
+            outline: none;
+            font-family: var(--font-mono);
+            font-size: 13px;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 8px rgba(0, 255, 42, 0.2);
+        }
+
+        button {
+            background: linear-gradient(180deg, #003366, #001122);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 10px 12px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 10px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        button:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        .btn-danger { border-color: var(--danger); color: var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: #fff; box-shadow: 0 0 15px var(--danger); }
+        
+        .btn-warning { border-color: var(--warning); color: var(--warning); }
+        .btn-warning:hover { background: var(--warning); color: #000; box-shadow: 0 0 15px var(--warning); }
+
+        .btn-purple { border-color: var(--purple); color: var(--purple); }
+        .btn-purple:hover { background: var(--purple); color: #fff; box-shadow: 0 0 15px var(--purple); }
+
+        .result-box {
+            background: #000;
+            border: 1px solid #222;
+            padding: 10px;
+            margin-top: auto;
+            min-height: 140px;
+            max-height: 350px;
+            overflow-y: auto;
+            font-size: 12px;
+            color: #ccc;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .result-box::-webkit-scrollbar { width: 6px; }
+        .result-box::-webkit-scrollbar-thumb { background: var(--primary); }
+
+        .dork-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .deeplink-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .ghdb-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+
+        .source-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 2px;
+            font-size: 10px;
+            margin-right: 5px;
+            font-weight: bold;
+        }
+
+        .source-ipapi { background: #00a2ff; color: #000; }
+        .source-ipinfo { background: #00ff2a; color: #000; }
+        .source-ipdata { background: #ffcc00; color: #000; }
+        .source-abstract { background: #a855f7; color: #fff; }
+
+        .avatar-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            margin: 0 auto 10px auto;
+            background-size: cover;
+            background-position: center;
+            display: none;
+        }
+
+        .highlight { color: var(--accent); }
+        .warning { color: var(--warning); }
+        .danger { color: var(--danger); }
+
+        .loading-bar {
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
+            background-size: 200% 100%;
+            animation: loadingMove 1s linear infinite;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .loading-bar.active { display: block; }
+
+        .terminal-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 35px;
+            background: #080808;
+            border-top: 1px solid var(--primary);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 12px;
+            color: var(--primary);
+        }
+
+        .terminal-prompt { color: var(--accent); margin-right: 10px; }
+        .terminal-text { animation: blink 1s infinite; }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .tab {
+            padding: 6px 12px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            color: #888;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .tab.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(0, 162, 255, 0.1);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes loadingMove { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        @media (max-width: 950px) {
+            .dashboard-container { grid-template-columns: 1fr; }
+            .panel-wide { grid-column: span 1; }
+            .dork-grid { grid-template-columns: repeat(2, 1fr); }
+            .deeplink-grid { grid-template-columns: repeat(2, 1fr); }
+            .ghdb-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 500px) {
+            .deeplink-grid { grid-template-columns: 1fr; }
+            .dork-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <header>
+        <div class="logo">
+            <i class="fas fa-shield-alt"></i> MK SECURITY <span style="font-size:12px; opacity:0.6; margin-left:5px">v4.0 - MULTI-SOURCE OSINT</span>
+        </div>
+        <div class="system-status">
+            <span>IP: <span id="my-ip-display" class="highlight">DETECTANDO...</span></span>
+            <div class="status-dot"></div>
+            <span class="highlight">SYSTEM ONLINE</span>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+
+        <div class="panel panel-wide">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-crosshairs"></i> MULTI-SOURCE RECON (4 FONTES PARALELAS)</span>
+            </div>
+            <div class="input-group">
+                <input type="text" id="multiInput" placeholder="IP ou Domínio alvo (ex: 8.8.8.8 ou google.com)">
+                <button onclick="multiSourceScan()" class="btn-warning"><i class="fas fa-bolt"></i> SCAN PARALELO</button>
+            </div>
+            <div class="loading-bar" id="multiLoader"></div>
+            <div id="multi-result" class="result-box" style="min-height:200px">
+[MULTI-SOURCE ENGINE]
+Dispara requisições simultâneas para múltiplas APIs:
+• IP-API.com (Geolocalização)
+• IPInfo.io (ASN/Org)  
+• IPData.co (Threat Intel)
+• AbstractAPI (ISP/Proxy Detection)
+
+Digite um IP ou domínio e clique em SCAN PARALELO.</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-external-link-alt"></i> DEEP LINKS (SEM LOGIN)</span>
+            </div>
+            <div class="input-group">
+                <input type="text" id="deepLinkTarget" placeholder="IP, Domínio ou Hash">
+            </div>
+            <div class="deeplink-grid">
+                <button onclick="openDeepLink('shodan')"><i class="fas fa-search"></i> Shodan</button>
+                <button onclick="openDeepLink('censys')"><i class="fas fa-server"></i> Censys</button>
+                <button onclick="openDeepLink('zoomeye')"><i class="fas fa-eye"></i> ZoomEye</button>
+                <button onclick="openDeepLink('fofa')"><i class="fas fa-radar"></i> FOFA</button>
+                <button onclick="openDeepLink('virustotal')"><i class="fas fa-virus"></i> VirusTotal</button>
+                <button onclick="openDeepLink('urlscan')"><i class="fas fa-link"></i> URLScan</button>
+                <button onclick="openDeepLink('greynoise')"><i class="fas fa-wave-square"></i> GreyNoise</button>
+                <button onclick="openDeepLink('abuseipdb')"><i class="fas fa-ban"></i> AbuseIPDB</button>
+                <button onclick="openDeepLink('hunter')"><i class="fas fa-envelope"></i> Hunter.io</button>
+                <button onclick="openDeepLink('intelx')"><i class="fas fa-database"></i> IntelX</button>
+                <button onclick="openDeepLink('pulsedive')"><i class="fas fa-heartbeat"></i> Pulsedive</button>
+                <button onclick="openDeepLink('securitytrails')"><i class="fas fa-route"></i> SecTrails</button>
+            </div>
+            <div id="deeplink-result" class="result-box" style="min-height:60px">Links diretos para ferramentas profissionais. Alguns requerem conta gratuita para ver detalhes completos.</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-database"></i> GHDB - GOOGLE HACKING DATABASE</span>
+            </div>
+            <div class="input-group">
+                <input type="text" id="ghdbTarget" placeholder="Domínio alvo">
+            </div>
+            <div class="ghdb-grid">
+                <button onclick="runGHDB('vuln')"><i class="fas fa-bug"></i> Vulnerabilidades</button>
+                <button onclick="runGHDB('sensitive')"><i class="fas fa-folder-open"></i> Dir. Sensíveis</button>
+                <button onclick="runGHDB('webserver')"><i class="fas fa-server"></i> Web Servers</button>
+                <button onclick="runGHDB('files')"><i class="fas fa-file-alt"></i> Arquivos Exp.</button>
+                <button onclick="runGHDB('login')"><i class="fas fa-sign-in-alt"></i> Painéis Login</button>
+                <button onclick="runGHDB('network')"><i class="fas fa-network-wired"></i> Devices IoT</button>
+                <button onclick="runGHDB('advisories')"><i class="fas fa-exclamation-triangle"></i> Advisories</button>
+                <button onclick="runGHDB('errormsgs')"><i class="fas fa-exclamation-circle"></i> Error Messages</button>
+            </div>
+            <div id="ghdb-result" class="result-box" style="min-height:60px">Dorks precisos baseados no Exploit-DB GHDB oficial.</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-certificate"></i> CRT.SH PARSER (SUBDOMÍNIOS)</span>
+            </div>
+            <div class="input-group">
+                <input type="text" id="crtInput" placeholder="Domínio (ex: tesla.com)">
+                <button onclick="parseCrtSh()"><i class="fas fa-sitemap"></i> EXTRAIR</button>
+                <button onclick="window.open('https://crt.sh/?q='+document.getElementById('crtInput').value,'_blank')"><i class="fas fa-external-link-alt"></i></button>
+            </div>
+            <div class="loading-bar" id="crtLoader"></div>
+            <div id="crt-result" class="result-box">Busca subdomínios via Certificate Transparency Logs usando crt.sh</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-globe"></i> IP INTEL & GEOLOCALIZAÇÃO</span>
+            </div>
+            <div class="input-group">
+                <input type="text" id="ipInput" placeholder="IP Alvo (ex: 8.8.8.8)">
+                <button onclick="lookupIP()"><i class="fas fa-search"></i> SCAN</button>
+            </div>
+            <div id="ip-result" class="result-box">Aguardando comando...</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-history"></i> WAYBACK MACHINE (SEGREDOS)</span>
+            </div>
+            <div class="input-group">
+                <input type="text" id="waybackInput" placeholder="Domínio (ex: tesla.com)">
+                <button onclick="searchWayback()"><i class="fas fa-file-code"></i> CAÇAR ARQUIVOS</button>
+            </div>
+            <div class="loading-bar" id="waybackLoader"></div>
+            <div id="wayback-result" class="result-box">Busca por arquivos .sql, .bak, .env, .txt deletados no histórico.</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-project-diagram"></i> DNS & INFRA RECON</span>
+            </div>
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab(this, 'dns')">DNS Records</div>
+                <div class="tab" onclick="switchTab(this, 'hackertarget')">HackerTarget</div>
+                <div class="tab" onclick="switchTab(this, 'threatcrowd')">ThreatCrowd</div>
+            </div>
+            <div id="dns-tab" class="tab-content active">
+                <div class="input-group">
+                    <input type="text" id="dnsInput" placeholder="Domínio">
+                    <button onclick="lookupDNS()"><i class="fas fa-search"></i> DNS</button>
+                </div>
+            </div>
+            <div id="hackertarget-tab" class="tab-content">
+                <div class="input-group">
+                    <select id="htType" style="max-width:100px">
+                        <option value="hostsearch">Host Search</option>
+                        <option value="dnslookup">DNS Lookup</option>
+                        <option value="reversedns">Reverse DNS</option>
+                        <option value="httpheaders">HTTP Headers</option>
+                    </select>
+                    <input type="text" id="htInput" placeholder="Domínio ou IP">
+                    <button onclick="hackerTargetLookup()"><i class="fas fa-terminal"></i></button>
+                </div>
+            </div>
+            <div id="threatcrowd-tab" class="tab-content">
+                <div class="input-group">
+                    <select id="threatType" style="max-width: 100px;">
+                        <option value="domain">Dominio</option>
+                        <option value="ip">IP</option>
+                        <option value="email">Email</option>
+                    </select>
+                    <input type="text" id="threatInput" placeholder="Alvo...">
+                    <button onclick="threatCrowdLookup()"><i class="fas fa-network-wired"></i></button>
+                </div>
+            </div>
+            <div id="infra-result" class="result-box">Múltiplas fontes para análise de infraestrutura.</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fab fa-google"></i> GOOGLE DORKS AUTOMATION</span>
+            </div>
+            <div class="input-group">
+                <input type="text" id="dorkInput" placeholder="Domínio ou Nome do Alvo">
+            </div>
+            <div class="dork-grid">
+                <button onclick="runDork('files')"><i class="fas fa-file-pdf"></i> ARQUIVOS</button>
+                <button onclick="runDork('admin')"><i class="fas fa-user-lock"></i> ADMIN</button>
+                <button onclick="runDork('cam')"><i class="fas fa-video"></i> CÂMERAS</button>
+                <button onclick="runDork('index')"><i class="fas fa-folder-open"></i> INDEX OF</button>
+                <button onclick="runDork('pass')"><i class="fas fa-key"></i> SENHAS</button>
+                <button onclick="runDork('social')"><i class="fas fa-users"></i> SOCIAL</button>
+                <button onclick="runDork('api')"><i class="fas fa-code"></i> API KEYS</button>
+                <button onclick="runDork('git')"><i class="fab fa-git-alt"></i> GIT EXPOSED</button>
+                <button onclick="runDork('backup')"><i class="fas fa-database"></i> BACKUPS</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-user-secret"></i> VERIFICADOR DE LEAKS (K-ANON)</span>
+            </div>
+            <div class="input-group">
+                <input type="password" id="pwnedInput" placeholder="Digite uma senha para testar">
+                <button onclick="checkPwnedPassword()" class="btn-danger"><i class="fas fa-bomb"></i> CHECK</button>
+            </div>
+            <div id="pwned-result" class="result-box">Usa hash SHA-1 parcial. A senha nunca é enviada completa.</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-id-card"></i> EMAIL RECON (MULTI-SOURCE)</span>
+            </div>
+            <div class="input-group">
+                <input type="email" id="emailReconInput" placeholder="email@alvo.com">
+                <button onclick="emailRecon()"><i class="fas fa-search"></i> RECON</button>
+            </div>
+            <div class="avatar-preview" id="gravatarImg"></div>
+            <div id="email-result" class="result-box">Gravatar, Have I Been Pwned (email), e links para verificação.</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-flag"></i> BRASIL DATA (CEP/CNPJ)</span>
+            </div>
+            <div class="input-group">
+                <select id="brType" style="max-width: 80px;">
+                    <option value="cep">CEP</option>
+                    <option value="cnpj">CNPJ</option>
+                </select>
+                <input type="text" id="brInput" placeholder="Somente números">
+                <button onclick="lookupBrasil()"><i class="fas fa-search"></i> CONSULTAR</button>
+            </div>
+            <div id="br-result" class="result-box">API Governamental e Correios.</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-camera"></i> EXIF METADATA FORENSICS</span>
+            </div>
+            <input type="file" id="exifFile" accept="image/*" style="display:none" onchange="extractExif(this)">
+            <button onclick="document.getElementById('exifFile').click()" style="width:100%; margin-bottom:10px; padding:15px">
+                <i class="fas fa-upload"></i> CARREGAR IMAGEM LOCAL
+            </button>
+            <div id="exif-result" class="result-box">Extração local (Client-side). Nenhuma imagem é enviada ao servidor.</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fab fa-bitcoin"></i> CRYPTO & MAC VENDOR</span>
+            </div>
+            <div class="input-group">
+                <input type="text" id="btcInput" placeholder="Endereço BTC">
+                <button onclick="checkBTC()"><i class="fas fa-coins"></i></button>
+            </div>
+            <div class="input-group">
+                <input type="text" id="macInput" placeholder="MAC Address (XX:XX:XX...)">
+                <button onclick="checkMAC()"><i class="fas fa-laptop"></i></button>
+            </div>
+            <div id="crypto-result" class="result-box">Saldo Bitcoin ou Fabricante da Placa de Rede.</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-shield-virus"></i> THREAT INTEL LINKS</span>
+            </div>
+            <div class="input-group">
+                <input type="text" id="threatIntelInput" placeholder="IP, Hash, ou Domínio">
+            </div>
+            <div class="deeplink-grid">
+                <button onclick="openThreatIntel('alienvault')"><i class="fas fa-alien"></i> AlienVault</button>
+                <button onclick="openThreatIntel('threatminer')"><i class="fas fa-gem"></i> ThreatMiner</button>
+                <button onclick="openThreatIntel('hybrid')"><i class="fas fa-vial"></i> Hybrid</button>
+                <button onclick="openThreatIntel('malwarebazaar')"><i class="fas fa-biohazard"></i> MalBazaar</button>
+            </div>
+            <div id="threat-intel-result" class="result-box" style="min-height:60px">Deep links para plataformas de Threat Intelligence.</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-phone"></i> PHONE / USERNAME OSINT</span>
+            </div>
+            <div class="input-group">
+                <input type="text" id="usernameInput" placeholder="Username ou Telefone">
+            </div>
+            <div class="deeplink-grid">
+                <button onclick="openUsernameLink('namechk')"><i class="fas fa-user"></i> Namechk</button>
+                <button onclick="openUsernameLink('whatsmyname')"><i class="fas fa-fingerprint"></i> WhatsMyName</button>
+                <button onclick="openUsernameLink('phoneinfoga')" class="btn-purple"><i class="fas fa-phone"></i> PhoneInfo</button>
+                <button onclick="openUsernameLink('epieos')"><i class="fas fa-at"></i> Epieos</button>
+            </div>
+            <div id="username-result" class="result-box" style="min-height:60px">Ferramentas de verificação de username e telefone.</div>
+        </div>
+
+    </div>
+
+    <div class="terminal-footer">
+        <span class="terminal-prompt">root@mk-security:~#</span>
+        <span id="terminal-log">Inicializando módulos de inteligência... Pronto.</span><span class="terminal-text">_</span>
+    </div>
+
+    <script>
+        const CORS_PROXIES = [
+            'https://api.allorigins.win/get?url=',
+            'https://corsproxy.io/?'
+        ];
+
+        function getProxy(url, index = 0) {
+            if (index === 0) return CORS_PROXIES[0] + encodeURIComponent(url);
+            return CORS_PROXIES[1] + encodeURIComponent(url);
+        }
+
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+            
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 2500;
+            const posArray = new Float32Array(particlesCount * 3);
+            
+            for(let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 50;
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            
+            const material = new THREE.PointsMaterial({
+                size: 0.06,
+                color: 0x00a2ff,
+                transparent: true,
+                opacity: 0.7,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const particlesMesh = new THREE.Points(particlesGeometry, material);
+            scene.add(particlesMesh);
+            camera.position.z = 5;
+
+            let mouseX = 0, mouseY = 0;
+            document.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX - window.innerWidth / 2;
+                mouseY = e.clientY - window.innerHeight / 2;
+            });
+
+            function animate() {
+                requestAnimationFrame(animate);
+                particlesMesh.rotation.y += 0.0004;
+                particlesMesh.rotation.x += 0.0002;
+                particlesMesh.rotation.x += mouseY * 0.000008;
+                particlesMesh.rotation.y += mouseX * 0.000008;
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function log(msg) {
+            const el = document.getElementById('terminal-log');
+            const time = new Date().toLocaleTimeString();
+            el.textContent = `[${time}] ${msg}`;
+        }
+
+        function switchTab(el, tabId) {
+            el.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            el.closest('.panel').querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tabId + '-tab').classList.add('active');
+        }
+
+        async function multiSourceScan() {
+            const target = document.getElementById('multiInput').value.trim();
+            const output = document.getElementById('multi-result');
+            const loader = document.getElementById('multiLoader');
+
+            if (!target) return output.textContent = "Insira um IP ou domínio.";
+
+            output.innerHTML = "<span class='warning'>Iniciando scan paralelo em 4 fontes...</span>\n";
+            loader.classList.add('active');
+            log(`Multi-Source Scan: ${target}`);
+
+            const isIP = /^[\d.]+$/.test(target);
+            const lookupTarget = isIP ? target : target;
+
+            const sources = [
+                {
+                    name: 'IP-API',
+                    class: 'source-ipapi',
+                    url: `http://ip-api.com/json/${lookupTarget}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,query`,
+                    parse: (data) => {
+                        if (data.status === 'fail') return `Erro: ${data.message}`;
+                        return `País: ${data.country} (${data.countryCode})\nCidade: ${data.city}, ${data.regionName}\nCoordenadas: ${data.lat}, ${data.lon}\nISP: ${data.isp}\nORG: ${data.org}\nAS: ${data.as}\nTimezone: ${data.timezone}`;
+                    }
+                },
+                {
+                    name: 'IPInfo',
+                    class: 'source-ipinfo',
+                    url: `https://ipinfo.io/${lookupTarget}/json`,
+                    parse: (data) => {
+                        if (data.error) return `Erro: ${data.error.message}`;
+                        return `IP: ${data.ip}\nHostname: ${data.hostname || 'N/A'}\nCidade: ${data.city}\nRegião: ${data.region}\nPaís: ${data.country}\nOrg: ${data.org}\nPostal: ${data.postal}`;
+                    }
+                },
+                {
+                    name: 'IPWhois',
+                    class: 'source-ipdata',
+                    url: `https://ipwho.is/${lookupTarget}`,
+                    parse: (data) => {
+                        if (!data.success) return `Erro: ${data.message}`;
+                        return `Tipo: ${data.type}\nContinente: ${data.continent}\nPaís: ${data.country} (${data.country_code})\nCidade: ${data.city}\nISP: ${data.connection?.isp || 'N/A'}\nOrg: ${data.connection?.org || 'N/A'}\nASN: ${data.connection?.asn || 'N/A'}`;
+                    }
+                },
+                {
+                    name: 'IP-Score',
+                    class: 'source-abstract',
+                    url: getProxy(`https://check.getipintel.net/check.php?ip=${lookupTarget}&contact=test@test.com&format=json`),
+                    isProxy: true,
+                    parse: (data) => {
+                        if (data.status && data.status !== 'success') return 'Serviço indisponível';
+                        const score = parseFloat(data.result);
+                        if (isNaN(score)) return 'Resposta inválida';
+                        const risk = score > 0.99 ? 'ALTO (Proxy/VPN/Tor)' : score > 0.5 ? 'MÉDIO' : 'BAIXO';
+                        return `Score de Proxy: ${(score * 100).toFixed(1)}%\nRisco: ${risk}`;
+                    }
+                }
+            ];
+
+            const promises = sources.map(async (source) => {
+                try {
+                    const res = await fetch(source.url);
+                    let data;
+                    if (source.isProxy) {
+                        const wrap = await res.json();
+                        data = JSON.parse(wrap.contents);
+                    } else {
+                        data = await res.json();
+                    }
+                    return { source: source.name, class: source.class, result: source.parse(data), success: true };
+                } catch (e) {
+                    return { source: source.name, class: source.class, result: `Erro: ${e.message}`, success: false };
+                }
+            });
+
+            const results = await Promise.all(promises);
+            loader.classList.remove('active');
+
+            let html = "<span class='highlight'>═══ RESULTADOS MULTI-SOURCE ═══</span>\n\n";
+            results.forEach(r => {
+                const statusIcon = r.success ? '✓' : '✗';
+                html += `<span class='source-tag ${r.class}'>${r.source}</span> ${statusIcon}\n${r.result}\n\n`;
+            });
+
+            output.innerHTML = html;
+        }
+
+        function openDeepLink(service) {
+            const target = document.getElementById('deepLinkTarget').value.trim();
+            if (!target) return alert('Digite um alvo!');
+            
+            const links = {
+                shodan: `https://www.shodan.io/search?query=${encodeURIComponent(target)}`,
+                censys: `https://search.censys.io/search?resource=hosts&q=${encodeURIComponent(target)}`,
+                zoomeye: `https://www.zoomeye.org/searchResult?q=${encodeURIComponent(target)}`,
+                fofa: `https://fofa.info/result?qbase64=${btoa(target)}`,
+                virustotal: `https://www.virustotal.com/gui/search/${encodeURIComponent(target)}`,
+                urlscan: `https://urlscan.io/search/#${encodeURIComponent(target)}`,
+                greynoise: `https://viz.greynoise.io/ip/${encodeURIComponent(target)}`,
+                abuseipdb: `https://www.abuseipdb.com/check/${encodeURIComponent(target)}`,
+                hunter: `https://hunter.io/search/${encodeURIComponent(target)}`,
+                intelx: `https://intelx.io/?s=${encodeURIComponent(target)}`,
+                pulsedive: `https://pulsedive.com/indicator/?ioc=${encodeURIComponent(target)}`,
+                securitytrails: `https://securitytrails.com/domain/${encodeURIComponent(target)}/dns`
+            };
+
+            window.open(links[service], '_blank');
+            log(`DeepLink: ${service} -> ${target}`);
+            document.getElementById('deeplink-result').innerHTML = `<span class='highlight'>Aberto:</span> ${service.toUpperCase()}\n<span class='warning'>Alvo:</span> ${target}`;
+        }
+
+        function runGHDB(category) {
+            const target = document.getElementById('ghdbTarget').value.trim();
+            if (!target) return alert('Digite o domínio!');
+
+            const dorks = {
+                vuln: [
+                    `site:${target} inurl:"php?id="`,
+                    `site:${target} "sql syntax" | "mysql_fetch"`,
+                    `site:${target} "Warning:" "on line"`,
+                    `site:${target} inurl:".php?" intext:"id="`
+                ],
+                sensitive: [
+                    `site:${target} intitle:"index of" "parent directory"`,
+                    `site:${target} intitle:"index of" ".git"`,
+                    `site:${target} intitle:"index of" "backup"`,
+                    `site:${target} inurl:/admin/ | inurl:/administrator/`
+                ],
+                webserver: [
+                    `site:${target} intitle:"Apache Status"`,
+                    `site:${target} "server at" intitle:index.of`,
+                    `site:${target} inurl:server-status`,
+                    `site:${target} intitle:"phpinfo()"`
+                ],
+                files: [
+                    `site:${target} ext:sql | ext:db | ext:log`,
+                    `site:${target} ext:conf | ext:cnf | ext:cfg`,
+                    `site:${target} ext:bak | ext:backup | ext:old`,
+                    `site:${target} ext:env | ext:yml | ext:yaml`
+                ],
+                login: [
+                    `site:${target} inurl:login | inurl:signin | inurl:admin`,
+                    `site:${target} intitle:"login" | intitle:"sign in"`,
+                    `site:${target} "username" "password" filetype:log`,
+                    `site:${target} inurl:wp-login.php | inurl:wp-admin`
+                ],
+                network: [
+                    `site:${target} inurl:"/cgi-bin/webcm"`,
+                    `site:${target} intitle:"Router" "Status"`,
+                    `site:${target} inurl:"level/15/exec"`,
+                    `"${target}" inurl:"/view/view.shtml"`
+                ],
+                advisories: [
+                    `"${target}" site:cve.mitre.org`,
+                    `"${target}" site:exploit-db.com`,
+                    `"${target}" site:nvd.nist.gov`,
+                    `"${target}" "vulnerability" OR "CVE-"`
+                ],
+                errormsgs: [
+                    `site:${target} "Fatal error" | "Parse error"`,
+                    `site:${target} "ORA-" | "PLS-"`,
+                    `site:${target} "Warning: mysql_" | "SQLSTATE"`,
+                    `site:${target} "Stack trace:" | "Exception in"`
+                ]
+            };
+
+            const selected = dorks[category];
+            const output = document.getElementById('ghdb-result');
+            
+            output.innerHTML = `<span class='highlight'>GHDB - ${category.toUpperCase()}</span>\nAlvo: ${target}\n\n`;
+            selected.forEach((dork, i) => {
+                output.innerHTML += `[${i+1}] <a href="https://www.google.com/search?q=${encodeURIComponent(dork)}" target="_blank" style="color:#00ff2a">${dork}</a>\n`;
+            });
+
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(selected[0])}`, '_blank');
+            log(`GHDB ${category}: ${target}`);
+        }
+
+        async function parseCrtSh() {
+            const domain = document.getElementById('crtInput').value.trim();
+            const output = document.getElementById('crt-result');
+            const loader = document.getElementById('crtLoader');
+
+            if (!domain) return output.textContent = "Insira um domínio.";
+
+            output.innerHTML = "<span class='warning'>Consultando crt.sh (pode demorar)...</span>";
+            loader.classList.add('active');
+            log(`CRT.sh Parser: ${domain}`);
+
+            try {
+                const url = `https://crt.sh/?q=%25.${domain}&output=json`;
+                const res = await fetch(getProxy(url));
+                const wrap = await res.json();
+                const data = JSON.parse(wrap.contents);
+
+                if (!data || data.length === 0) {
+                    output.textContent = "Nenhum certificado encontrado.";
+                    loader.classList.remove('active');
+                    return;
+                }
+
+                const subdomains = new Set();
+                data.forEach(cert => {
+                    const names = cert.name_value.split('\n');
+                    names.forEach(name => {
+                        const clean = name.replace(/^\*\./, '').toLowerCase().trim();
+                        if (clean.endsWith(domain)) subdomains.add(clean);
+                    });
+                });
+
+                const sorted = Array.from(subdomains).sort();
+                output.innerHTML = `<span class='highlight'>Subdomínios Encontrados (${sorted.length}):</span>\n\n`;
+                
+                sorted.forEach(sub => {
+                    const wildcard = sub.includes('*') ? ' <span class="warning">[WILDCARD]</span>' : '';
+                    output.innerHTML += `<a href="https://${sub}" target="_blank" style="color:#ccc">${sub}</a>${wildcard}\n`;
+                });
+
+            } catch(e) {
+                output.textContent = `Erro: ${e.message}\nTente o botão externo para acessar crt.sh diretamente.`;
+            }
+            loader.classList.remove('active');
+        }
+
+        async function lookupIP(ip = "") {
+            const inputIp = ip || document.getElementById('ipInput').value;
+            const output = document.getElementById('ip-result');
+            
+            if(!inputIp) return output.textContent = "Insira um IP.";
+            
+            output.innerHTML = "<span class='highlight'>Rastreando...</span>";
+            log(`IP Lookup: ${inputIp}`);
+
+            try {
+                const res = await fetch(`http://ip-api.com/json/${inputIp}`);
+                const data = await res.json();
+                
+                if(data.status === 'fail') {
+                    output.innerHTML = `<span class='danger'>Falha: ${data.message}</span>`;
+                    return;
+                }
+
+                output.innerHTML = `
+<span class='highlight'>IP:</span> ${data.query}
+<span class='highlight'>ISP:</span> ${data.isp} (${data.as})
+<span class='highlight'>ORG:</span> ${data.org}
+<span class='highlight'>LOCAL:</span> ${data.city}, ${data.regionName} - ${data.country}
+<span class='highlight'>COORDS:</span> ${data.lat}, ${data.lon}
+<span class='highlight'>TIMEZONE:</span> ${data.timezone}
+<a href="https://www.google.com/maps?q=${data.lat},${data.lon}" target="_blank" style="color:#fff;text-decoration:underline">Ver no Mapa</a>`;
+            } catch(e) {
+                output.textContent = "Erro na requisição.";
+            }
+        }
+
+        async function searchWayback() {
+            const domain = document.getElementById('waybackInput').value;
+            const output = document.getElementById('wayback-result');
+            const loader = document.getElementById('waybackLoader');
+            
+            if(!domain) return output.textContent = "Insira um domínio.";
+            
+            output.innerHTML = "<span class='warning'>Varrendo histórico...</span>";
+            loader.classList.add('active');
+            log(`Wayback Scan: ${domain}`);
+
+            const query = `https://web.archive.org/cdx/search/cdx?url=*.${domain}/*&output=json&fl=original,mimetype,statuscode&collapse=urlkey&limit=500&filter=statuscode:200`;
+
+            try {
+                const res = await fetch(query);
+                const data = await res.json();
+                
+                if(data.length <= 1) {
+                    output.textContent = "Nenhum arquivo encontrado.";
+                    loader.classList.remove('active');
+                    return;
+                }
+
+                data.shift();
+                
+                let html = `<span class='highlight'>Arquivos Indexados (${data.length}):</span>\n\n`;
+                
+                const sensitive = data.filter(row => row[0].match(/\.(sql|bak|env|txt|log|conf|ini|zip|rar|xls|doc|pdf|json|xml|yml|yaml|key|pem|cfg)$/i));
+                const list = sensitive.length > 0 ? sensitive : data.slice(0, 30);
+
+                list.forEach(row => {
+                    const url = row[0];
+                    let color = '#ccc';
+                    if(url.match(/\.(sql|env|bak|key|pem)/i)) color = '#ff5555';
+                    else if(url.match(/\.(pdf|doc|xls)/i)) color = '#00a2ff';
+                    else if(url.match(/\.(json|xml|yml)/i)) color = '#ffcc00';
+                    
+                    html += `<a href="${url}" target="_blank" style="color:${color}; text-decoration:none; display:block">${url}</a>`;
+                });
+
+                output.innerHTML = html;
+            } catch(e) {
+                output.textContent = "Erro na API do Archive.org.";
+            }
+            loader.classList.remove('active');
+        }
+
+        async function lookupDNS() {
+            const domain = document.getElementById('dnsInput').value;
+            const output = document.getElementById('infra-result');
+            
+            if(!domain) return;
+            output.textContent = "Consultando DNS...";
+            log(`DNS Lookup: ${domain}`);
+
+            try {
+                const types = ['A', 'AAAA', 'MX', 'NS', 'TXT', 'CNAME'];
+                const results = {};
+
+                for (const type of types) {
+                    try {
+                        const res = await fetch(`https://dns.google/resolve?name=${domain}&type=${type}`);
+                        const data = await res.json();
+                        if (data.Answer) {
+                            results[type] = data.Answer.map(a => a.data);
+                        }
+                    } catch(e) {}
+                }
+
+                let txt = `<span class='highlight'>DNS Records para ${domain}:</span>\n\n`;
+                for (const [type, records] of Object.entries(results)) {
+                    txt += `[${type}]\n`;
+                    records.forEach(r => txt += `  ${r}\n`);
+                    txt += '\n';
+                }
+
+                if (Object.keys(results).length === 0) {
+                    txt = "Nenhum registro encontrado.";
+                }
+
+                output.innerHTML = txt;
+            } catch(e) {
+                output.textContent = "Erro na consulta DNS.";
+            }
+        }
+
+        async function hackerTargetLookup() {
+            const type = document.getElementById('htType').value;
+            const target = document.getElementById('htInput').value;
+            const output = document.getElementById('infra-result');
+
+            if(!target) return;
+            output.textContent = "Consultando HackerTarget...";
+            log(`HackerTarget ${type}: ${target}`);
+
+            try {
+                const res = await fetch(`https://api.hackertarget.com/${type}/?q=${target}`);
+                const text = await res.text();
+                
+                if (text.includes('error') || text.includes('API count exceeded')) {
+                    output.innerHTML = `<span class='danger'>${text}</span>`;
+                } else {
+                    output.innerHTML = `<span class='highlight'>HackerTarget - ${type.toUpperCase()}</span>\n\n${text}`;
+                }
+            } catch(e) {
+                output.textContent = "Erro na API HackerTarget.";
+            }
+        }
+
+        async function threatCrowdLookup() {
+            const type = document.getElementById('threatType').value;
+            const val = document.getElementById('threatInput').value;
+            const output = document.getElementById('infra-result');
+            
+            if(!val) return;
+            output.textContent = "Correlacionando dados...";
+            log(`ThreatCrowd: ${val}`);
+
+            const targetUrl = `https://www.threatcrowd.org/searchApi/v2/${type}/report/?${type}=${val}`;
+
+            try {
+                const res = await fetch(getProxy(targetUrl));
+                const json = await res.json();
+                const data = JSON.parse(json.contents);
+
+                if(data.response_code === "0") {
+                    output.textContent = "Nada encontrado na base.";
+                    return;
+                }
+
+                let txt = "";
+                if(data.votes) txt += `MALICIOUS VOTES: ${data.votes}\n`;
+                
+                if(data.subdomains && data.subdomains.length > 0) {
+                    txt += `\n[SUBDOMÍNIOS]\n${data.subdomains.slice(0,15).join('\n')}\n`;
+                }
+
+                if(data.resolutions && data.resolutions.length > 0) {
+                    txt += `\n[IP HISTORY]\n`;
+                    data.resolutions.slice(0,8).forEach(r => txt += `${r.last_resolved}: ${r.ip_address || r.domain}\n`);
+                }
+
+                if(data.emails && data.emails.length > 0) {
+                    txt += `\n[EMAILS]\n${data.emails.join('\n')}`;
+                }
+
+                output.textContent = txt || "Dados limitados.";
+            } catch(e) {
+                output.textContent = "Erro de conexão API.";
+            }
+        }
+
+        function runDork(type) {
+            const target = document.getElementById('dorkInput').value;
+            if(!target) return alert("Defina o alvo!");
+            
+            let q = "";
+            const site = target.includes('.') ? `site:${target}` : `"${target}"`;
+            
+            const dorks = {
+                files: `${site} ext:pdf OR ext:xls OR ext:csv OR ext:doc OR ext:docx OR ext:ppt`,
+                admin: `${site} inurl:admin OR inurl:login OR inurl:portal OR inurl:dashboard`,
+                cam: `${target} inurl:"/view.shtml" OR intitle:"Network Camera" OR inurl:"axis-cgi"`,
+                index: `${site} intitle:"index of" "parent directory"`,
+                pass: `${site} "password" OR "passwd" OR "credentials" filetype:txt OR filetype:log`,
+                social: `site:instagram.com "${target}" OR site:facebook.com "${target}" OR site:linkedin.com "${target}" OR site:twitter.com "${target}"`,
+                api: `${site} "api_key" OR "apikey" OR "api_secret" OR "access_token" filetype:json OR filetype:yaml`,
+                git: `${site} inurl:".git" OR intitle:"index of" ".git"`,
+                backup: `${site} ext:bak OR ext:backup OR ext:sql OR ext:old OR ext:zip`
+            };
+            
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(dorks[type])}`, '_blank');
+            log(`Dork: ${type}`);
+        }
+
+        async function checkPwnedPassword() {
+            const pass = document.getElementById('pwnedInput').value;
+            const output = document.getElementById('pwned-result');
+            
+            if(!pass) return;
+            
+            output.textContent = "Hashing SHA-1 e consultando...";
+            
+            const hash = CryptoJS.SHA1(pass).toString().toUpperCase();
+            const prefix = hash.substring(0, 5);
+            const suffix = hash.substring(5);
+
+            try {
+                const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
+                const text = await res.text();
+                const regex = new RegExp(`^${suffix}:([0-9]+)`, 'm');
+                const match = text.match(regex);
+
+                if(match) {
+                    const count = parseInt(match[1]).toLocaleString();
+                    output.innerHTML = `<span class='danger' style='font-size:14px; font-weight:bold'>⚠ VAZOU!</span>\n\nEsta senha apareceu em <span class='highlight'>${count}</span> vazamentos.\nSHA1: ${hash}`;
+                } else {
+                    output.innerHTML = `<span style='color:#00ff2a; font-size:14px'>✓ SEGURA</span>\n\nNenhum vazamento registrado.\nSHA1: ${hash}`;
+                }
+            } catch(e) {
+                output.textContent = "Erro na API.";
+            }
+        }
+
+        async function emailRecon() {
+            const email = document.getElementById('emailReconInput').value.trim().toLowerCase();
+            const output = document.getElementById('email-result');
+            const img = document.getElementById('gravatarImg');
+            
+            if(!email) return;
+
+            const hash = CryptoJS.MD5(email).toString();
+            const imgUrl = `https://www.gravatar.com/avatar/${hash}?d=404`;
+            
+            output.innerHTML = "<span class='warning'>Verificando múltiplas fontes...</span>";
+            img.style.display = 'none';
+
+            let results = `<span class='highlight'>Email:</span> ${email}\n<span class='highlight'>MD5:</span> ${hash}\n\n`;
+
+            const imgTest = new Image();
+            imgTest.src = imgUrl;
+            imgTest.onload = () => {
+                img.style.backgroundImage = `url('${imgUrl}')`;
+                img.style.display = 'block';
+                results += `<span style='color:#00ff2a'>✓ Gravatar encontrado</span>\n`;
+                output.innerHTML = results + generateEmailLinks(email);
+            };
+            imgTest.onerror = () => {
+                results += `<span style='color:#888'>✗ Gravatar não encontrado</span>\n`;
+                output.innerHTML = results + generateEmailLinks(email);
+            };
+        }
+
+        function generateEmailLinks(email) {
+            const domain = email.split('@')[1];
+            return `
+<span class='highlight'>[VERIFICAR EM:]</span>
+<a href="https://haveibeenpwned.com/account/${encodeURIComponent(email)}" target="_blank" style="color:#ff5555">Have I Been Pwned</a>
+<a href="https://www.dehashed.com/search?query=${encodeURIComponent(email)}" target="_blank" style="color:#ffcc00">DeHashed</a>
+<a href="https://epieos.com/?q=${encodeURIComponent(email)}" target="_blank" style="color:#00a2ff">Epieos</a>
+<a href="https://hunter.io/verify/${encodeURIComponent(email)}" target="_blank" style="color:#a855f7">Hunter.io</a>
+<a href="https://www.google.com/search?q=%22${encodeURIComponent(email)}%22" target="_blank" style="color:#00ff2a">Google Dorking</a>`;
+        }
+
+        async function lookupBrasil() {
+            const type = document.getElementById('brType').value;
+            const val = document.getElementById('brInput').value.replace(/\D/g,'');
+            const output = document.getElementById('br-result');
+            
+            if(!val) return output.textContent = "Digite apenas números.";
+            output.textContent = "Consultando BrasilAPI...";
+
+            const endpoint = type === 'cep' ? `cep/v1/${val}` : `cnpj/v1/${val}`;
+
+            try {
+                const res = await fetch(`https://brasilapi.com.br/api/${endpoint}`);
+                if(!res.ok) throw new Error("Não encontrado");
+                const data = await res.json();
+                
+                let txt = "";
+                for(const [k,v] of Object.entries(data)) {
+                    if(typeof v === 'object' && v !== null) continue;
+                    txt += `${k.toUpperCase()}: ${v}\n`;
+                }
+                
+                if(type === 'cnpj' && data.qsa) {
+                    txt += "\n[SÓCIOS]\n";
+                    data.qsa.forEach(s => txt += `${s.nome_socio} (${s.qualificacao_socio})\n`);
+                }
+
+                output.textContent = txt;
+            } catch(e) {
+                output.textContent = "Dados não encontrados.";
+            }
+        }
+
+        async function extractExif(input) {
+            const file = input.files[0];
+            const output = document.getElementById('exif-result');
+            if(!file) return;
+
+            output.textContent = "Processando imagem...";
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const dataView = new DataView(arrayBuffer);
+
+                let exifData = {};
+                
+                if (dataView.getUint16(0) === 0xFFD8) {
+                    let offset = 2;
+                    while (offset < dataView.byteLength) {
+                        if (dataView.getUint16(offset) === 0xFFE1) {
+                            const length = dataView.getUint16(offset + 2);
+                            const exifString = String.fromCharCode(
+                                dataView.getUint8(offset + 4),
+                                dataView.getUint8(offset + 5),
+                                dataView.getUint8(offset + 6),
+                                dataView.getUint8(offset + 7)
+                            );
+                            if (exifString === 'Exif') {
+                                exifData.found = true;
+                            }
+                            break;
+                        }
+                        offset += 2 + dataView.getUint16(offset + 2);
+                    }
+                }
+
+                let txt = `<span class='highlight'>Arquivo:</span> ${file.name}\n`;
+                txt += `<span class='highlight'>Tamanho:</span> ${(file.size / 1024).toFixed(2)} KB\n`;
+                txt += `<span class='highlight'>Tipo:</span> ${file.type}\n`;
+                txt += `<span class='highlight'>Última Modificação:</span> ${new Date(file.lastModified).toLocaleString()}\n\n`;
+
+                if (exifData.found) {
+                    txt += "<span class='warning'>EXIF detectado no arquivo.</span>\n";
+                    txt += "Para análise completa, use:\n";
+                    txt += '<a href="https://exifdata.com/" target="_blank" style="color:#00ff2a">ExifData.com</a>\n';
+                    txt += '<a href="http://exif.regex.info/exif.cgi" target="_blank" style="color:#00ff2a">Jeffrey\'s EXIF Viewer</a>';
+                } else {
+                    txt += "Sem dados EXIF detectados ou formato não suportado.";
+                }
+
+                output.innerHTML = txt;
+            } catch(e) {
+                output.textContent = "Erro ao processar: " + e.message;
+            }
+        }
+
+        async function checkBTC() {
+            const addr = document.getElementById('btcInput').value;
+            const output = document.getElementById('crypto-result');
+            if(!addr) return;
+            
+            output.textContent = "Consultando Blockchain...";
+
+            try {
+                const res = await fetch(getProxy(`https://blockchain.info/rawaddr/${addr}`));
+                const json = await res.json();
+                const data = JSON.parse(json.contents);
+                
+                output.innerHTML = `
+<span class='highlight'>Endereço BTC</span>
+Saldo: ${(data.final_balance / 100000000).toFixed(8)} BTC
+Recebido: ${(data.total_received / 100000000).toFixed(8)} BTC
+Transações: ${data.n_tx}
+
+<a href="https://www.blockchain.com/btc/address/${addr}" target="_blank" style="color:#ffcc00">Ver no Explorer</a>`;
+            } catch(e) {
+                output.textContent = "Erro ao consultar.";
+            }
+        }
+
+        async function checkMAC() {
+            const mac = document.getElementById('macInput').value;
+            const output = document.getElementById('crypto-result');
+            if(!mac) return;
+            
+            output.textContent = "Consultando Vendor...";
+            try {
+                const res = await fetch(`https://api.macvendors.com/${mac}`);
+                if(!res.ok) throw new Error();
+                const text = await res.text();
+                output.innerHTML = `<span class='highlight'>FABRICANTE:</span> ${text}`;
+            } catch(e) {
+                output.textContent = "Vendor não encontrado.";
+            }
+        }
+
+        function openThreatIntel(service) {
+            const target = document.getElementById('threatIntelInput').value.trim();
+            if (!target) return alert('Digite um alvo!');
+            
+            const links = {
+                alienvault: `https://otx.alienvault.com/indicator/ip/${target}`,
+                threatminer: `https://www.threatminer.org/host.php?q=${target}`,
+                hybrid: `https://www.hybrid-analysis.com/search?query=${target}`,
+                malwarebazaar: `https://bazaar.abuse.ch/browse.php?search=${target}`
+            };
+
+            window.open(links[service], '_blank');
+            log(`ThreatIntel: ${service}`);
+        }
+
+        function openUsernameLink(service) {
+            const target = document.getElementById('usernameInput').value.trim();
+            if (!target) return alert('Digite um username ou telefone!');
+            
+            const links = {
+                namechk: `https://namechk.com/`,
+                whatsmyname: `https://whatsmyname.app/`,
+                phoneinfoga: `https://demo.phoneinfoga.crvx.fr/`,
+                epieos: `https://epieos.com/?q=${encodeURIComponent(target)}`
+            };
+
+            window.open(links[service], '_blank');
+            document.getElementById('username-result').innerHTML = `<span class='highlight'>Aberto:</span> ${service}\n<span class='warning'>Busque por:</span> ${target}`;
+        }
+
+        async function getMyIP() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                const data = await res.json();
+                document.getElementById('my-ip-display').textContent = data.ip;
+            } catch(e) {
+                document.getElementById('my-ip-display').textContent = "OFFLINE";
+            }
+        }
+
+        window.onload = function() {
+            initThreeJS();
+            getMyIP();
+            log("Sistema carregado. Multi-Source Engine ativo.");
+        };
+    </script>
+</body>
+</html>
